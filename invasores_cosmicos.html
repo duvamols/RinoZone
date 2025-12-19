@@ -312,6 +312,22 @@ min-height:100vh;
     }
   }
 
+
+  /* Ajustes para que el juego use TODO el alto disponible y no se corte */
+  .game-wrapper{
+    display:flex;
+    flex-direction:column;
+  }
+  .game-container{
+    flex:1 1 auto;
+    display:flex;
+    flex-direction:column;
+  }
+  .game-container canvas{
+    flex:1 1 auto;
+    align-self:center;
+  }
+
 </style>
 </head>
 
@@ -430,6 +446,15 @@ const rotateHint = document.getElementById("rotateHint");
 const iosHint = document.getElementById("iosHint");
 let userInteracted = false;
 let fsAttempted = false;
+let pendingFullscreen = false;
+
+function isLandscapeNow(){
+  return window.matchMedia && window.matchMedia('(orientation: landscape)').matches;
+}
+function isMobileNow(){
+  return window.innerWidth <= 820;
+}
+
 
 function isIOS(){
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -440,7 +465,7 @@ function isStandalone(){
 function showIOSHint(){
   if(!iosHint) return;
   const vw = window.innerWidth;
-  const isMobile = vw <= 820;
+  const isMobile = isMobileNow();
   if(isIOS() && isMobile && !isStandalone()){
     iosHint.style.display = "block";
     iosHint.innerHTML = `
@@ -464,16 +489,27 @@ async function requestFullscreenAuto(){
   try{ await appEl.requestFullscreen(); return true; }catch(e){ return false; }
 }
 
-async function maybeAutoFullscreen(){
-  const vw = window.innerWidth, vh = window.innerHeight;
-  const isMobile = vw <= 820;
-  const isLandscape = vw > vh;
+async function maybeAutoFullscreen(reason='auto'){
+  const isMobile = isMobileNow();
+  const isLandscape = isLandscapeNow();
   if(!isMobile) return;
-  if(!userInteracted) return;
+
+  // Si el usuario aún no interactuó, marcamos como pendiente para el primer toque
+  if(!userInteracted){
+    if(isLandscape) pendingFullscreen = true;
+    return;
+  }
+
+  // Evita spam
   if(fsAttempted && document.fullscreenElement) return;
-  if(isLandscape && !document.fullscreenElement){
+
+  // Si está en horizontal, o quedó marcado como pendiente, intentamos fullscreen
+  if((isLandscape || pendingFullscreen) && !document.fullscreenElement){
+    pendingFullscreen = false;
     fsAttempted = true;
     await requestFullscreenAuto();
+    // Recalcula tamaños tras el cambio de viewport
+    setTimeout(applyFit, 60);
   }
 }
 
@@ -486,8 +522,8 @@ function applyFit(){
 
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const isMobile = vw <= 820;
-  const isLandscape = vw > vh;
+  const isMobile = isMobileNow();
+  const isLandscape = isLandscapeNow();
   const preferLandscape = true;
 
   // Rotate hint
@@ -528,15 +564,29 @@ function applyFit(){
 const markInteraction = () => {
   if(!userInteracted){
     userInteracted = true;
-    maybeAutoFullscreen();
   }
+  // Si el usuario tocó por primera vez estando en horizontal, debe irse a fullscreen
+  if(isMobileNow() && isLandscapeNow()) pendingFullscreen = true;
+
+  // Intento inmediato (misma interacción) + reintentos cortos por cambios de viewport/barras
+  maybeAutoFullscreen('gesture');
+  setTimeout(() => maybeAutoFullscreen('retry1'), 80);
+  setTimeout(() => maybeAutoFullscreen('retry2'), 220);
 };
 window.addEventListener("pointerdown", markInteraction, { passive:true });
 window.addEventListener("touchstart", markInteraction, { passive:true });
 window.addEventListener("keydown", markInteraction, { passive:true });
 
 window.addEventListener("resize", applyFit, { passive:true });
-window.addEventListener("orientationchange", () => setTimeout(applyFit, 60), { passive:true });
+window.addEventListener("orientationchange", () => {
+  // al girar a horizontal, el siguiente toque debe disparar fullscreen
+  if(isMobileNow() && isLandscapeNow()) pendingFullscreen = true;
+  setTimeout(() => {
+    applyFit();
+    // si ya hubo interacción, intentamos de una vez
+    if(userInteracted) maybeAutoFullscreen('rotate');
+  }, 120);
+}, { passive:true });
 
 // first paint
 setTimeout(applyFit, 0);
