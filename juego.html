@@ -2,7 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Viewport optimizado para móvil + safe areas -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Mundo de Monedas</title>
   <style>
     :root{
@@ -22,6 +25,8 @@
       font-family:"Lato", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
+    html, body{ height:100%; width:100%; }
+
     body{
       min-height:100vh;
       display:flex;
@@ -30,6 +35,18 @@
       background:linear-gradient(var(--bg1), var(--bg2));
       color:var(--text);
       padding:16px;
+      overflow:hidden;           /* evita scroll en móvil */
+      touch-action:none;         /* evita gestos que desplazan */
+      -webkit-user-select:none;
+      user-select:none;
+    }
+
+    /* Contenedor tipo "app" (en móvil ocupa todo) */
+    #app{
+      position:relative;
+      width:100%;
+      display:flex;
+      justify-content:center;
     }
 
     .game-wrapper{
@@ -112,8 +129,12 @@
       border-radius:20px;
       padding:10px 10px 12px;
       box-shadow:inset 0 0 0 1px rgba(15,23,42,.4);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
     }
 
+    /* Canvas: el tamaño visual lo controla JS (para que en rotate se ajuste perfecto) */
     canvas{
       display:block;
       width:100%;
@@ -121,12 +142,13 @@
       height:auto;
       border-radius:16px;
       background:linear-gradient(#60a5fa, #0ea5e9);
+      touch-action:none;
     }
 
     .help{
       font-size:12px;
       color:var(--muted);
-      margin-top:6px;
+      margin-top:0;
       display:flex;
       justify-content:space-between;
       align-items:center;
@@ -157,34 +179,100 @@
       transform:translateY(2px);
       box-shadow:0 1px 0 #15803d;
     }
+
+    /* Overlay para sugerir rotación */
+    #rotateHint{
+      position:absolute;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:24px;
+      background:rgba(0,0,0,0.86);
+      color:#fff;
+      z-index:20;
+      font:700 16px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+
+    /* Botón de fullscreen (Android/Chrome lo aprovecha; iOS es limitado) */
+    #fsBtn{
+      position:absolute;
+      right:12px;
+      bottom:12px;
+      z-index:21;
+      padding:10px 12px;
+      border:0;
+      border-radius:12px;
+      background:rgba(255,255,255,0.14);
+      color:#fff;
+      font:800 13px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      cursor:pointer;
+      display:none; /* se muestra solo en móvil */
+    }
+
+    /* MODO MÓVIL: ocupa toda la pantalla y se comporta tipo app */
+    @media (max-width: 820px){
+      body{
+        padding:0;
+        align-items:stretch;
+        justify-content:stretch;
+      }
+      #app{
+        position:fixed;
+        inset:0;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right)
+                 env(safe-area-inset-bottom) env(safe-area-inset-left);
+      }
+      .game-wrapper{
+        max-width:none;
+        width:100%;
+        height:100%;
+        border-radius:0;
+        box-shadow:none;
+        padding:12px;
+      }
+      .game-header-left p{
+        max-width:none;
+      }
+      .game-container{
+        flex:1;
+      }
+      #fsBtn{ display:block; }
+    }
   </style>
 </head>
 
 <body>
-  <div class="game-wrapper">
-    <div class="game-header">
-      <div class="game-header-left">
-        <h1>Mundo de Monedas</h1>
-        <p>Salta, esquiva bloques y recoge monedas. El nivel sube según tu puntaje.</p>
+  <div id="app">
+    <div class="game-wrapper">
+      <div class="game-header">
+        <div class="game-header-left">
+          <h1>Mundo de Monedas</h1>
+          <p>Salta, esquiva bloques y recoge monedas. El nivel sube según tu puntaje.</p>
+        </div>
+
+        <div class="game-header-right">
+          <button class="btn-volver" onclick="window.location.href='panel.html'">⬅ Volver al panel</button>
+          <div class="hud">
+            <span>Puntaje: <strong id="hudScore">0</strong></span>
+            <span>| Nivel: <strong id="hudLevel">1</strong></span>
+            <span>| Monedas: <strong id="hudCoins">0</strong></span>
+          </div>
+        </div>
       </div>
 
-      <div class="game-header-right">
-        <button class="btn-volver" onclick="window.location.href='panel.html'">⬅ Volver al panel</button>
-        <div class="hud">
-          <span>Puntaje: <strong id="hudScore">0</strong></span>
-          <span>| Nivel: <strong id="hudLevel">1</strong></span>
-          <span>| Monedas: <strong id="hudCoins">0</strong></span>
+      <div class="game-container" id="gameContainer">
+        <canvas id="gameCanvas" width="840" height="320"></canvas>
+        <div class="help">
+          <span>Controles: barra espaciadora, flecha ↑ o tocar/click para saltar (doble salto).</span>
+          <button id="btnRestart" class="btn-restart">🔄 Reintentar</button>
         </div>
       </div>
     </div>
 
-    <div class="game-container">
-      <canvas id="gameCanvas" width="840" height="320"></canvas>
-      <div class="help">
-        <span>Controles: barra espaciadora, flecha ↑ o tocar/click para saltar (doble salto).</span>
-        <button id="btnRestart" class="btn-restart">🔄 Reintentar</button>
-      </div>
-    </div>
+    <div id="rotateHint">Para una mejor experiencia, gira tu teléfono a horizontal.</div>
+    <button id="fsBtn" type="button">Pantalla completa</button>
   </div>
 
   <script>
@@ -192,9 +280,80 @@
       "use strict";
 
       /* ---------------------------------------------------------
-       *  DOM / CANVAS
+       *  RESPONSIVE FIT (móvil tipo app)
+       *  - Mantiene resolución interna (840x320)
+       *  - Ajusta el tamaño visual del canvas al espacio disponible
+       *  - Reacciona a rotate/resize/fullscreen
        * --------------------------------------------------------- */
       const canvas = document.getElementById("gameCanvas");
+      const gameContainer = document.getElementById("gameContainer");
+      const rotateHint = document.getElementById("rotateHint");
+      const fsBtn = document.getElementById("fsBtn");
+
+      const GAME_W = canvas.width;
+      const GAME_H = canvas.height;
+
+      function applyFit() {
+        // espacio disponible dentro del contenedor (evita que el canvas tape la ayuda)
+        const containerRect = gameContainer.getBoundingClientRect();
+
+        // Calcula alto disponible descontando el bloque .help
+        const helpEl = gameContainer.querySelector(".help");
+        const helpH = helpEl ? helpEl.getBoundingClientRect().height : 0;
+
+        // Padding interno del contenedor (10px arriba/abajo en CSS)
+        const styles = getComputedStyle(gameContainer);
+        const padY = parseFloat(styles.paddingTop || "0") + parseFloat(styles.paddingBottom || "0");
+        const padX = parseFloat(styles.paddingLeft || "0") + parseFloat(styles.paddingRight || "0");
+
+        const availW = Math.max(0, containerRect.width - padX);
+        const availH = Math.max(0, containerRect.height - padY - helpH - 8); // 8px gap
+
+        // "contain" sin deformar
+        const scale = Math.min(availW / GAME_W, availH / GAME_H);
+
+        const cssW = Math.floor(GAME_W * scale);
+        const cssH = Math.floor(GAME_H * scale);
+
+        canvas.style.width = cssW + "px";
+        canvas.style.height = cssH + "px";
+
+        // Hint de rotación: preferimos horizontal en móvil
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const isMobile = vw <= 820;
+        const preferLandscape = true;
+
+        const isPortrait = vh > vw;
+        rotateHint.style.display = (isMobile && preferLandscape && isPortrait) ? "flex" : "none";
+
+        // intenta minimizar barras del navegador
+        window.scrollTo(0, 1);
+      }
+
+      async function requestFullscreen() {
+        const el = document.getElementById("app");
+        if (!document.fullscreenElement && el.requestFullscreen) {
+          try { await el.requestFullscreen(); } catch(e) {}
+        }
+        applyFit();
+      }
+
+      if (fsBtn) fsBtn.addEventListener("click", requestFullscreen);
+
+      window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true });
+      window.addEventListener("orientationchange", () => setTimeout(applyFit, 160), { passive:true });
+      document.addEventListener("fullscreenchange", () => setTimeout(applyFit, 60));
+
+      // iOS: tras la primera interacción a veces cambia el viewport
+      window.addEventListener("touchend", () => setTimeout(applyFit, 60), { passive:true });
+
+      // Primera aplicación
+      applyFit();
+
+      /* ---------------------------------------------------------
+       *  DOM / CANVAS (juego)
+       * --------------------------------------------------------- */
       const ctx = canvas.getContext("2d", { alpha: true });
 
       const hudScore = document.getElementById("hudScore");
@@ -611,6 +770,9 @@
         btnRestart.style.display = "none";
         seedWorld();
         musicStop();
+
+        // importante: recalcular tamaño visual por si cambió el viewport
+        applyFit();
       }
 
       /* ---------------------------------------------------------
@@ -1163,3 +1325,4 @@
   </script>
 </body>
 </html>
+
