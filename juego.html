@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>RinoZone</title>
+  <title>Mundo de Monedas</title>
   <style>
     :root{
       --bg1:#4a90e2;
@@ -287,6 +287,55 @@
     /* Fullscreen button: hidden by default, only shown if fullscreen fails */
     #fsBtn{ display:none !important; }
 
+  
+    /* LANDSCAPE MÓVIL: maximiza el área jugable (canvas a lado y lado) */
+    @media (max-width: 920px) and (orientation: landscape){
+      .game-wrapper{
+        padding:10px 10px 12px;
+      }
+      .game-header-left p{ display:none; }              /* recorta texto para ganar alto */
+      .game-header-left h1{ font-size:16px; }
+      .hud{ font-size:12px; gap:10px; }
+      .btn-volver{ padding:6px 10px; font-size:12px; border-radius:12px; }
+
+      .game-container{
+        position:relative;
+        padding:8px;                                   /* menos padding para más ancho útil */
+        border-radius:18px;
+      }
+
+      /* La ayuda pasa a overlay (no “quita” altura al canvas) */
+      .game-container .help{
+        position:absolute;
+        left:10px;
+        right:10px;
+        bottom:10px;
+        margin:0;
+        padding:8px 10px;
+        border-radius:14px;
+        background:rgba(15,23,42,0.55);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        font-size:11px;
+        gap:10px;
+      }
+
+      /* Botón reintentar siempre por encima del overlay */
+      #btnRestart{
+        display:none; /* JS lo muestra cuando corresponde */
+        position:absolute;
+        right:14px;
+        bottom:14px;
+        z-index:5;
+      }
+
+      /* Canvas ocupa el ancho disponible (JS calcula el tamaño exacto) */
+      canvas{
+        max-width:none;
+        border-radius:16px;
+      }
+    }
+
   </style>
 </head>
 
@@ -379,9 +428,11 @@
 
         // Calcula alto disponible descontando el bloque .help
         const helpEl = gameContainer.querySelector(".help");
-        const helpH = helpEl ? helpEl.getBoundingClientRect().height : 0;
-
-        // Padding interno del contenedor (10px arriba/abajo en CSS)
+        const isLandscape = window.innerWidth > window.innerHeight;
+        const isMobile = window.innerWidth <= 820;
+        // En landscape móvil, la ayuda es overlay (no resta alto al canvas)
+        const helpH = (isMobile && isLandscape) ? 0 : (helpEl ? helpEl.getBoundingClientRect().height : 0);
+// Padding interno del contenedor (10px arriba/abajo en CSS)
         const styles = getComputedStyle(gameContainer);
         const padY = parseFloat(styles.paddingTop || "0") + parseFloat(styles.paddingBottom || "0");
         const padX = parseFloat(styles.paddingLeft || "0") + parseFloat(styles.paddingRight || "0");
@@ -401,7 +452,6 @@
         // Hint de rotación: preferimos horizontal en móvil
         const vw = window.innerWidth;
         const vh = window.innerHeight;
-        const isMobile = vw <= 820;
         const preferLandscape = true;
 
         const isPortrait = vh > vw;
@@ -1455,4 +1505,3 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
   </script>
 </body>
 </html>
-
