@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Mundo de Monedas</title>
+  <title>RinoZone</title>
   <style>
     :root{
       --bg1:#4a90e2;
@@ -240,6 +240,53 @@
       }
       #fsBtn{ display:block; }
     }
+  
+    /* Hint card */
+    #rotateHint{
+      display:none; /* JS controls */
+      align-items:center;
+      justify-content:center;
+      text-align:left;
+      padding:24px;
+    }
+    #rotateHint .hint-card{
+      width:min(520px, 92vw);
+      border-radius:22px;
+      padding:18px 18px 16px;
+      background:rgba(15,23,42,0.92);
+      box-shadow:0 18px 40px rgba(0,0,0,0.45);
+      border:1px solid rgba(56,189,248,0.35);
+      display:flex;
+      gap:14px;
+      align-items:center;
+    }
+    #rotateHint .hint-icon{ flex:0 0 auto; }
+    #rotateHint .hint-title{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.2px;
+      margin-bottom:4px;
+    }
+    #rotateHint .hint-sub{
+      font-size:14px;
+      font-weight:650;
+      color:rgba(249,250,251,0.92);
+      line-height:1.25;
+      margin-bottom:6px;
+    }
+    #rotateHint .hint-sub2{
+      font-size:12px;
+      font-weight:600;
+      color:rgba(203,213,245,0.90);
+      line-height:1.3;
+    }
+    @media (max-width: 420px){
+      #rotateHint .hint-card{ flex-direction:column; text-align:center; }
+    }
+
+    /* Fullscreen button: hidden by default, only shown if fullscreen fails */
+    #fsBtn{ display:none !important; }
+
   </style>
 </head>
 
@@ -271,7 +318,40 @@
       </div>
     </div>
 
-    <div id="rotateHint">Para una mejor experiencia, gira tu teléfono a horizontal.</div>
+    <div id="rotateHint">
+      <div class="hint-card">
+        <div class="hint-icon" aria-hidden="true">
+          <!-- Simple "rotate phone" cartoon icon as inline SVG -->
+          <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="g1" x1="20" y1="20" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#38bdf8"/>
+                <stop offset="1" stop-color="#a78bfa"/>
+              </linearGradient>
+              <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="rgba(0,0,0,0.35)"/>
+              </filter>
+            </defs>
+            <!-- Phone -->
+            <g filter="url(#sh)">
+              <rect x="40" y="22" width="40" height="70" rx="10" fill="#0f172a" stroke="url(#g1)" stroke-width="3"/>
+              <rect x="47" y="30" width="26" height="48" rx="6" fill="#111827"/>
+              <circle cx="60" cy="82" r="4" fill="#334155"/>
+            </g>
+            <!-- Curved arrows -->
+            <path d="M33 74C27 64 27 51 35 41C43 31 56 27 68 30" stroke="#facc15" stroke-width="6" stroke-linecap="round"/>
+            <path d="M70 21L78 33L63 33" fill="#facc15"/>
+            <path d="M87 47C93 57 93 70 85 80C77 90 64 94 52 91" stroke="#22c55e" stroke-width="6" stroke-linecap="round"/>
+            <path d="M50 100L42 88L57 88" fill="#22c55e"/>
+          </svg>
+        </div>
+        <div class="hint-text">
+          <div class="hint-title">Gira tu teléfono</div>
+          <div class="hint-sub">Para una mejor experiencia, usa el modo horizontal.</div>
+          <div class="hint-sub2">Al girarlo, el juego se ajusta a pantalla completa automáticamente.</div>
+        </div>
+      </div>
+    </div>
     <button id="fsBtn" type="button">Pantalla completa</button>
   </div>
 
@@ -327,21 +407,71 @@
         const isPortrait = vh > vw;
         rotateHint.style.display = (isMobile && preferLandscape && isPortrait) ? "flex" : "none";
 
+
+        // If landscape and user already interacted, try fullscreen automatically
+        maybeAutoFullscreen();
         // intenta minimizar barras del navegador
         window.scrollTo(0, 1);
       }
 
-      async function requestFullscreen() {
+      let userInteracted = false;
+      let fsAttempted = false;
+
+      async function requestFullscreenAuto(reason = "auto") {
         const el = document.getElementById("app");
-        if (!document.fullscreenElement && el.requestFullscreen) {
-          try { await el.requestFullscreen(); } catch(e) {}
+        // Fullscreen requires user gesture on most browsers; this will fail silently if not allowed.
+        if (!el || document.fullscreenElement) return true;
+        if (!el.requestFullscreen) return false;
+        try {
+          await el.requestFullscreen();
+          return true;
+        } catch (e) {
+          return false;
         }
-        applyFit();
       }
 
-      if (fsBtn) fsBtn.addEventListener("click", requestFullscreen);
+      // We try to go fullscreen automatically AFTER the first user interaction (tap/click/keydown),
+      // and also when rotating to landscape.
+      async function maybeAutoFullscreen() {
+        const vw = window.innerWidth, vh = window.innerHeight;
+        const isMobile = vw <= 820;
+        const isLandscape = vw > vh;
 
-      window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true });
+        if (!isMobile) return;
+
+        // Only attempt if we have at least one user interaction (gesture requirement)
+        if (!userInteracted) return;
+
+        // Avoid spamming attempts
+        if (fsAttempted && document.fullscreenElement) return;
+
+        if (isLandscape && !document.fullscreenElement) {
+          fsAttempted = true;
+          const ok = await requestFullscreenAuto("landscape");
+          // If fails, we keep button hidden (per your request) but the game still fits responsively.
+          // If you later want it, we can re-enable the button only on failure.
+        }
+      }
+
+      // Track user interaction (first gesture)
+      const markInteraction = () => {
+        if (!userInteracted) {
+          userInteracted = true;
+          // Try immediately (in case already landscape)
+          maybeAutoFullscreen();
+        }
+      };
+      window.addEventListener("pointerdown", markInteraction, { passive:true, once:false });
+      window.addEventListener("touchstart", markInteraction, { passive:true, once:false });
+      window.addEventListener("keydown", markInteraction, { passive:true, once:false });
+
+      // keep the function for future (not used by UI)
+      async function requestFullscreen() {
+        userInteracted = true;
+        await requestFullscreenAuto("manual");
+        applyFit();
+      }
+window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true });
       window.addEventListener("orientationchange", () => setTimeout(applyFit, 160), { passive:true });
       document.addEventListener("fullscreenchange", () => setTimeout(applyFit, 60));
 
