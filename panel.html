@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RinoZone · Panel</title>
+  <meta name="theme-color" content="#0b1220" />
+  <style>
+    :root{
+      --bg0:#060a12;
+      --bg1:#0b1220;
+      --card:#0f172af0;
+      --card2:#0b1220cc;
+      --stroke:#1f2a44;
+      --text:#eaf0ff;
+      --muted:#a8b3d6;
+      --accent:#38bdf8;
+      --accent2:#a78bfa;
+      --good:#22c55e;
+      --warn:#facc15;
+      --bad:#fb7185;
+
+      --r:18px;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --shadow2: 0 10px 25px rgba(0,0,0,.35);
+      --blur: 18px;
+
+      --max: 1180px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--text);
+      background: radial-gradient(1200px 600px at 15% 10%, rgba(56,189,248,.25), transparent 60%),
+                  radial-gradient(900px 500px at 85% 15%, rgba(167,139,250,.22), transparent 55%),
+                  radial-gradient(1000px 600px at 50% 110%, rgba(34,197,94,.12), transparent 60%),
+                  linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    /* subtle moving stars */
+    .stars, .stars2{
+      position:fixed; inset:-20vh -10vw;
+      background-image:
+        radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,.55) 35%, transparent 36%),
+        radial-gradient(1.5px 1.5px at 60% 10%, rgba(255,255,255,.45) 35%, transparent 36%),
+        radial-gradient(1.8px 1.8px at 80% 60%, rgba(255,255,255,.40) 35%, transparent 36%),
+        radial-gradient(1.2px 1.2px at 35% 75%, rgba(255,255,255,.35) 35%, transparent 36%),
+        radial-gradient(1.4px 1.4px at 10% 85%, rgba(255,255,255,.30) 35%, transparent 36%);
+      opacity:.55;
+      pointer-events:none;
+      animation: drift 28s linear infinite;
+      transform: translate3d(0,0,0);
+      filter: blur(.0px);
+    }
+    .stars2{
+      opacity:.35;
+      animation-duration: 46s;
+      filter: blur(.2px);
+    }
+    @keyframes drift{
+      0%{ transform: translate3d(0,0,0); }
+      100%{ transform: translate3d(6vw, -10vh,0); }
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    .wrap{
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 18px 16px 40px;
+      position:relative;
+    }
+
+    /* Top bar */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 14px 14px;
+      border:1px solid rgba(255,255,255,.06);
+      background: linear-gradient(180deg, rgba(15,23,42,.85), rgba(15,23,42,.55));
+      backdrop-filter: blur(var(--blur));
+      border-radius: calc(var(--r) + 6px);
+      box-shadow: var(--shadow2);
+      position: sticky;
+      top: 10px;
+      z-index: 5;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      min-width: 220px;
+    }
+    .logo{
+      width:40px; height:40px;
+      border-radius: 14px;
+      background:
+        radial-gradient(12px 12px at 30% 30%, rgba(56,189,248,.85), transparent 60%),
+        radial-gradient(14px 14px at 75% 60%, rgba(167,139,250,.85), transparent 60%),
+        linear-gradient(135deg, rgba(56,189,248,.35), rgba(167,139,250,.35));
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: 0 10px 30px rgba(56,189,248,.15);
+      position:relative;
+      overflow:hidden;
+    }
+    .logo::after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.22), transparent 55%);
+      transform: rotate(25deg);
+    }
+    .brand h1{
+      font-size: 15.5px;
+      line-height:1.05;
+      margin:0;
+      letter-spacing:.4px;
+      font-weight: 800;
+    }
+    .brand small{
+      display:block;
+      margin-top:2px;
+      color:var(--muted);
+      font-size: 12px;
+      font-weight:600;
+    }
+    .right{
+      display:flex; align-items:center; gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .chip{
+      display:flex; align-items:center; gap:8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(2,6,23,.35);
+      backdrop-filter: blur(10px);
+      font-weight:700;
+      font-size: 12.5px;
+      color:var(--muted);
+    }
+    .dot{
+      width:8px; height:8px;
+      background: var(--good);
+      border-radius: 999px;
+      box-shadow: 0 0 0 4px rgba(34,197,94,.18);
+    }
+    .btn{
+      border: 0;
+      cursor:pointer;
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-weight: 800;
+      letter-spacing:.2px;
+      color: var(--text);
+      background: rgba(56,189,248,.16);
+      border: 1px solid rgba(56,189,248,.26);
+      box-shadow: 0 10px 28px rgba(56,189,248,.10);
+      transition: transform .12s ease, filter .12s ease, background .12s ease;
+      user-select:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size: 12.5px;
+      white-space:nowrap;
+    }
+    .btn:hover{ transform: translateY(-1px); filter: brightness(1.06); }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+    .btn.secondary{
+      background: rgba(167,139,250,.14);
+      border-color: rgba(167,139,250,.26);
+      box-shadow: 0 10px 28px rgba(167,139,250,.10);
+    }
+    .btn.ghost{
+      background: rgba(255,255,255,.04);
+      border-color: rgba(255,255,255,.10);
+      box-shadow: none;
+      color: var(--muted);
+    }
+
+    /* Layout grid */
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+      .brand{ min-width: unset; }
+    }
+
+    /* Cards */
+    .card{
+      border-radius: calc(var(--r) + 10px);
+      border:1px solid rgba(255,255,255,.06);
+      background: linear-gradient(180deg, rgba(15,23,42,.78), rgba(2,6,23,.35));
+      backdrop-filter: blur(var(--blur));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    .card::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(600px 180px at 12% 0%, rgba(56,189,248,.12), transparent 60%),
+                  radial-gradient(600px 180px at 88% 0%, rgba(167,139,250,.12), transparent 60%);
+      pointer-events:none;
+    }
+    .card > *{ position:relative; }
+
+    .cardHead{
+      padding: 16px 16px 12px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .cardTitle{
+      margin:0;
+      font-size: 14px;
+      letter-spacing:.2px;
+      font-weight: 900;
+    }
+    .cardSub{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-weight:600;
+      font-size: 12.5px;
+      line-height:1.35;
+    }
+    .cardBody{ padding: 0 16px 16px; }
+
+    /* Stats */
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+    @media (max-width: 520px){
+      .stats{ grid-template-columns: 1fr; }
+    }
+    .stat{
+      padding: 12px 12px;
+      border-radius: 18px;
+      background: rgba(2,6,23,.35);
+      border:1px solid rgba(255,255,255,.07);
+    }
+    .stat label{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      font-weight:800;
+      font-size: 11.5px;
+      color: var(--muted);
+      letter-spacing:.2px;
+    }
+    .stat strong{
+      display:block;
+      margin-top: 8px;
+      font-size: 22px;
+      letter-spacing:.2px;
+      font-weight: 950;
+    }
+    .badge{
+      font-size: 10.5px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      color: var(--muted);
+      background: rgba(255,255,255,.04);
+      font-weight: 900;
+      white-space:nowrap;
+    }
+    .badge.ok{ border-color: rgba(34,197,94,.30); color: rgba(34,197,94,.95); background: rgba(34,197,94,.10); }
+    .badge.new{ border-color: rgba(56,189,248,.30); color: rgba(56,189,248,.95); background: rgba(56,189,248,.10); }
+
+    /* Progress */
+    .progress{
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(2,6,23,.35);
+      border:1px solid rgba(255,255,255,.07);
+    }
+    .progressRow{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      font-weight: 800;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .bar{
+      margin-top: 10px;
+      height: 10px;
+      background: rgba(255,255,255,.06);
+      border-radius: 999px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .bar > i{
+      display:block;
+      height:100%;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(56,189,248,.95), rgba(167,139,250,.95));
+      border-radius: 999px;
+      box-shadow: 0 10px 25px rgba(56,189,248,.18);
+      transition: width .35s ease;
+    }
+
+    /* Games grid */
+    .gameGrid{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 620px){
+      .gameGrid{ grid-template-columns: 1fr; }
+    }
+    .game{
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(2,6,23,.32);
+      border:1px solid rgba(255,255,255,.07);
+      transition: transform .12s ease, filter .12s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .game:hover{ transform: translateY(-1px); filter: brightness(1.03); }
+    .gameTop{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+    }
+    .game h3{
+      margin:0;
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing:.2px;
+    }
+    .game p{
+      margin: 6px 0 10px;
+      color: var(--muted);
+      font-size: 12.3px;
+      line-height: 1.35;
+      font-weight: 600;
+      min-height: 32px;
+    }
+    .gameActions{
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .mini{
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    /* Utility card - invite */
+    .field{
+      display:flex;
+      gap:10px;
+      margin-top:10px;
+      align-items:stretch;
+    }
+    .input{
+      flex:1;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(2,6,23,.35);
+      color: var(--text);
+      font-weight: 700;
+      outline:none;
+      font-size: 12.5px;
+    }
+    .input::selection{ background: rgba(56,189,248,.35); }
+    .hint{
+      margin-top: 10px;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    /* Activity */
+    .activity{
+      margin-top: 10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .item{
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(2,6,23,.32);
+      border:1px solid rgba(255,255,255,.07);
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .item b{
+      display:block;
+      font-size: 12.5px;
+      font-weight: 950;
+    }
+    .item span{
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    /* Footer */
+    .foot{
+      margin-top: 18px;
+      color: rgba(168,179,214,.85);
+      font-size: 11.5px;
+      text-align:center;
+      font-weight:600;
+    }
+
+    /* Toast */
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      padding: 12px 14px;
+      border-radius: 999px;
+      background: rgba(2,6,23,.70);
+      border: 1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow2);
+      color: var(--text);
+      font-weight: 800;
+      font-size: 12.5px;
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      z-index: 20;
+    }
+    .toast.show{ opacity:1; transform: translateX(-50%) translateY(-2px); }
+    .toast i{
+      width:8px; height:8px; border-radius:999px; background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(56,189,248,.18);
+      display:inline-block;
+    }
+  </style>
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="stars2"></div>
+
+  <div class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>RinoZone · Panel</h1>
+          <small id="subline">Cargando sesión...</small>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="chip" title="Estado de sesión">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="chipUser">—</span>
+        </div>
+        <button class="btn ghost" id="btnRefresh" type="button" title="Actualizar datos del panel">
+          ⟳ Actualizar
+        </button>
+        <button class="btn secondary" id="btnInvite" type="button" title="Ir a invitaciones">
+          ↗ Invitaciones
+        </button>
+        <button class="btn" id="btnLogout" type="button" title="Cerrar sesión">
+          ⎋ Salir
+        </button>
+      </div>
+    </header>
+
+    <main class="grid">
+      <!-- LEFT: overview + games -->
+      <section class="card">
+        <div class="cardHead">
+          <div>
+            <h2 class="cardTitle">Tu centro de control</h2>
+            <p class="cardSub">Aquí verás tus monedas acumuladas, nivel, progreso y acceso a todos los juegos y herramientas.</p>
+          </div>
+          <span class="badge new" id="badgeStatus">EN LÍNEA</span>
+        </div>
+
+        <div class="cardBody">
+          <div class="stats">
+            <div class="stat">
+              <label>Monedas <span class="badge ok" id="badgeCoins">ACTIVO</span></label>
+              <strong id="statCoins">0</strong>
+            </div>
+            <div class="stat">
+              <label>Nivel <span class="badge" id="badgeLevel">PRO</span></label>
+              <strong id="statLevel">1</strong>
+            </div>
+            <div class="stat">
+              <label>XP <span class="badge" id="badgeXP">META</span></label>
+              <strong id="statXP">0</strong>
+            </div>
+          </div>
+
+          <div class="progress">
+            <div class="progressRow">
+              <span id="progressLabel">Progreso al siguiente nivel</span>
+              <span id="progressPct">0%</span>
+            </div>
+            <div class="bar"><i id="barFill"></i></div>
+            <div class="hint" id="progressHint">Suma XP en los juegos para subir de nivel y desbloquear recompensas.</div>
+          </div>
+
+          <div style="margin-top:14px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <div>
+              <h2 class="cardTitle" style="margin:0;">Juegos & Herramientas</h2>
+              <p class="cardSub" style="margin:4px 0 0;">Acceso rápido. Cada juego puede sumar monedas/XP al perfil.</p>
+            </div>
+            <a class="btn mini" href="index.html" title="Ir al inicio / landing">
+              ⌂ Inicio
+            </a>
+          </div>
+
+          <div class="gameGrid" id="gameGrid">
+            <!-- injected by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: invite + activity -->
+      <aside class="card">
+        <div class="cardHead">
+          <div>
+            <h2 class="cardTitle">Invitaciones y actividad</h2>
+            <p class="cardSub">Comparte tu enlace y consulta lo último que has hecho en la plataforma.</p>
+          </div>
+          <span class="badge" id="badgeRef">REF</span>
+        </div>
+
+        <div class="cardBody">
+          <div class="stat" style="margin-top:0;">
+            <label>Referidos (demo) <span class="badge" id="statRefBadge">LOCAL</span></label>
+            <strong id="statRefs">0</strong>
+            <p class="cardSub" style="margin:8px 0 0;">En esta versión el contador es local. En servidor podrás contabilizarlo real.</p>
+          </div>
+
+          <div style="margin-top:12px;">
+            <div class="progressRow">
+              <span style="font-weight:950; color:var(--text);">Tu enlace de invitación</span>
+              <button class="btn mini ghost" id="btnCopyLink" type="button">Copiar</button>
+            </div>
+            <div class="field">
+              <input id="invLinkInput" class="input" readonly value="" />
+            </div>
+            <div class="hint">
+              Recomendación: envía el enlace en WhatsApp. Cuando implementes el backend, podrás registrar el <b>ref</b> automáticamente.
+            </div>
+          </div>
+
+          <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn mini secondary" id="btnSimReward" type="button" title="Simular recompensa (solo pruebas)">
+              + Simular premio
+            </button>
+            <button class="btn mini ghost" id="btnResetWallet" type="button" title="Reiniciar billetera (solo pruebas)">
+              ↺ Reiniciar
+            </button>
+          </div>
+
+          <div style="margin-top:14px;">
+            <h2 class="cardTitle" style="margin:0;">Actividad reciente</h2>
+            <p class="cardSub" style="margin:4px 0 0;">Los últimos eventos se guardan localmente por usuario.</p>
+            <div class="activity" id="activityList"></div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <div class="foot">RinoZone · Panel v2 · LocalStorage Wallet · listo para integrar backend cuando lo decidas.</div>
+  </div>
+
+  <div class="toast" id="toast"><i></i><span id="toastMsg">Listo</span></div>
+
+  <script>
+    /*********************
+     * RinoZone Panel v2
+     * - Sesión: localStorage key "juego_user"
+     * - Billetera por usuario: localStorage key "rz_wallet_<user>"
+     *********************/
+
+    const $ = (sel) => document.querySelector(sel);
+
+    const el = {
+      subline: $("#subline"),
+      chipUser: $("#chipUser"),
+
+      statCoins: $("#statCoins"),
+      statLevel: $("#statLevel"),
+      statXP: $("#statXP"),
+      statRefs: $("#statRefs"),
+
+      progressPct: $("#progressPct"),
+      barFill: $("#barFill"),
+
+      invLinkInput: $("#invLinkInput"),
+      btnCopyLink: $("#btnCopyLink"),
+      btnLogout: $("#btnLogout"),
+      btnRefresh: $("#btnRefresh"),
+      btnInvite: $("#btnInvite"),
+
+      btnSimReward: $("#btnSimReward"),
+      btnResetWallet: $("#btnResetWallet"),
+
+      gameGrid: $("#gameGrid"),
+      activityList: $("#activityList"),
+
+      toast: $("#toast"),
+      toastMsg: $("#toastMsg")
+    };
+
+    function toast(msg){
+      el.toastMsg.textContent = msg;
+      el.toast.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.toast.classList.remove("show"), 1600);
+    }
+
+    function safeJsonParse(str, fallback){
+      try{ return JSON.parse(str); }catch(_){ return fallback; }
+    }
+
+    function nowISO(){ return new Date().toISOString(); }
+
+    function getUser(){
+      const u = (localStorage.getItem("juego_user") || "").trim();
+      return u;
+    }
+
+    function walletKey(user){ return `rz_wallet_${user}`; }
+
+    function defaultWallet(user){
+      return {
+        user,
+        coins: 0,
+        xp: 0,
+        level: 1,
+        refs: 0,              // demo local
+        createdAt: nowISO(),
+        updatedAt: nowISO(),
+        activity: [
+          { t: nowISO(), title: "Bienvenido a RinoZone", note: "Tu panel ya está listo. Juega y acumula monedas." }
+        ]
+      };
+    }
+
+    function loadWallet(user){
+      const key = walletKey(user);
+      const raw = localStorage.getItem(key);
+      const w = raw ? safeJsonParse(raw, null) : null;
+      if(!w || typeof w !== "object"){
+        const fresh = defaultWallet(user);
+        saveWallet(user, fresh);
+        return fresh;
+      }
+      // Ensure required fields
+      w.user = user;
+      w.coins = Number(w.coins || 0);
+      w.xp = Number(w.xp || 0);
+      w.level = Math.max(1, Number(w.level || 1));
+      w.refs = Number(w.refs || 0);
+      w.activity = Array.isArray(w.activity) ? w.activity.slice(0, 10) : [];
+      w.updatedAt = nowISO();
+      saveWallet(user, w);
+      return w;
+    }
+
+    function saveWallet(user, wallet){
+      wallet.updatedAt = nowISO();
+      localStorage.setItem(walletKey(user), JSON.stringify(wallet));
+    }
+
+    function addActivity(user, wallet, title, note=""){
+      wallet.activity = Array.isArray(wallet.activity) ? wallet.activity : [];
+      wallet.activity.unshift({ t: nowISO(), title, note });
+      wallet.activity = wallet.activity.slice(0, 8);
+      saveWallet(user, wallet);
+    }
+
+    // Simple leveling: each level requires 250 XP * level
+    function xpForNext(level){
+      return Math.round(250 * level);
+    }
+
+    function recomputeLevel(wallet){
+      let changed = false;
+      while(wallet.xp >= xpForNext(wallet.level)){
+        wallet.xp -= xpForNext(wallet.level);
+        wallet.level += 1;
+        changed = true;
+      }
+      return changed;
+    }
+
+    function formatNum(n){
+      return new Intl.NumberFormat("es-CO").format(Number(n || 0));
+    }
+
+    function counter(elm, to){
+      const from = Number((elm.dataset.v || "0"));
+      const end = Number(to || 0);
+      const start = performance.now();
+      const dur = 420;
+
+      function tick(t){
+        const p = Math.min(1, (t - start)/dur);
+        const v = Math.round(from + (end - from) * (1 - Math.pow(1-p, 3)));
+        elm.textContent = formatNum(v);
+        if(p < 1) requestAnimationFrame(tick);
+        else elm.dataset.v = String(end);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    function renderPanel(user, wallet){
+      el.subline.textContent = `Sesión iniciada · ${new Date(wallet.updatedAt).toLocaleString("es-CO")}`;
+      el.chipUser.textContent = user;
+
+      counter(el.statCoins, wallet.coins);
+      counter(el.statLevel, wallet.level);
+      counter(el.statXP, wallet.xp);
+      counter(el.statRefs, wallet.refs);
+
+      const need = xpForNext(wallet.level);
+      const pct = need === 0 ? 0 : Math.max(0, Math.min(100, Math.round((wallet.xp / need) * 100)));
+      el.progressPct.textContent = `${pct}%`;
+      el.barFill.style.width = `${pct}%`;
+
+      // Activity
+      el.activityList.innerHTML = "";
+      const items = (wallet.activity || []).slice(0, 6);
+      if(items.length === 0){
+        const d = document.createElement("div");
+        d.className = "item";
+        d.innerHTML = `<div><b>Sin actividad</b><span>Juega para ver eventos aquí.</span></div><span>—</span>`;
+        el.activityList.appendChild(d);
+      } else {
+        items.forEach(it => {
+          const d = document.createElement("div");
+          d.className = "item";
+          const time = new Date(it.t).toLocaleString("es-CO", { dateStyle:"short", timeStyle:"short" });
+          d.innerHTML = `
+            <div>
+              <b>${escapeHtml(it.title || "Evento")}</b>
+              <span>${escapeHtml(it.note || "")}</span>
+            </div>
+            <span>${time}</span>
+          `;
+          el.activityList.appendChild(d);
+        });
+      }
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[c]));
+    }
+
+    function buildInviteLink(user){
+      // Usa el mismo enfoque que tu panel anterior: index.html con ?ref=
+      let baseUrl = "";
+      if (window.location.origin === "null" || window.location.origin === "file://" || !window.location.origin){
+        baseUrl = "index.html";
+      } else {
+        const path = window.location.pathname;
+        const newPath = path.replace(/panel\.html$/i, "index.html");
+        baseUrl = window.location.origin + newPath;
+      }
+      const inviteUrl = baseUrl + "?ref=" + encodeURIComponent(user);
+      el.invLinkInput.value = inviteUrl;
+    }
+
+    function renderGames(){
+      const games = [
+        {
+          title: "Mundo de Monedas",
+          desc: "Runner: salta, esquiva y acumula monedas.",
+          href: "juego.html",
+          tag: "ARCADE"
+        },
+        {
+          title: "Culebra Cósmica",
+          desc: "Snake clásico con progresión por nivel.",
+          href: "snake.html",
+          tag: "CLÁSICO"
+        },
+        {
+          title: "Invasores Cósmicos · PLUS",
+          desc: "Shooter con power-ups, oleadas y monedas.",
+          href: "invasores_cosmicos.html",
+          tag: "PLUS"
+        },
+        {
+          title: "Impostor · PLUS (MVP)",
+          desc: "Modo demo con economía local y partidas rápidas.",
+          href: "impostor.html",
+          tag: "MVP"
+        }
+      ];
+
+      el.gameGrid.innerHTML = "";
+      games.forEach(g => {
+        const card = document.createElement("a");
+        card.className = "game";
+        card.href = g.href;
+        card.innerHTML = `
+          <div class="gameTop">
+            <div>
+              <h3>${escapeHtml(g.title)}</h3>
+            </div>
+            <span class="badge">${escapeHtml(g.tag)}</span>
+          </div>
+          <p>${escapeHtml(g.desc)}</p>
+          <div class="gameActions">
+            <span class="btn mini" style="pointer-events:none;">▶ Jugar</span>
+            <span class="btn mini ghost" style="pointer-events:none;">↩ Panel</span>
+          </div>
+        `;
+        el.gameGrid.appendChild(card);
+      });
+    }
+
+    function goInvite(){
+      // Desplaza al bloque de invitaciones
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      toast("Sección de invitaciones");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const user = getUser();
+      if(!user){
+        window.location.href = "login.html";
+        return;
+      }
+
+      buildInviteLink(user);
+      renderGames();
+
+      let wallet = loadWallet(user);
+
+      // Recalcular nivel si aplica
+      if(recomputeLevel(wallet)){
+        addActivity(user, wallet, "Subiste de nivel", `Nuevo nivel: ${wallet.level}`);
+        toast("Subiste de nivel");
+      }
+
+      renderPanel(user, wallet);
+
+      el.btnCopyLink.addEventListener("click", async () => {
+        try{
+          await navigator.clipboard.writeText(el.invLinkInput.value);
+          toast("Enlace copiado");
+        } catch(e){
+          // fallback
+          el.invLinkInput.focus();
+          el.invLinkInput.select();
+          toast("Copia manualmente");
+        }
+      });
+
+      el.btnLogout.addEventListener("click", () => {
+        localStorage.removeItem("juego_user");
+        toast("Sesión cerrada");
+        setTimeout(() => window.location.href = "login.html", 250);
+      });
+
+      el.btnRefresh.addEventListener("click", () => {
+        wallet = loadWallet(user);
+        renderPanel(user, wallet);
+        toast("Panel actualizado");
+      });
+
+      el.btnInvite.addEventListener("click", goInvite);
+
+      // Botón de prueba: simular premio para validar visualización
+      el.btnSimReward.addEventListener("click", () => {
+        wallet = loadWallet(user);
+        wallet.coins += 25;
+        wallet.xp += 40;
+
+        const leveled = recomputeLevel(wallet);
+        saveWallet(user, wallet);
+
+        addActivity(user, wallet, "Recompensa de prueba", "+25 monedas · +40 XP");
+        if(leveled) addActivity(user, wallet, "Subiste de nivel", `Nuevo nivel: ${wallet.level}`);
+
+        renderPanel(user, wallet);
+        toast(leveled ? "Premio + nivel" : "Premio aplicado");
+      });
+
+      el.btnResetWallet.addEventListener("click", () => {
+        const fresh = defaultWallet(user);
+        saveWallet(user, fresh);
+        renderPanel(user, fresh);
+        toast("Billetera reiniciada");
+      });
+    });
+  </script>
+</body>
+</html>

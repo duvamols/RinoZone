@@ -1,0 +1,1144 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RinoZone · Impostor PLUS (MVP)</title>
+
+<style>
+  :root{
+    --bg1:#4a90e2;
+    --bg2:#1a3c6e;
+    --panel:#0f172af5;
+    --muted:#cbd5f5;
+    --text:#f9fafb;
+    --accent:#38bdf8;
+    --gold:#facc15;
+    --violet:#a78bfa;
+    --green:#22c55e;
+    --red:#fb7185;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; font-family:"Lato", system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+  body{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(var(--bg1), var(--bg2));
+    color:var(--text);
+    padding:16px;
+  }
+  .game-wrapper{
+    width:100%;
+    max-width:980px;
+    background:var(--panel);
+    border-radius:24px;
+    box-shadow:0 14px 28px rgba(0,0,0,.35);
+    padding:18px 18px 22px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    position:relative;
+    overflow:hidden;
+  }
+  .game-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+  }
+  .game-header-left h1{
+    font-size:18px;
+    font-weight:900;
+    letter-spacing:.2px;
+  }
+  .game-header-left p{
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.25;
+    max-width:640px;
+  }
+  .game-header-right{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:8px;
+    min-width:330px;
+  }
+  .btn{
+    border:none;
+    border-radius:14px;
+    padding:7px 12px;
+    font-size:13px;
+    font-weight:900;
+    cursor:pointer;
+    color:var(--text);
+    transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+    user-select:none;
+  }
+  .btn:hover{ transform:translateY(-1px); filter:brightness(1.03); }
+  .btn:active{ transform:translateY(2px); filter:brightness(0.98); }
+  .btn-light{
+    background:#e2e8f0;
+    color:#0f172a;
+    box-shadow:0 3px 0 #cbd5e1;
+    font-weight:800;
+  }
+  .btn-primary{
+    background:linear-gradient(135deg,#60a5fa,#2563eb);
+    box-shadow:0 3px 0 #1e40af;
+  }
+  .btn-green{
+    background:linear-gradient(135deg,#22c55e,#16a34a);
+    box-shadow:0 3px 0 #15803d;
+  }
+  .btn-red{
+    background:linear-gradient(135deg,#fb7185,#e11d48);
+    box-shadow:0 3px 0 #9f1239;
+  }
+  .btn-violet{
+    background:linear-gradient(135deg,#a78bfa,#7c3aed);
+    box-shadow:0 3px 0 #4c1d95;
+  }
+
+  .hud{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    align-items:center;
+    font-size:12px;
+    color:#e5e7eb;
+  }
+  .hud strong{ color:var(--gold); }
+
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 10px;
+    border-radius:999px;
+    background:rgba(2,6,23,0.35);
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,0.18);
+    font-size:12px;
+    color:#e5e7eb;
+  }
+  .bar{
+    width:110px;
+    height:8px;
+    border-radius:999px;
+    background:rgba(148,163,184,0.18);
+    overflow:hidden;
+    box-shadow:inset 0 0 0 1px rgba(15,23,42,0.35);
+  }
+  .bar > i{
+    display:block;
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--accent), var(--violet));
+    border-radius:999px;
+    box-shadow:0 0 14px rgba(56,189,248,0.45);
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap:12px;
+  }
+
+  .game-container{
+    background:linear-gradient(#1d4ed8, #1e293b);
+    border-radius:20px;
+    padding:10px 10px 12px;
+    box-shadow:inset 0 0 0 1px rgba(15,23,42,.4);
+  }
+  canvas{
+    display:block;
+    width:100%;
+    height:auto;
+    border-radius:16px;
+    background:#0b1224;
+    touch-action:none;
+  }
+
+  .side{
+    background:rgba(2,6,23,0.35);
+    border-radius:20px;
+    padding:12px;
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,0.18);
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .side h2{
+    font-size:13px;
+    font-weight:900;
+    letter-spacing:.2px;
+    color:#e5e7eb;
+  }
+  .small{ font-size:12px; color:var(--muted); line-height:1.25; }
+  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  label{ font-size:12px; color:#e5e7eb; font-weight:800; }
+  input{
+    width:100%;
+    border:none;
+    border-radius:14px;
+    padding:10px 12px;
+    background:rgba(15,23,42,0.55);
+    color:#f9fafb;
+    outline:none;
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,0.18);
+    font-weight:800;
+  }
+  input::placeholder{ color:rgba(203,213,245,0.65); font-weight:700; }
+  .list{
+    background:rgba(15,23,42,0.55);
+    border-radius:14px;
+    padding:10px 12px;
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,0.18);
+    font-size:12px;
+    color:#e5e7eb;
+    max-height:170px;
+    overflow:auto;
+    line-height:1.35;
+  }
+  .tag{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 9px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:900;
+    background:rgba(15,23,42,0.55);
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,0.18);
+    color:#e5e7eb;
+  }
+
+  .help{
+    margin-top:8px;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  /* Modal Meeting */
+  .modal{
+    position:absolute;
+    inset:0;
+    background:rgba(2,6,23,0.72);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:14px;
+  }
+  .modal-card{
+    width:min(760px, 100%);
+    background:rgba(15,23,42,0.95);
+    border-radius:22px;
+    box-shadow:0 18px 40px rgba(0,0,0,.5);
+    padding:14px;
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,0.18);
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .modal-card h3{
+    font-size:14px;
+    font-weight:900;
+    color:#f9fafb;
+  }
+  .vote-grid{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap:10px;
+  }
+  .vote{
+    background:rgba(2,6,23,0.35);
+    border-radius:16px;
+    padding:10px;
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,0.18);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    font-size:12px;
+  }
+  .pill{
+    padding:4px 8px;
+    border-radius:999px;
+    font-weight:900;
+    font-size:11px;
+  }
+  .pill-alive{ background:rgba(34,197,94,0.18); color:#86efac; }
+  .pill-dead{ background:rgba(251,113,133,0.18); color:#fda4af; }
+  .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+</style>
+</head>
+
+<body>
+  <div class="game-wrapper">
+    <div class="game-header">
+      <div class="game-header-left">
+        <h1>RinoZone · Impostor PLUS (MVP)</h1>
+        <p>Loop tipo “impostor”: Crew hace tareas, Impostor sabotea y elimina. Monedas ficticias con <b>stake</b> por partida (pozo), sin dinero real.</p>
+      </div>
+
+      <div class="game-header-right">
+        <button class="btn btn-light" onclick="window.location.href='panel.html'">⬅ Volver al panel</button>
+        <div class="hud">
+          <span>Estado: <strong id="hudState">Lobby</strong></span>
+          <span>| Rol: <strong id="hudRole">?</strong></span>
+          <span>| Balance: <strong id="hudBal">500</strong></span>
+          <span>| Escrow: <strong id="hudEsc">0</strong></span>
+          <span class="chip" title="Progreso de tareas del Crew (solo avanza con E en estaciones)">
+            Tareas
+            <span class="bar"><i id="hudTasksBar" style="width:0%"></i></span>
+          </span>
+          <span class="chip" title="Pozo total: stake x jugadores">
+            Pot: <strong id="hudPot">0</strong>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="game-container">
+        <canvas id="gameCanvas" width="840" height="520"></canvas>
+        <div class="help">
+          <span><b>WASD</b> mover · <b>E</b> tarea · <b>K</b> kill (si eres impostor) · <b>R</b> report · <b>P</b> pausa</span>
+          <div class="row">
+            <button id="btnStart" class="btn btn-green">▶ Iniciar partida</button>
+            <button id="btnMeeting" class="btn btn-primary">📣 Meeting (debug)</button>
+            <button id="btnRestart" class="btn btn-violet">🔄 Reiniciar</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <h2>Lobby / Apuesta ficticia</h2>
+        <div class="small">Define stake por jugador. Al iniciar se bloquea en <span class="mono">escrow</span> y al final se reparte el pot al equipo ganador.</div>
+
+        <div class="row" style="align-items:flex-end;">
+          <div style="flex:1;">
+            <label>Stake (monedas)</label>
+            <input id="stake" type="number" min="0" step="1" placeholder="Ej: 25" value="25"/>
+          </div>
+          <div style="width:120px;">
+            <label>Jugadores</label>
+            <input id="players" type="number" min="4" max="10" step="1" value="6"/>
+          </div>
+        </div>
+
+        <div class="row">
+          <span class="tag">Ficticio</span>
+          <span class="tag">Servidor: pendiente</span>
+          <span class="tag">MVP local</span>
+        </div>
+
+        <h2>Registro de eventos</h2>
+        <div id="log" class="list"></div>
+
+        <div class="small">
+          Siguiente paso (cuando lo pidas): llevar esto a <b>multijugador online</b> (Socket.IO) y mover el escrow al servidor para evitar trampas.
+        </div>
+      </aside>
+    </div>
+
+    <!-- Meeting Modal -->
+    <div id="modal" class="modal">
+      <div class="modal-card">
+        <h3>Meeting · Votación</h3>
+        <div class="small" id="meetingInfo"></div>
+        <div class="vote-grid" id="voteGrid"></div>
+        <div class="row" style="justify-content:flex-end;">
+          <button id="btnSkip" class="btn btn-primary">⏭ Skip</button>
+          <button id="btnClose" class="btn btn-light">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+"use strict";
+
+/* ---------------- DOM ---------------- */
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d", { alpha:true });
+
+const hudState = document.getElementById("hudState");
+const hudRole  = document.getElementById("hudRole");
+const hudBal   = document.getElementById("hudBal");
+const hudEsc   = document.getElementById("hudEsc");
+const hudTasksBar = document.getElementById("hudTasksBar");
+const hudPot = document.getElementById("hudPot");
+
+const stakeEl = document.getElementById("stake");
+const playersEl = document.getElementById("players");
+const logEl = document.getElementById("log");
+
+const btnStart = document.getElementById("btnStart");
+const btnRestart = document.getElementById("btnRestart");
+const btnMeeting = document.getElementById("btnMeeting");
+
+const modal = document.getElementById("modal");
+const voteGrid = document.getElementById("voteGrid");
+const meetingInfo = document.getElementById("meetingInfo");
+const btnClose = document.getElementById("btnClose");
+const btnSkip = document.getElementById("btnSkip");
+
+const W = canvas.width, H = canvas.height;
+
+/* ---------------- Utils ---------------- */
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const rand = (a,b)=> a + Math.random()*(b-a);
+const randi = (a,b)=> Math.floor(rand(a,b+1));
+const dist2 = (x1,y1,x2,y2)=>{const dx=x1-x2,dy=y1-y2;return dx*dx+dy*dy;};
+function aabb(ax,ay,aw,ah,bx,by,bw,bh){
+  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+}
+function log(msg){
+  const t = new Date().toLocaleTimeString("es-CO",{hour12:false});
+  logEl.innerHTML = `<div><span class="mono" style="color:rgba(203,213,245,.7)">[${t}]</span> ${msg}</div>` + logEl.innerHTML;
+}
+
+/* ---------------- Game Config ---------------- */
+const COLORS = {
+  me: "#38bdf8",
+  crew: "#a78bfa",
+  imp: "#fb7185",
+  dead: "rgba(148,163,184,0.55)",
+  task: "#facc15",
+  wall: "rgba(148,163,184,0.16)"
+};
+
+const MAP = {
+  walls: [
+    {x:80,y:80,w:680,h:20},
+    {x:80,y:420,w:680,h:20},
+    {x:80,y:100,w:20,h:320},
+    {x:740,y:100,w:20,h:320},
+    {x:240,y:170,w:360,h:20},
+    {x:240,y:330,w:360,h:20},
+    {x:240,y:190,w:20,h:140},
+    {x:580,y:190,w:20,h:140},
+  ],
+  tasks: [
+    {id:"Reactor", x:150, y:140, r:18},
+    {id:"Comms",   x:690, y:140, r:18},
+    {id:"O2",      x:420, y:390, r:18},
+  ]
+};
+
+const KEYS = { w:false,a:false,s:false,d:false };
+let paused = false;
+
+/* ---------------- Economy (local MVP) ---------------- */
+const wallet = { balance: 500, escrow: 0 };
+function setHudEconomy(pot=0){
+  hudBal.textContent = String(wallet.balance);
+  hudEsc.textContent = String(wallet.escrow);
+  hudPot.textContent = String(pot);
+}
+function lockStake(stake){
+  if(wallet.balance - wallet.escrow < stake) return false;
+  wallet.escrow += stake;
+  return true;
+}
+function unlockStake(stake){
+  wallet.escrow = Math.max(0, wallet.escrow - stake);
+}
+function settle(stake, playersCount, winnerTeam /* "CREW"|"IMPOSTOR" */){
+  const pot = stake * playersCount;
+
+  // todos pagan stake desde balance, se libera escrow
+  wallet.balance -= stake;
+  unlockStake(stake);
+
+  // si gana tu equipo, recibes share fijo del pot
+  // MVP: reparto por equipo y no por azar.
+  const alive = state.players.filter(p=>p.alive);
+  const crewAlive = alive.filter(p=>p.role==="CREW").length;
+  const impAlive  = alive.filter(p=>p.role==="IMPOSTOR").length;
+
+  let winners = 0;
+  if(winnerTeam==="CREW") winners = crewAlive;
+  else winners = impAlive;
+
+  // Si tú perteneces al equipo ganador, recibes share
+  const share = winners>0 ? Math.floor(pot / winners) : 0;
+  if(state.me.alive && state.me.role === winnerTeam){
+    wallet.balance += share;
+  }
+
+  setHudEconomy(pot);
+  log(`<b>FIN</b> · Gana <b>${winnerTeam}</b>. Pot=${pot}. Tu payout=${(state.me.alive && state.me.role===winnerTeam)?share:0}.`);
+}
+
+/* ---------------- State ---------------- */
+const state = {
+  phase: "LOBBY", // LOBBY | PLAY | MEETING | END
+  stake: 25,
+  pot: 0,
+  tasksDone: 0,
+  tasksTotal: MAP.tasks.length,
+  players: [], // includes me + bots
+  me: null,
+  bodies: [], // {x,y, byName}
+  meeting: { votes: new Map(), open:false, reportedBy:null },
+  lastKillAt: 0,
+  lastBotKillAt: 0,
+};
+
+/* ---------------- Entities ---------------- */
+function makePlayer(name, isMe=false){
+  return {
+    id: name,
+    name,
+    isMe,
+    role: "CREW",
+    alive: true,
+    x: rand(140,700),
+    y: rand(140,380),
+    r: 13,
+    speed: isMe ? 2.5 : 1.6,
+    target: null,
+    suspicion: 0,
+  };
+}
+
+function resetAll(){
+  state.phase="LOBBY";
+  paused=false;
+  state.tasksDone=0;
+  state.bodies=[];
+  state.meeting.votes = new Map();
+  state.meeting.open=false;
+  state.meeting.reportedBy=null;
+  state.lastKillAt=0;
+  state.lastBotKillAt=0;
+
+  state.players=[];
+  state.me = makePlayer("Tú", true);
+  state.players.push(state.me);
+
+  const n = clamp(parseInt(playersEl.value||"6",10), 4, 10);
+  for(let i=1;i<n;i++){
+    state.players.push(makePlayer("Player"+i,false));
+  }
+
+  // Roles: 1 impostor (MVP)
+  const impIndex = randi(0, state.players.length-1);
+  state.players.forEach((p,idx)=> p.role = (idx===impIndex ? "IMPOSTOR":"CREW"));
+
+  hudState.textContent = "Lobby";
+  hudRole.textContent = "?";
+  setHudEconomy(0);
+  hudTasksBar.style.width = "0%";
+  log(`Lobby listo · jugadores=${state.players.length} · impostor oculto asignado.`);
+}
+
+resetAll();
+
+/* ---------------- Input ---------------- */
+document.addEventListener("keydown",(e)=>{
+  if(e.code==="KeyW") KEYS.w=true;
+  if(e.code==="KeyA") KEYS.a=true;
+  if(e.code==="KeyS") KEYS.s=true;
+  if(e.code==="KeyD") KEYS.d=true;
+
+  if(e.code==="KeyP"){ e.preventDefault(); togglePause(); }
+  if(e.code==="KeyE"){ e.preventDefault(); tryDoTask(); }
+  if(e.code==="KeyK"){ e.preventDefault(); tryKill(); }
+  if(e.code==="KeyR"){ e.preventDefault(); tryReport(); }
+});
+document.addEventListener("keyup",(e)=>{
+  if(e.code==="KeyW") KEYS.w=false;
+  if(e.code==="KeyA") KEYS.a=false;
+  if(e.code==="KeyS") KEYS.s=false;
+  if(e.code==="KeyD") KEYS.d=false;
+});
+
+canvas.addEventListener("touchstart",(e)=>{
+  e.preventDefault();
+  // touch = mover hacia el dedo (simple)
+  const t = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const mx = (t.clientX-rect.left) * (W/rect.width);
+  const my = (t.clientY-rect.top)  * (H/rect.height);
+  state.me.target = {x:mx,y:my};
+},{passive:false});
+
+btnStart.addEventListener("click", startGame);
+btnRestart.addEventListener("click", resetAll);
+btnMeeting.addEventListener("click", ()=> openMeeting("Debug"));
+
+btnClose.addEventListener("click", closeMeeting);
+btnSkip.addEventListener("click", ()=> { state.meeting.votes.set(state.me.id,"SKIP"); finalizeVotes(); });
+
+function togglePause(){
+  if(state.phase!=="PLAY") return;
+  paused = !paused;
+  hudState.textContent = paused ? "Pausa" : "En juego";
+}
+
+/* ---------------- Collision with walls ---------------- */
+function collideWalls(p, nx, ny){
+  // simple: prevent entering walls AABB vs circle approximated as square
+  const s = p.r*2;
+  const box = {x:nx-p.r, y:ny-p.r, w:s, h:s};
+  for(const w of MAP.walls){
+    if(aabb(box.x,box.y,box.w,box.h, w.x,w.y,w.w,w.h)) return {x:p.x,y:p.y};
+  }
+  // bounds
+  nx = clamp(nx, 40, W-40);
+  ny = clamp(ny, 40, H-40);
+  return {x:nx,y:ny};
+}
+
+/* ---------------- Game flow ---------------- */
+function startGame(){
+  if(state.phase!=="LOBBY") return;
+
+  state.stake = clamp(parseInt(stakeEl.value||"0",10), 0, 999999);
+  const ok = lockStake(state.stake);
+  if(!ok){
+    log(`<span style="color:#fda4af"><b>Error:</b> saldo insuficiente para stake.</span>`);
+    return;
+  }
+
+  state.pot = state.stake * state.players.length;
+  setHudEconomy(state.pot);
+
+  state.phase="PLAY";
+  hudState.textContent = "En juego";
+
+  // Revela rol SOLO a ti (MVP)
+  hudRole.textContent = state.me.role === "IMPOSTOR" ? "IMPOSTOR" : "CREW";
+  log(`<b>Partida iniciada</b> · Stake=${state.stake} · Pot=${state.pot}. Tu rol: <b>${hudRole.textContent}</b>.`);
+}
+
+/* ---------------- Tasks ---------------- */
+function nearestTask(){
+  let best=null, bd=Infinity;
+  for(const t of MAP.tasks){
+    const d = dist2(state.me.x,state.me.y,t.x,t.y);
+    if(d<bd){ bd=d; best=t; }
+  }
+  return {task:best, d2:bd};
+}
+function tryDoTask(){
+  if(state.phase!=="PLAY" || paused) return;
+  if(state.me.role!=="CREW") { log(`<span style="color:#fda4af">E: los impostores no hacen tareas.</span>`); return; }
+  const {task, d2} = nearestTask();
+  if(!task) return;
+  if(d2 > (34*34)) { log(`<span style="color:#cbd5f5">Acércate a una estación para hacer tarea (E).</span>`); return; }
+
+  // MVP: cada estación se puede completar una vez por ti
+  if(task.done){ log(`<span style="color:#cbd5f5">Esta tarea ya fue completada.</span>`); return; }
+  task.done = true;
+  state.tasksDone++;
+
+  const pct = Math.round((state.tasksDone/state.tasksTotal)*100);
+  hudTasksBar.style.width = `${pct}%`;
+  log(`<b>Tarea</b> completada: <b>${task.id}</b> (${state.tasksDone}/${state.tasksTotal}).`);
+
+  if(state.tasksDone >= state.tasksTotal){
+    endGame("CREW", "Tareas completadas");
+  }
+}
+
+/* ---------------- Kill / Report / Meeting ---------------- */
+function nearestAliveOther(){
+  let best=null, bd=Infinity;
+  for(const p of state.players){
+    if(p.id===state.me.id) continue;
+    if(!p.alive) continue;
+    const d = dist2(state.me.x,state.me.y,p.x,p.y);
+    if(d<bd){ bd=d; best=p; }
+  }
+  return {p:best, d2:bd};
+}
+function tryKill(){
+  if(state.phase!=="PLAY" || paused) return;
+  if(state.me.role!=="IMPOSTOR"){ log(`<span style="color:#cbd5f5">K: solo impostor puede eliminar.</span>`); return; }
+  const now = performance.now();
+  if(now - state.lastKillAt < 2200){ log(`<span style="color:#cbd5f5">Kill en cooldown.</span>`); return; }
+
+  const {p, d2} = nearestAliveOther();
+  if(!p || d2 > (36*36)){ log(`<span style="color:#cbd5f5">Acércate a un jugador para eliminar (K).</span>`); return; }
+
+  p.alive=false;
+  state.bodies.push({x:p.x,y:p.y, byName:p.name});
+  state.lastKillAt=now;
+  log(`<span style="color:#fda4af"><b>ELIMINADO</b></span> · ${p.name} cayó.`);
+
+  checkImpostorWin();
+}
+function tryReport(){
+  if(state.phase!=="PLAY" || paused) return;
+  // report body if close
+  let found=-1;
+  for(let i=0;i<state.bodies.length;i++){
+    const b=state.bodies[i];
+    if(dist2(state.me.x,state.me.y,b.x,b.y) < (48*48)){ found=i; break; }
+  }
+  if(found<0){ log(`<span style="color:#cbd5f5">No hay cuerpo cerca para reportar (R).</span>`); return; }
+  openMeeting("Reporte de cuerpo");
+}
+
+function openMeeting(reason){
+  if(state.phase!=="PLAY") return;
+  state.phase="MEETING";
+  paused=false;
+  hudState.textContent="Meeting";
+  state.meeting.votes = new Map();
+  state.meeting.reportedBy = state.me.name;
+
+  meetingInfo.innerHTML = `
+    <span class="mono">Motivo:</span> <b>${reason}</b> ·
+    <span class="mono">Vota para expulsar.</span> (MVP: bots votan por heurística)
+  `;
+
+  // Render candidates
+  voteGrid.innerHTML = "";
+  for(const p of state.players){
+    const alive = p.alive;
+    const card = document.createElement("div");
+    card.className = "vote";
+    card.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div><b>${p.name}</b> ${p.isMe?'<span class="mono" style="opacity:.75">[tú]</span>':''}</div>
+        <div class="small mono">id:${p.id}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="pill ${alive?'pill-alive':'pill-dead'}">${alive?'VIVO':'MUERTO'}</span>
+        <button class="btn btn-red" ${alive? "" : "disabled"} style="padding:7px 10px;font-size:12px;" data-vote="${p.id}">Votar</button>
+      </div>
+    `;
+    voteGrid.appendChild(card);
+  }
+
+  voteGrid.querySelectorAll("button[data-vote]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const target = btn.getAttribute("data-vote");
+      if(!target) return;
+      state.meeting.votes.set(state.me.id, target);
+      log(`<b>Voto</b> · Tú votaste por <b>${target}</b>.`);
+      finalizeVotes();
+    });
+  });
+
+  modal.style.display="flex";
+  // bots vote after small delay
+  setTimeout(botVotes, 550);
+}
+
+function closeMeeting(){
+  modal.style.display="none";
+  // si se cerró sin resolver, resolvemos por skip
+  if(state.phase==="MEETING"){
+    state.meeting.votes.set(state.me.id, state.meeting.votes.get(state.me.id) || "SKIP");
+    finalizeVotes();
+  }
+}
+
+function botVotes(){
+  if(state.phase!=="MEETING") return;
+
+  const alive = state.players.filter(p=>p.alive);
+  // heuristic: bots sospechan del más cercano al cuerpo si existe, o random
+  const candidates = alive.map(p=>p.id);
+
+  for(const p of alive){
+    if(p.isMe) continue;
+    let vote = "SKIP";
+
+    // bots: si ven "suspect" alto, votan
+    // MVP: impostor bot intenta votar a otro; crew bot vota random con sesgo
+    if(p.role==="IMPOSTOR"){
+      const others = candidates.filter(id=>id!==p.id);
+      vote = others.length ? others[randi(0, others.length-1)] : "SKIP";
+    } else {
+      if(Math.random() < 0.70){
+        const others = candidates.filter(id=>id!==p.id);
+        vote = others.length ? others[randi(0, others.length-1)] : "SKIP";
+      }
+    }
+    state.meeting.votes.set(p.id, vote);
+  }
+  finalizeVotes();
+}
+
+function finalizeVotes(){
+  if(state.phase!=="MEETING") return;
+
+  // if not all alive voted, wait a bit
+  const alive = state.players.filter(p=>p.alive);
+  if(state.meeting.votes.size < alive.length) return;
+
+  // Count votes
+  const counts = new Map();
+  for(const [voter, target] of state.meeting.votes.entries()){
+    if(target==="SKIP") continue;
+    counts.set(target, (counts.get(target)||0)+1);
+  }
+
+  // Find max
+  let max=0, pick=null, tie=false;
+  for(const [target,c] of counts.entries()){
+    if(c>max){ max=c; pick=target; tie=false; }
+    else if(c===max && c>0){ tie=true; }
+  }
+
+  if(!pick || tie){
+    log(`<b>Meeting</b> · Sin expulsión (empate o skip).`);
+  } else {
+    const expelled = state.players.find(p=>p.id===pick);
+    if(expelled && expelled.alive){
+      expelled.alive=false;
+      log(`<span style="color:#fda4af"><b>EXPULSADO</b></span> · ${expelled.name} fue expulsado.`);
+      // win check: if impostor expelled, crew wins
+      if(expelled.role==="IMPOSTOR"){
+        endGame("CREW", "Impostor expulsado");
+        modal.style.display="none";
+        return;
+      }
+    }
+  }
+
+  modal.style.display="none";
+  state.phase="PLAY";
+  hudState.textContent="En juego";
+}
+
+/* ---------------- Win conditions ---------------- */
+function checkImpostorWin(){
+  const alive = state.players.filter(p=>p.alive);
+  const crew = alive.filter(p=>p.role==="CREW").length;
+  const imp  = alive.filter(p=>p.role==="IMPOSTOR").length;
+  if(imp>=crew && state.phase==="PLAY"){
+    endGame("IMPOSTOR", "Impostor domina la nave");
+  }
+}
+function endGame(winner, reason){
+  if(state.phase==="END") return;
+  state.phase="END";
+  hudState.textContent="Final";
+  log(`<b>Resultado</b> · ${reason} · Gana <b>${winner}</b>.`);
+
+  // settle economy (solo tu wallet en MVP)
+  // si no habías empezado (stake no bloqueado), no liquida
+  if(wallet.escrow >= state.stake){
+    settle(state.stake, state.players.length, winner);
+  } else {
+    log(`<span style="color:#cbd5f5">No hubo liquidación (stake no bloqueado).</span>`);
+  }
+
+  // reset tasks done flags
+  MAP.tasks.forEach(t=> delete t.done);
+}
+
+/* ---------------- Bots movement & bot impostor kills ---------------- */
+function botAI(dt){
+  if(state.phase!=="PLAY" || paused) return;
+
+  const now = performance.now();
+  for(const p of state.players){
+    if(p.isMe || !p.alive) continue;
+
+    // random wandering target
+    if(!p.target || dist2(p.x,p.y,p.target.x,p.target.y) < (18*18)){
+      p.target = {x:rand(120,720), y:rand(120,400)};
+    }
+
+    const dx = p.target.x - p.x;
+    const dy = p.target.y - p.y;
+    const d = Math.max(1, Math.hypot(dx,dy));
+    const nx = p.x + (dx/d)*p.speed*dt;
+    const ny = p.y + (dy/d)*p.speed*dt;
+    const fixed = collideWalls(p, nx, ny);
+    p.x = fixed.x; p.y = fixed.y;
+  }
+
+  // impostor bot kill occasionally (if you are not impostor)
+  const botImp = state.players.find(p=>p.role==="IMPOSTOR" && !p.isMe && p.alive);
+  if(botImp && now - state.lastBotKillAt > 2400){
+    // find nearest crew
+    let victim=null, bd=Infinity;
+    for(const p of state.players){
+      if(!p.alive) continue;
+      if(p.id===botImp.id) continue;
+      if(p.role!=="CREW") continue;
+      const d2 = dist2(botImp.x,botImp.y,p.x,p.y);
+      if(d2<bd){ bd=d2; victim=p; }
+    }
+    if(victim && bd < (34*34) && Math.random()<0.55){
+      victim.alive=false;
+      state.bodies.push({x:victim.x,y:victim.y, byName:victim.name});
+      state.lastBotKillAt = now;
+      log(`<span style="color:#fda4af"><b>ELIMINADO</b></span> · ${victim.name} cayó (bot).`);
+      checkImpostorWin();
+    } else {
+      state.lastBotKillAt = now - 700; // reintenta pronto
+    }
+  }
+}
+
+/* ---------------- Player movement ---------------- */
+function moveMe(dt){
+  if(state.phase!=="PLAY" || paused || !state.me.alive) return;
+
+  let vx=0, vy=0;
+  if(KEYS.w) vy -= 1;
+  if(KEYS.s) vy += 1;
+  if(KEYS.a) vx -= 1;
+  if(KEYS.d) vx += 1;
+
+  // touch target move
+  if(state.me.target){
+    const dx = state.me.target.x - state.me.x;
+    const dy = state.me.target.y - state.me.y;
+    const d2 = dx*dx+dy*dy;
+    if(d2 < (12*12)) state.me.target=null;
+    else{
+      const d = Math.max(1, Math.hypot(dx,dy));
+      vx = dx/d;
+      vy = dy/d;
+    }
+  }
+
+  const sp = state.me.speed * dt;
+  const nx = state.me.x + vx*sp;
+  const ny = state.me.y + vy*sp;
+  const fixed = collideWalls(state.me, nx, ny);
+  state.me.x=fixed.x; state.me.y=fixed.y;
+}
+
+/* ---------------- Render ---------------- */
+const stars = Array.from({length:70}, ()=>({x:rand(0,W),y:rand(0,H),r:rand(0.8,1.8),s:rand(0.10,0.35)}));
+function drawBackground(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, "#060b1a");
+  g.addColorStop(1, "#00030c");
+  ctx.fillStyle=g;
+  ctx.fillRect(0,0,W,H);
+  ctx.save();
+  ctx.globalAlpha=0.35;
+  ctx.fillStyle="#e5e7eb";
+  for(const s of stars){
+    s.y += s.s;
+    if(s.y>H+6){ s.y=-6; s.x=rand(0,W); }
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+function drawWalls(){
+  ctx.save();
+  ctx.fillStyle = COLORS.wall;
+  for(const w of MAP.walls){
+    ctx.fillRect(w.x,w.y,w.w,w.h);
+  }
+  ctx.restore();
+}
+function drawTasks(){
+  for(const t of MAP.tasks){
+    const done = !!t.done;
+    ctx.save();
+    ctx.shadowColor = COLORS.task;
+    ctx.shadowBlur = done ? 0 : 14;
+    ctx.globalAlpha = done ? 0.25 : 1;
+    ctx.fillStyle = COLORS.task;
+    ctx.beginPath();
+    ctx.arc(t.x,t.y,t.r,0,Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.globalAlpha=1;
+    ctx.fillStyle = "rgba(2,6,23,0.85)";
+    ctx.font = "900 12px Lato";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.fillText(t.id[0], t.x, t.y+0.5);
+    ctx.restore();
+  }
+}
+function drawBodies(){
+  for(const b of state.bodies){
+    ctx.save();
+    ctx.globalAlpha=0.9;
+    ctx.fillStyle="rgba(251,113,133,0.85)";
+    ctx.beginPath();
+    ctx.arc(b.x,b.y,10,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle="rgba(2,6,23,0.85)";
+    ctx.font="900 10px Lato";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.fillText("X", b.x, b.y+0.5);
+    ctx.restore();
+  }
+}
+function drawPlayer(p){
+  const isMe = p.isMe;
+  const alive = p.alive;
+
+  ctx.save();
+  let col = isMe ? COLORS.me : (p.role==="IMPOSTOR" ? COLORS.imp : COLORS.crew);
+  if(!alive) col = COLORS.dead;
+
+  // body
+  ctx.shadowColor = col;
+  ctx.shadowBlur = isMe && alive ? 18 : 0;
+  ctx.fillStyle = col;
+  ctx.beginPath();
+  ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+  ctx.fill();
+
+  // visor
+  ctx.shadowBlur=0;
+  ctx.fillStyle = "rgba(15,23,42,0.75)";
+  ctx.beginPath();
+  ctx.ellipse(p.x+4,p.y-2, p.r*0.55, p.r*0.35, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // name
+  ctx.globalAlpha = alive ? 1 : 0.6;
+  ctx.fillStyle = "#e5e7eb";
+  ctx.font = "800 11px Lato";
+  ctx.textAlign="center";
+  ctx.textBaseline="top";
+  ctx.fillText(p.name, p.x, p.y + p.r + 6);
+
+  ctx.restore();
+}
+function drawPrompt(){
+  if(state.phase!=="PLAY" || paused || !state.me.alive) return;
+
+  // near task prompt
+  const {task, d2} = nearestTask();
+  if(task && d2 < (40*40) && state.me.role==="CREW" && !task.done){
+    ctx.save();
+    ctx.fillStyle="rgba(15,23,42,0.85)";
+    ctx.font="900 12px Lato";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.fillText("E · Hacer tarea", task.x, task.y - 30);
+    ctx.restore();
+  }
+
+  // near body prompt
+  for(const b of state.bodies){
+    if(dist2(state.me.x,state.me.y,b.x,b.y) < (52*52)){
+      ctx.save();
+      ctx.fillStyle="rgba(15,23,42,0.85)";
+      ctx.font="900 12px Lato";
+      ctx.textAlign="center";
+      ctx.textBaseline="middle";
+      ctx.fillText("R · Reportar", b.x, b.y - 30);
+      ctx.restore();
+      break;
+    }
+  }
+
+  // impostor kill prompt
+  if(state.me.role==="IMPOSTOR"){
+    const {p, d2} = nearestAliveOther();
+    if(p && d2 < (40*40)){
+      ctx.save();
+      ctx.fillStyle="rgba(15,23,42,0.85)";
+      ctx.font="900 12px Lato";
+      ctx.textAlign="center";
+      ctx.textBaseline="middle";
+      ctx.fillText("K · Eliminar", p.x, p.y - 30);
+      ctx.restore();
+    }
+  }
+}
+function drawOverlay(){
+  if(state.phase==="LOBBY"){
+    ctx.save();
+    ctx.fillStyle="rgba(10,15,30,0.55)";
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle="#f9fafb";
+    ctx.font="900 26px Lato";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.fillText("Lobby · Configura stake y inicia", W/2, H/2 - 10);
+    ctx.font="700 14px Lato";
+    ctx.fillStyle="rgba(203,213,245,0.95)";
+    ctx.fillText("Monedas ficticias · Sin dinero real · MVP local", W/2, H/2 + 20);
+    ctx.restore();
+  }
+  if(state.phase==="END"){
+    ctx.save();
+    ctx.fillStyle="rgba(10,15,30,0.72)";
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle="#f9fafb";
+    ctx.font="900 28px Lato";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.fillText("Partida finalizada", W/2, H/2 - 20);
+    ctx.font="700 15px Lato";
+    ctx.fillStyle="rgba(203,213,245,0.95)";
+    ctx.fillText("Reinicia para jugar otra ronda", W/2, H/2 + 14);
+    ctx.restore();
+  }
+  if(paused && state.phase==="PLAY"){
+    ctx.save();
+    ctx.fillStyle="rgba(10,15,30,0.55)";
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle="#f9fafb";
+    ctx.font="900 26px Lato";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.fillText("Pausa", W/2, H/2);
+    ctx.restore();
+  }
+}
+
+/* ---------------- Loop ---------------- */
+let last = performance.now();
+function tick(now){
+  const dt = clamp((now-last)/16.67, 0.5, 1.6);
+  last = now;
+
+  if(state.phase==="PLAY" && !paused){
+    moveMe(dt);
+    botAI(dt);
+  }
+
+  // render
+  ctx.clearRect(0,0,W,H);
+  drawBackground();
+  drawWalls();
+  drawTasks();
+  drawBodies();
+
+  // players
+  for(const p of state.players) drawPlayer(p);
+
+  drawPrompt();
+  drawOverlay();
+
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+/* ---------------- Init HUD ---------------- */
+setHudEconomy(0);
+hudTasksBar.style.width = "0%";
+
+/* ---------------- Meeting close button ---------------- */
+btnClose.addEventListener("click", closeMeeting);
+
+})();
+</script>
+</body>
+</html>

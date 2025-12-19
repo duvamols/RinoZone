@@ -1,0 +1,947 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RinoZone · RinoPac</title>
+  <style>
+    :root{
+      --bg1:#0b1020;
+      --bg2:#020617;
+      --panel:#0f172af0;
+      --text:#e5e7eb;
+      --muted:#a5b4fc;
+      --accent:#38bdf8;
+      --gold:#facc15;
+      --green:#22c55e;
+      --red:#fb7185;
+      --road:#0b1225;
+      --line:#e2e8f0;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;}
+    body{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      background:radial-gradient(1000px 600px at 20% 0%, #1d4ed8 0%, transparent 50%),
+                 radial-gradient(900px 600px at 80% 0%, #7c3aed 0%, transparent 55%),
+                 linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:var(--text);
+    }
+
+    .topbar{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+      background:linear-gradient(180deg, rgba(15,23,42,.9), rgba(15,23,42,.55));
+      border-bottom:1px solid rgba(148,163,184,.18);
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+    }
+    .brand{display:flex; gap:10px; align-items:center;}
+    .logo{
+      width:36px;height:36px;border-radius:12px;
+      background:linear-gradient(135deg,#22c55e,#38bdf8,#a78bfa);
+      box-shadow:0 10px 25px rgba(56,189,248,.15);
+    }
+    .brand h1{font-size:14px; letter-spacing:.5px; font-weight:800;}
+    .brand p{font-size:12px; color:rgba(226,232,240,.7); margin-top:2px;}
+    .hud{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;}
+    .pill{
+      display:flex; gap:8px; align-items:center;
+      padding:10px 12px; border-radius:14px;
+      background:rgba(2,6,23,.55);
+      border:1px solid rgba(148,163,184,.18);
+      box-shadow:0 8px 20px rgba(0,0,0,.25);
+      font-size:12px;
+    }
+    .dot{width:8px;height:8px;border-radius:999px;background:var(--accent);}
+    .dot.gold{background:var(--gold);}
+    .dot.green{background:var(--green);}
+    .dot.red{background:var(--red);}
+
+    .wrap{
+      display:grid;
+      grid-template-columns: 1fr 320px;
+      gap:14px;
+      padding:14px 16px 18px;
+      max-width:1100px;
+      width:100%;
+      margin:0 auto;
+    }
+    @media (max-width:980px){ .wrap{grid-template-columns:1fr;} }
+
+    .card{
+      background:rgba(15,23,42,.75);
+      border:1px solid rgba(148,163,184,.18);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:0 18px 45px rgba(0,0,0,.35);
+    }
+    .cardHead{
+      display:flex; justify-content:space-between; align-items:center;
+      padding:12px 12px 10px;
+      border-bottom:1px solid rgba(148,163,184,.12);
+      background:linear-gradient(180deg, rgba(2,6,23,.35), transparent);
+    }
+    .cardHead .title{font-weight:900; font-size:13px; letter-spacing:.4px;}
+    .btns{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
+    button{
+      border:none;
+      cursor:pointer;
+      padding:10px 12px;
+      border-radius:14px;
+      color:var(--text);
+      font-weight:800;
+      font-size:12px;
+      background:rgba(2,6,23,.55);
+      border:1px solid rgba(148,163,184,.18);
+      transition:transform .08s ease, background .15s ease;
+    }
+    button:hover{transform:translateY(-1px); background:rgba(56,189,248,.12);}
+    button.primary{
+      background:linear-gradient(135deg, rgba(34,197,94,.95), rgba(56,189,248,.95));
+      border:0;
+      color:#031018;
+    }
+    button.danger{
+      background:rgba(251,113,133,.12);
+      border:1px solid rgba(251,113,133,.35);
+    }
+
+    .gameArea{position:relative; padding:12px;}
+    canvas{
+      width:100%;
+      height:auto;
+      display:block;
+      background:radial-gradient(900px 600px at 50% -10%, rgba(56,189,248,.08), transparent 55%),
+                 linear-gradient(180deg, rgba(2,6,23,.15), rgba(2,6,23,.75));
+      border-radius:16px;
+      border:1px solid rgba(148,163,184,.14);
+    }
+    .hint{
+      padding:10px 12px 12px;
+      color:rgba(226,232,240,.75);
+      font-size:12px;
+      line-height:1.45;
+    }
+    .kbd{
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:26px; padding:2px 8px; margin:0 2px;
+      border-radius:10px;
+      background:rgba(2,6,23,.6);
+      border:1px solid rgba(148,163,184,.18);
+      font-weight:900;
+      color:rgba(226,232,240,.9);
+    }
+
+    .side{display:flex; flex-direction:column; gap:14px;}
+    .box{
+      padding:12px;
+      border-radius:18px;
+      background:rgba(15,23,42,.75);
+      border:1px solid rgba(148,163,184,.18);
+      box-shadow:0 18px 45px rgba(0,0,0,.35);
+    }
+    .box h3{font-size:13px; font-weight:900; letter-spacing:.4px; margin-bottom:8px;}
+    .statgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    .stat{
+      padding:10px; border-radius:14px;
+      background:rgba(2,6,23,.55);
+      border:1px solid rgba(148,163,184,.14);
+    }
+    .stat .k{font-size:11px;color:rgba(226,232,240,.7);}
+    .stat .v{margin-top:6px;font-weight:1000; font-size:16px;}
+    .small{font-size:12px;color:rgba(226,232,240,.75); line-height:1.45;}
+    a.link{color:var(--accent); text-decoration:none; font-weight:900;}
+
+    .toast{
+      position:fixed;
+      left:16px;
+      bottom:16px;
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(2,6,23,.8);
+      border:1px solid rgba(148,163,184,.18);
+      box-shadow:0 18px 40px rgba(0,0,0,.35);
+      color:rgba(226,232,240,.92);
+      font-size:12px;
+      opacity:0;
+      transform:translateY(12px);
+      transition:opacity .2s ease, transform .2s ease;
+      pointer-events:none;
+      max-width:420px;
+    }
+    .toast.show{opacity:1; transform:translateY(0);}
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>RinoZone · RinoPac</h1>
+        <p id="hello">Jugador</p>
+      </div>
+    </div>
+
+    <div class="hud">
+      <div class="pill"><span class="dot"></span> <b>Score</b> <span id="hudScore">0</span></div>
+      <div class="pill"><span class="dot gold"></span> <b>Monedas</b> <span id="hudCoins">0</span></div>
+      <div class="pill"><span class="dot green"></span> <b>Nivel</b> <span id="hudLevel">1</span></div>
+      <div class="pill"><span class="dot red"></span> <b>Vidas</b> <span id="hudLives">3</span></div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="cardHead">
+        <div class="title">Laberinto: come puntos, activa súper poder y evita fantasmas</div>
+        <div class="btns">
+          <button onclick="goPanel()">Volver al Panel</button>
+          <button class="primary" id="btnStart">Iniciar</button>
+          <button class="danger" id="btnReset">Reiniciar</button>
+        </div>
+      </div>
+
+      <div class="gameArea">
+        <canvas id="cv" width="900" height="540"></canvas>
+        <div class="hint">
+          Controles: <span class="kbd">↑</span><span class="kbd">↓</span><span class="kbd">←</span><span class="kbd">→</span>
+          o <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> ·
+          <span class="kbd">ESPACIO</span> (pausa) ·
+          Objetivo: juntar puntos y <b>monedas para tu billetera</b>. Monedas se guardan al finalizar.
+        </div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="box">
+        <h3>Tu billetera (central)</h3>
+        <div class="statgrid">
+          <div class="stat"><div class="k">Monedas totales</div><div class="v" id="wCoins">0</div></div>
+          <div class="stat"><div class="k">Nivel</div><div class="v" id="wLevel">1</div></div>
+          <div class="stat"><div class="k">XP</div><div class="v" id="wXp">0</div></div>
+          <div class="stat"><div class="k">Récord (este juego)</div><div class="v" id="best">0</div></div>
+        </div>
+        <p class="small" style="margin-top:10px;">
+          Guarda por usuario en <b>localStorage</b>. Lo que ganes acá se verá en el panel.
+        </p>
+      </div>
+
+      <div class="box">
+        <h3>Reglas de RinoPac (PRO)</h3>
+        <p class="small">
+          1) <b>1 moneda</b> cada 12 puntos (pellets) que consumas. <br/>
+          2) Power pellet: fantasmas “asustados” por 7s. <br/>
+          3) Comer fantasma: bonus de score + XP.
+        </p>
+        <p class="small" style="margin-top:10px;">
+          Upgrade futuro: misiones diarias + tienda de skins + ranking global.
+        </p>
+      </div>
+
+      <div class="box">
+        <h3>Atajos</h3>
+        <p class="small">
+          <a class="link" href="panel.html">Panel</a> ·
+          <a class="link" href="juego.html">Mundo de Monedas</a> ·
+          <a class="link" href="snake.html">Culebra Cósmica</a> ·
+          <a class="link" href="invasores_cosmicos.html">Invasores</a> ·
+          <a class="link" href="impostor.html">Impostor</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /********************
+     * Identidad + Wallet
+     ********************/
+    const user = localStorage.getItem("juego_user") || "Invitado";
+    document.getElementById("hello").textContent = "Jugador: " + user;
+
+    const WALLET_KEY = `rz_wallet_${user}`;
+    function loadWallet(){
+      const w = JSON.parse(localStorage.getItem(WALLET_KEY) || "null");
+      if(w) return w;
+      const fresh = { coins: 0, level: 1, xp: 0 };
+      localStorage.setItem(WALLET_KEY, JSON.stringify(fresh));
+      return fresh;
+    }
+    function saveWallet(w){
+      localStorage.setItem(WALLET_KEY, JSON.stringify(w));
+      renderWallet();
+    }
+    function addCoins(n){
+      const w = loadWallet();
+      w.coins = Math.max(0, (w.coins|0) + (n|0));
+      saveWallet(w);
+    }
+    function addXp(n){
+      const w = loadWallet();
+      w.xp = Math.max(0, (w.xp|0) + (n|0));
+      const newLevel = 1 + Math.floor(w.xp / 250);
+      if(newLevel > w.level){
+        w.level = newLevel;
+        toast(`Subiste a nivel ${w.level}.`);
+      }
+      saveWallet(w);
+    }
+    function renderWallet(){
+      const w = loadWallet();
+      document.getElementById("wCoins").textContent = w.coins;
+      document.getElementById("wLevel").textContent = w.level;
+      document.getElementById("wXp").textContent = w.xp;
+      document.getElementById("hudLevel").textContent = w.level;
+    }
+    renderWallet();
+
+    function goPanel(){ window.location.href = "panel.html"; }
+
+    /********************
+     * Juego: RinoPac
+     ********************/
+    const cv = document.getElementById("cv");
+    const ctx = cv.getContext("2d");
+
+    const hudScore = document.getElementById("hudScore");
+    const hudCoins = document.getElementById("hudCoins");
+    const hudLives = document.getElementById("hudLives");
+    const bestEl = document.getElementById("best");
+
+    const BEST_KEY = `rz_best_rinopac_${user}`;
+    function getBest(){ return +(localStorage.getItem(BEST_KEY) || 0); }
+    function setBest(v){ localStorage.setItem(BEST_KEY, String(v)); bestEl.textContent = v; }
+    bestEl.textContent = getBest();
+
+    const btnStart = document.getElementById("btnStart");
+    const btnReset = document.getElementById("btnReset");
+
+    // Mapa: 0 vacío, 1 muro, 2 pellet, 3 power pellet
+    const MAP = [
+      "111111111111111111111",
+      "120000000010000000021",
+      "101111011010110111101",
+      "103000010000010000301",
+      "101111011111110111101",
+      "100000000010000000001",
+      "101111011010110111101",
+      "100010000000000010001",
+      "111011111010111110111",
+      "100000000000000000001",
+      "101111011111110111101",
+      "103000010000010000301",
+      "101111011010110111101",
+      "120000000010000000021",
+      "111111111111111111111",
+    ].map(row => row.split("").map(ch => +ch));
+
+    const rows = MAP.length;
+    const cols = MAP[0].length;
+
+    // Ajuste del tamaño de tile al canvas (dejando margen)
+    const margin = 26;
+    const tile = Math.floor(Math.min((cv.width - margin*2)/cols, (cv.height - margin*2)/rows));
+    const gridW = cols*tile;
+    const gridH = rows*tile;
+    const ox = Math.floor((cv.width - gridW)/2);
+    const oy = Math.floor((cv.height - gridH)/2);
+
+    function cellAt(px, py){
+      const c = Math.floor((px - ox)/tile);
+      const r = Math.floor((py - oy)/tile);
+      return { r, c };
+    }
+    function isWall(r,c){
+      if(r<0||c<0||r>=rows||c>=cols) return true;
+      return MAP[r][c] === 1;
+    }
+
+    // Estado
+    let running=false, paused=false;
+    let score=0, runCoins=0, lives=3;
+    let pelletsLeft=0;
+    let levelLocal=1; // nivel interno del juego (independiente del wallet)
+    let frightened = 0; // segundos
+    let comboGhost = 0;
+    let last = performance.now();
+
+    // Movimiento
+    const SPEED = 160; // px/s base (se escala con nivel)
+    const PAC = {
+      x:0, y:0, dir:{x:1,y:0}, next:{x:1,y:0},
+      r: Math.max(10, Math.floor(tile*0.36)),
+      mouth: 0,
+      inv: 0,
+    };
+
+    const GHOSTS = [
+      {name:"Aqua",  color:"rgba(56,189,248,.95)", x:0,y:0, dir:{x:-1,y:0}, home:{r:9,c:10}, state:"chase"},
+      {name:"Rose",  color:"rgba(251,113,133,.95)", x:0,y:0, dir:{x:1,y:0},  home:{r:9,c:9},  state:"chase"},
+      {name:"Mint",  color:"rgba(34,197,94,.95)",  x:0,y:0, dir:{x:0,y:-1}, home:{r:9,c:11}, state:"chase"},
+    ];
+
+    function resetMap(){
+      // Regenera pellets/power (sin tocar muros)
+      pelletsLeft=0;
+      for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+          const v = MAP[r][c];
+          if(v===2||v===3) pelletsLeft++;
+        }
+      }
+    }
+
+    function placeEntities(){
+      // Pacman en una celda segura
+      const pr = 9, pc = 10;
+      PAC.x = ox + pc*tile + tile/2;
+      PAC.y = oy + pr*tile + tile/2;
+      PAC.dir = {x:1,y:0};
+      PAC.next = {x:1,y:0};
+      PAC.inv = 0;
+
+      // Fantasmas
+      for(const g of GHOSTS){
+        g.x = ox + g.home.c*tile + tile/2;
+        g.y = oy + g.home.r*tile + tile/2;
+        g.dir = {x: (Math.random()<.5?1:-1), y:0};
+        g.state = "chase";
+      }
+    }
+
+    function syncHUD(){
+      hudScore.textContent = score|0;
+      hudCoins.textContent = runCoins|0;
+      hudLives.textContent = lives|0;
+    }
+
+    btnStart.addEventListener("click", () => {
+      if(!running) start();
+      else {
+        paused = !paused;
+        btnStart.textContent = paused ? "Reanudar" : "Pausar";
+        toast(paused ? "Pausa" : "En marcha");
+      }
+    });
+    btnReset.addEventListener("click", () => reset(true));
+
+    function start(){
+      reset(false);
+      running = true;
+      paused = false;
+      btnStart.textContent = "Pausar";
+      last = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    function reset(hard){
+      running = hard ? false : running;
+      paused = false;
+      score = 0;
+      runCoins = 0;
+      lives = 3;
+      levelLocal = 1;
+      frightened = 0;
+      comboGhost = 0;
+      PAC.mouth = 0;
+      resetMap();
+      placeEntities();
+      syncHUD();
+      drawSplash();
+    }
+
+    function loop(now){
+      if(!running) return;
+      const dt = Math.min(0.03, (now - last)/1000);
+      last = now;
+
+      if(!paused){
+        update(dt);
+        render();
+      } else {
+        render();
+        drawOverlay("PAUSA", "Presiona ESPACIO o Reanudar");
+      }
+      requestAnimationFrame(loop);
+    }
+
+    function update(dt){
+      // power time
+      if(frightened > 0){
+        frightened -= dt;
+        if(frightened <= 0){
+          frightened = 0;
+          comboGhost = 0;
+        }
+      }
+
+      // inv
+      if(PAC.inv > 0) PAC.inv -= dt;
+
+      // Pac: intenta girar si puede
+      tryTurn(PAC);
+
+      // Mover pac
+      const pacSpeed = SPEED * (1 + (levelLocal-1)*0.08);
+      moveEntity(PAC, pacSpeed, dt);
+
+      // Comer pellets/power
+      eatIfAny();
+
+      // Fantasmas
+      const ghostSpeed = (SPEED * 0.92) * (1 + (levelLocal-1)*0.08) * (frightened>0 ? 0.82 : 1.0);
+      for(const g of GHOSTS){
+        ghostAI(g);
+        moveEntity(g, ghostSpeed, dt);
+      }
+
+      // Colisiones pac vs ghost
+      for(const g of GHOSTS){
+        const dx = g.x - PAC.x;
+        const dy = g.y - PAC.y;
+        const dist = Math.hypot(dx,dy);
+        if(dist < PAC.r*1.05){
+          if(frightened > 0){
+            // comer fantasma
+            comboGhost++;
+            const bonus = 200 * comboGhost;
+            score += bonus;
+            addXp(12 + 2*comboGhost);
+            toast(`¡Fantasma capturado! +${bonus} score`);
+            // reset fantasma a home
+            g.x = ox + g.home.c*tile + tile/2;
+            g.y = oy + g.home.r*tile + tile/2;
+            g.dir = {x:(Math.random()<.5?1:-1), y:0};
+          } else if(PAC.inv <= 0){
+            lives--;
+            PAC.inv = 1.2;
+            toast("Te atraparon. Pierdes 1 vida.");
+            if(lives <= 0){
+              endRun();
+              return;
+            }
+            // reposicionar
+            placeEntities();
+          }
+        }
+      }
+
+      // Level up cuando se acaban pellets
+      if(pelletsLeft <= 0){
+        levelLocal++;
+        toast(`Nivel ${levelLocal}. Laberinto repuesto.`);
+        // repone pellets (reconstruyendo la matriz desde el original base)
+        // (aquí reutilizamos MAP tal cual, ya viene con pellets)
+        resetMap();
+        placeEntities();
+      }
+
+      // Score pasivo por supervivencia
+      score += 6 * dt * (1 + (levelLocal-1)*0.12);
+
+      syncHUD();
+    }
+
+    function endRun(){
+      running = false;
+      paused = false;
+      btnStart.textContent = "Iniciar";
+
+      // Persistencia: sumar monedas ganadas
+      addCoins(runCoins);
+      addXp(Math.floor(score/12));
+
+      const s = Math.floor(score);
+      const best = getBest();
+      if(s > best){
+        setBest(s);
+        toast("Nuevo récord: " + s);
+      } else {
+        toast(`Fin. Score: ${s} · Monedas: +${runCoins} (guardadas)`);
+      }
+
+      render();
+      drawOverlay("GAME OVER", `Score: ${s} · Monedas: +${runCoins} (guardadas)`);
+      renderWallet();
+    }
+
+    function centerOf(r,c){
+      return {
+        x: ox + c*tile + tile/2,
+        y: oy + r*tile + tile/2
+      };
+    }
+
+    function atCenter(e){
+      const cc = cellAt(e.x, e.y);
+      const center = centerOf(cc.r, cc.c);
+      return (Math.abs(e.x - center.x) < 1.6 && Math.abs(e.y - center.y) < 1.6);
+    }
+
+    function canMoveDir(e, dir){
+      const cc = cellAt(e.x, e.y);
+      // mirar celda hacia donde iría (desde centro ideal)
+      const nr = cc.r + dir.y;
+      const nc = cc.c + dir.x;
+      return !isWall(nr,nc);
+    }
+
+    function tryTurn(e){
+      if(!atCenter(e)) return;
+      // si next es válido, girar
+      if(canMoveDir(e, e.next)){
+        e.dir = {x:e.next.x, y:e.next.y};
+      } else {
+        // si la dir actual queda bloqueada, detener (se resolverá cuando se pueda girar)
+        if(!canMoveDir(e, e.dir)){
+          e.dir = {x:0,y:0};
+        }
+      }
+    }
+
+    function moveEntity(e, spd, dt){
+      // mover y chequear pared
+      const step = spd * dt;
+      let nx = e.x + e.dir.x * step;
+      let ny = e.y + e.dir.y * step;
+
+      // Colisión simple: si la celda destino es muro, clamp al centro y parar
+      const cc = cellAt(nx, ny);
+      if(isWall(cc.r, cc.c)){
+        // reubicar al centro de celda actual
+        const cur = cellAt(e.x, e.y);
+        const cent = centerOf(cur.r, cur.c);
+        e.x = cent.x;
+        e.y = cent.y;
+        e.dir = {x:0,y:0};
+        return;
+      }
+
+      e.x = nx;
+      e.y = ny;
+
+      // Wrap horizontal (teletransporte por bordes) si pasa el margen del grid
+      if(e.x < ox) e.x = ox + gridW - 2;
+      if(e.x > ox + gridW) e.x = ox + 2;
+    }
+
+    function eatIfAny(){
+      const cc = cellAt(PAC.x, PAC.y);
+      if(cc.r<0||cc.c<0||cc.r>=rows||cc.c>=cols) return;
+      const v = MAP[cc.r][cc.c];
+
+      if(v === 2){
+        MAP[cc.r][cc.c] = 0;
+        pelletsLeft--;
+        score += 10;
+        addXp(2);
+
+        // regla monedas: 1 moneda cada 12 pellets
+        const eatenTotal = getEatenCount();
+        if(eatenTotal > 0 && (eatenTotal % 12 === 0)){
+          runCoins += 1;
+          toast("Moneda +1 (por racha de puntos)");
+        }
+      }
+      if(v === 3){
+        MAP[cc.r][cc.c] = 0;
+        pelletsLeft--;
+        score += 50;
+        runCoins += 1; // power pellet da moneda directa
+        frightened = 7.0;
+        comboGhost = 0;
+        addXp(10);
+        toast("Súper poder activado (7s) +1 moneda");
+      }
+    }
+
+    function getEatenCount(){
+      // pellets comidos = (pellets originales - pelletsLeft)
+      // Original: se recalcula al resetMap
+      // Para mantenerlo simple: calculamos originales por scan fijo de MAP ORIGINAL al inicio
+      // Mejor: usamos contador global incremental
+      return pelletsEaten;
+    }
+    let pelletsEaten = 0;
+    const _eatIfAny = eatIfAny;
+    eatIfAny = function(){
+      const before = pelletsLeft;
+      _eatIfAny();
+      if(pelletsLeft < before){
+        pelletsEaten += (before - pelletsLeft);
+      }
+    };
+
+    function ghostAI(g){
+      if(!atCenter(g)) return;
+
+      // En intersecciones: elegir nueva dirección
+      const options = [];
+      const dirs = [
+        {x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}
+      ];
+      for(const d of dirs){
+        // evitar reversa directa (a menos que esté encerrado)
+        const isReverse = (d.x === -g.dir.x && d.y === -g.dir.y);
+        if(isReverse) continue;
+        if(canMoveDir(g, d)) options.push(d);
+      }
+      if(options.length === 0){
+        // permitir reversa
+        for(const d of dirs){
+          if(canMoveDir(g, d)) options.push(d);
+        }
+      }
+      if(options.length === 0){
+        g.dir = {x:0,y:0};
+        return;
+      }
+
+      // Selección: chase / frightened
+      const pacCell = cellAt(PAC.x, PAC.y);
+      const gCell = cellAt(g.x, g.y);
+
+      function scoreDir(d){
+        const nr = gCell.r + d.y;
+        const nc = gCell.c + d.x;
+        // distancia Manhattan hacia pac
+        const md = Math.abs(nr - pacCell.r) + Math.abs(nc - pacCell.c);
+        return md;
+      }
+
+      if(frightened > 0){
+        // huir: tomar la dirección que MAXIMIZA distancia
+        let best = options[0], bestVal = -1;
+        for(const d of options){
+          const val = scoreDir(d);
+          if(val > bestVal){
+            bestVal = val; best = d;
+          }
+        }
+        // un poco de aleatoriedad
+        if(Math.random() < 0.20) best = options[Math.floor(Math.random()*options.length)];
+        g.dir = best;
+      } else {
+        // perseguir: MINIMIZA distancia, con aleatoriedad ligera para no ser perfecto
+        let best = options[0], bestVal = 1e9;
+        for(const d of options){
+          const val = scoreDir(d);
+          if(val < bestVal){
+            bestVal = val; best = d;
+          }
+        }
+        if(Math.random() < 0.18) best = options[Math.floor(Math.random()*options.length)];
+        g.dir = best;
+      }
+    }
+
+    function render(){
+      ctx.clearRect(0,0,cv.width,cv.height);
+
+      // panel oscuro
+      ctx.fillStyle = "rgba(2,6,23,1)";
+      ctx.fillRect(0,0,cv.width,cv.height);
+
+      // marco sutil
+      ctx.fillStyle = "rgba(15,23,42,.65)";
+      roundRect(ctx, ox-14, oy-14, gridW+28, gridH+28, 18);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(148,163,184,.18)";
+      ctx.lineWidth = 2;
+      roundRect(ctx, ox-14, oy-14, gridW+28, gridH+28, 18);
+      ctx.stroke();
+
+      // muros + pellets
+      for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+          const x = ox + c*tile;
+          const y = oy + r*tile;
+          const v = MAP[r][c];
+
+          if(v === 1){
+            // muro
+            ctx.fillStyle = "rgba(56,189,248,.16)";
+            roundRect(ctx, x+2, y+2, tile-4, tile-4, Math.max(8, Math.floor(tile*0.22)));
+            ctx.fill();
+            ctx.strokeStyle = "rgba(56,189,248,.22)";
+            ctx.lineWidth = 1;
+            roundRect(ctx, x+2, y+2, tile-4, tile-4, Math.max(8, Math.floor(tile*0.22)));
+            ctx.stroke();
+          } else if(v === 2){
+            // pellet
+            ctx.fillStyle = "rgba(250,204,21,.88)";
+            ctx.beginPath();
+            ctx.arc(x+tile/2, y+tile/2, Math.max(2, Math.floor(tile*0.10)), 0, Math.PI*2);
+            ctx.fill();
+          } else if(v === 3){
+            // power pellet
+            const pulse = 0.8 + 0.2*Math.sin(performance.now()/120);
+            ctx.fillStyle = "rgba(250,204,21,.95)";
+            ctx.beginPath();
+            ctx.arc(x+tile/2, y+tile/2, Math.max(5, Math.floor(tile*0.18))*pulse, 0, Math.PI*2);
+            ctx.fill();
+          }
+        }
+      }
+
+      // entidades
+      drawPac();
+      for(const g of GHOSTS) drawGhost(g);
+
+      // HUD interno
+      ctx.textAlign="left";
+      ctx.fillStyle="rgba(226,232,240,.75)";
+      ctx.font="800 13px system-ui";
+      ctx.fillText(`Nivel juego: ${levelLocal}  ·  Puntos restantes: ${pelletsLeft}  ·  Power: ${frightened>0 ? frightened.toFixed(1)+'s' : '—'}`, ox-2, oy+gridH+20);
+    }
+
+    function drawPac(){
+      const blink = PAC.inv > 0 ? (Math.floor(performance.now()/90)%2===0) : false;
+      if(blink) return;
+
+      // boca animada
+      PAC.mouth += 0.16;
+      const mouth = 0.22 + 0.12*Math.sin(PAC.mouth);
+
+      let ang = 0;
+      if(PAC.dir.x===1) ang = 0;
+      if(PAC.dir.x===-1) ang = Math.PI;
+      if(PAC.dir.y===1) ang = Math.PI/2;
+      if(PAC.dir.y===-1) ang = -Math.PI/2;
+
+      ctx.save();
+      ctx.translate(PAC.x, PAC.y);
+
+      ctx.fillStyle = "rgba(250,204,21,.97)";
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.arc(0,0,PAC.r, ang+mouth, ang+Math.PI*2-mouth);
+      ctx.closePath();
+      ctx.fill();
+
+      // ojo
+      ctx.fillStyle="rgba(2,6,23,.75)";
+      ctx.beginPath();
+      ctx.arc(PAC.r*0.12, -PAC.r*0.38, Math.max(2, Math.floor(PAC.r*0.10)), 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawGhost(g){
+      const r = Math.max(10, Math.floor(tile*0.34));
+      const isFright = frightened > 0;
+
+      ctx.save();
+      ctx.translate(g.x, g.y);
+
+      if(isFright){
+        const pulse = 0.75 + 0.25*Math.sin(performance.now()/110);
+        ctx.fillStyle = `rgba(59,130,246,${0.85*pulse})`;
+      } else {
+        ctx.fillStyle = g.color;
+      }
+
+      // cuerpo
+      ctx.beginPath();
+      ctx.arc(0, -r*0.15, r, Math.PI, 0);
+      ctx.lineTo(r, r);
+      // ondas inferiores
+      for(let i=0;i<4;i++){
+        const wx = r - i*(r*0.5);
+        ctx.quadraticCurveTo(wx - r*0.25, r*0.72, wx - r*0.5, r);
+      }
+      ctx.closePath();
+      ctx.fill();
+
+      // ojos
+      ctx.fillStyle = "rgba(226,232,240,.95)";
+      ctx.beginPath(); ctx.arc(-r*0.35, -r*0.20, r*0.22, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc( r*0.35, -r*0.20, r*0.22, 0, Math.PI*2); ctx.fill();
+
+      ctx.fillStyle = isFright ? "rgba(2,6,23,.70)" : "rgba(2,6,23,.85)";
+      const px = (g.dir.x)*r*0.10, py = (g.dir.y)*r*0.10;
+      ctx.beginPath(); ctx.arc(-r*0.35 + px, -r*0.20 + py, r*0.10, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc( r*0.35 + px, -r*0.20 + py, r*0.10, 0, Math.PI*2); ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawOverlay(title, subtitle){
+      ctx.fillStyle = "rgba(2,6,23,.58)";
+      ctx.fillRect(0,0,cv.width,cv.height);
+      ctx.textAlign="center";
+      ctx.fillStyle="rgba(226,232,240,.95)";
+      ctx.font="900 46px system-ui";
+      ctx.fillText(title, cv.width/2, cv.height/2 - 16);
+      ctx.fillStyle="rgba(226,232,240,.75)";
+      ctx.font="700 16px system-ui";
+      ctx.fillText(subtitle, cv.width/2, cv.height/2 + 22);
+    }
+
+    function drawSplash(){
+      render();
+      drawOverlay("RinoPac", "Inicia: come puntos, usa power, evita fantasmas. Monedas se guardan al finalizar.");
+    }
+
+    function roundRect(c, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      c.beginPath();
+      c.moveTo(x+rr, y);
+      c.arcTo(x+w, y, x+w, y+h, rr);
+      c.arcTo(x+w, y+h, x, y+h, rr);
+      c.arcTo(x, y+h, x, y, rr);
+      c.arcTo(x, y, x+w, y, rr);
+      c.closePath();
+    }
+
+    /********************
+     * Controles
+     ********************/
+    function setNextDir(dx,dy){
+      if(!running || paused) return;
+      PAC.next = {x:dx, y:dy};
+      // si está en centro intenta girar inmediato
+      tryTurn(PAC);
+    }
+
+    window.addEventListener("keydown", (e) => {
+      const k = e.key.toLowerCase();
+      if(k === "arrowup" || k === "w") setNextDir(0,-1);
+      if(k === "arrowdown" || k === "s") setNextDir(0, 1);
+      if(k === "arrowleft" || k === "a") setNextDir(-1,0);
+      if(k === "arrowright" || k === "d") setNextDir( 1,0);
+
+      if(k === " "){
+        if(!running) return;
+        paused = !paused;
+        btnStart.textContent = paused ? "Reanudar" : "Pausar";
+        toast(paused ? "Pausa" : "En marcha");
+        e.preventDefault();
+      }
+    });
+
+    /********************
+     * Toast
+     ********************/
+    const toastEl = document.getElementById("toast");
+    let toastTimer = null;
+    function toast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>toastEl.classList.remove("show"), 2400);
+    }
+
+    // Arranque visual
+    reset(true);
+  </script>
+</body>
+</html>

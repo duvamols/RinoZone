@@ -1,0 +1,1165 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mundo de Monedas</title>
+  <style>
+    :root{
+      --bg1:#4a90e2;
+      --bg2:#1a3c6e;
+      --panel:#0f172af5;
+      --muted:#cbd5f5;
+      --text:#f9fafb;
+      --accent:#38bdf8;
+      --gold:#facc15;
+    }
+
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      font-family:"Lato", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(var(--bg1), var(--bg2));
+      color:var(--text);
+      padding:16px;
+    }
+
+    .game-wrapper{
+      width:100%;
+      max-width:900px;
+      background:var(--panel);
+      border-radius:24px;
+      box-shadow:0 14px 28px rgba(0,0,0,.35);
+      padding:18px 18px 22px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .game-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+    }
+
+    .game-header-left h1{
+      font-size:18px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+
+    .game-header-left p{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.25;
+      max-width:520px;
+    }
+
+    .game-header-right{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:6px;
+    }
+
+    .btn-volver{
+      border:none;
+      border-radius:14px;
+      padding:7px 12px;
+      font-size:13px;
+      font-weight:800;
+      cursor:pointer;
+      background:#e2e8f0;
+      color:#0f172a;
+      box-shadow:0 3px 0 #cbd5e1;
+      transition:transform .12s ease, box-shadow .12s ease;
+      user-select:none;
+    }
+
+    .btn-volver:hover{
+      transform:translateY(-1px);
+      box-shadow:0 5px 0 #cbd5e1;
+    }
+    .btn-volver:active{
+      transform:translateY(2px);
+      box-shadow:0 1px 0 #cbd5e1;
+    }
+
+    .hud{
+      display:flex;
+      gap:12px;
+      font-size:13px;
+      color:#e5e7eb;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .hud span strong{ color:var(--gold); }
+
+    .game-container{
+      margin-top:6px;
+      background:linear-gradient(#1d4ed8, #1e293b);
+      border-radius:20px;
+      padding:10px 10px 12px;
+      box-shadow:inset 0 0 0 1px rgba(15,23,42,.4);
+    }
+
+    canvas{
+      display:block;
+      width:100%;
+      max-width:860px;
+      height:auto;
+      border-radius:16px;
+      background:linear-gradient(#60a5fa, #0ea5e9);
+    }
+
+    .help{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .btn-restart{
+      border:none;
+      border-radius:14px;
+      padding:7px 14px;
+      font-size:12px;
+      font-weight:900;
+      cursor:pointer;
+      background:linear-gradient(135deg,#22c55e,#16a34a);
+      color:var(--text);
+      box-shadow:0 3px 0 #15803d;
+      display:none;
+      transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+      user-select:none;
+    }
+    .btn-restart:hover{
+      transform:translateY(-1px);
+      box-shadow:0 5px 0 #15803d;
+      filter:brightness(1.03);
+    }
+    .btn-restart:active{
+      transform:translateY(2px);
+      box-shadow:0 1px 0 #15803d;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="game-wrapper">
+    <div class="game-header">
+      <div class="game-header-left">
+        <h1>Mundo de Monedas</h1>
+        <p>Salta, esquiva bloques y recoge monedas. El nivel sube según tu puntaje.</p>
+      </div>
+
+      <div class="game-header-right">
+        <button class="btn-volver" onclick="window.location.href='panel.html'">⬅ Volver al panel</button>
+        <div class="hud">
+          <span>Puntaje: <strong id="hudScore">0</strong></span>
+          <span>| Nivel: <strong id="hudLevel">1</strong></span>
+          <span>| Monedas: <strong id="hudCoins">0</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-container">
+      <canvas id="gameCanvas" width="840" height="320"></canvas>
+      <div class="help">
+        <span>Controles: barra espaciadora, flecha ↑ o tocar/click para saltar (doble salto).</span>
+        <button id="btnRestart" class="btn-restart">🔄 Reintentar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      /* ---------------------------------------------------------
+       *  DOM / CANVAS
+       * --------------------------------------------------------- */
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d", { alpha: true });
+
+      const hudScore = document.getElementById("hudScore");
+      const hudLevel = document.getElementById("hudLevel");
+      const hudCoins = document.getElementById("hudCoins");
+      const btnRestart = document.getElementById("btnRestart");
+
+      const W = canvas.width;
+      const H = canvas.height;
+
+      /* ---------------------------------------------------------
+       *  CONFIG
+       * --------------------------------------------------------- */
+      const GRAVITY = 1.6;
+      const JUMP_FORCE = 20;
+      const MAX_JUMPS = 2;
+
+      const SCORE_PER_COIN = 10;
+      const POINTS_PER_LEVEL = 200;
+      const BASE_SPEED = 4.6;
+
+      const GROUND_HEIGHT = 52;
+      const groundY = H - GROUND_HEIGHT;
+
+      const SPAWN = {
+        coinEvery: 70,
+        blockEvery: 110
+      };
+
+      /* ---------------------------------------------------------
+       *  SMALL UTILS
+       * --------------------------------------------------------- */
+      const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+      const rand = (a, b) => a + Math.random() * (b - a);
+      const lerp = (a, b, t) => a + (b - a) * t;
+
+      function roundedRectPath(g, x, y, w, h, r) {
+        const rr = Math.min(r, w / 2, h / 2);
+        g.beginPath();
+        g.moveTo(x + rr, y);
+        g.lineTo(x + w - rr, y);
+        g.quadraticCurveTo(x + w, y, x + w, y + rr);
+        g.lineTo(x + w, y + h - rr);
+        g.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+        g.lineTo(x + rr, y + h);
+        g.quadraticCurveTo(x, y + h, x, y + h - rr);
+        g.lineTo(x, y + rr);
+        g.quadraticCurveTo(x, y, x + rr, y);
+        g.closePath();
+      }
+
+      /* ---------------------------------------------------------
+       *  AUDIO (FX + MUSIC)
+       * --------------------------------------------------------- */
+      let fxCtx = null;
+      function getFxCtx() {
+        if (!fxCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) fxCtx = new AC();
+        }
+        return fxCtx;
+      }
+
+      function fxBeep(steps, dur = 0.28, vol = 0.18, type = "square") {
+        const ac = getFxCtx();
+        if (!ac) return;
+
+        if (ac.state === "suspended") ac.resume();
+
+        const now = ac.currentTime;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+
+        osc.type = type;
+        gain.gain.setValueAtTime(vol, now);
+
+        osc.connect(gain);
+        gain.connect(ac.destination);
+
+        for (const s of steps) {
+          osc.frequency.setValueAtTime(s.freq, now + s.time);
+        }
+
+        gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+        osc.start(now);
+        osc.stop(now + dur + 0.02);
+      }
+
+      function playFx(kind) {
+        switch (kind) {
+          case "jump":
+            fxBeep([{ time: 0.00, freq: 440 }, { time: 0.05, freq: 580 }, { time: 0.10, freq: 720 }], 0.25);
+            break;
+          case "coin":
+            fxBeep([{ time: 0.00, freq: 900 }, { time: 0.05, freq: 1100 }, { time: 0.10, freq: 1350 }], 0.22, 0.20);
+            break;
+          case "hit":
+            fxBeep([{ time: 0.00, freq: 400 }, { time: 0.05, freq: 260 }, { time: 0.10, freq: 180 }], 0.26, 0.20);
+            break;
+          case "levelup":
+            fxBeep([{ time: 0.00, freq: 600 }, { time: 0.06, freq: 800 }, { time: 0.12, freq: 1000 }], 0.28, 0.18);
+            break;
+          case "lose": {
+            /* Sonido de derrota: caída + “apagón” retro (más largo y con sweep) */
+            const ac = getFxCtx();
+            if (!ac) return;
+            if (ac.state === "suspended") ac.resume();
+
+            const now = ac.currentTime;
+            const osc = ac.createOscillator();
+            const gain = ac.createGain();
+            const filter = ac.createBiquadFilter();
+
+            osc.type = "square";
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(1800, now);
+            filter.frequency.exponentialRampToValueAtTime(250, now + 0.75);
+
+            gain.gain.setValueAtTime(0.22, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(ac.destination);
+
+            osc.frequency.setValueAtTime(520, now);
+            osc.frequency.exponentialRampToValueAtTime(110, now + 0.85);
+
+            osc.start(now);
+            osc.stop(now + 0.9);
+            break;
+          }
+          default:
+            fxBeep([{ time: 0.00, freq: 500 }, { time: 0.07, freq: 650 }], 0.22, 0.14);
+        }
+      }
+
+      let musicCtx = null;
+      let musicGain = null;
+      let musicTimer = null;
+      let musicOn = false;
+
+      const levelMelodies = [
+        [330, 392, 440, 392, 330, 262, 294, 330],
+        [523, 494, 440, 392, 440, 494, 523, 587],
+        [659, 587, 523, 587, 659, 784, 698, 659],
+        [392, 440, 494, 523, 494, 440, 392, 330],
+        [880, 740, 660, 740, 880, 660, 550, 660]
+      ];
+
+      function ensureMusic() {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!musicCtx) {
+          musicCtx = new AC();
+          musicGain = musicCtx.createGain();
+          musicGain.gain.value = 0.14;
+          musicGain.connect(musicCtx.destination);
+        }
+      }
+
+      function playNote(freq, dur = 0.28) {
+        const osc = musicCtx.createOscillator();
+        const gain = musicCtx.createGain();
+        osc.type = "square";
+        osc.frequency.setValueAtTime(freq, musicCtx.currentTime);
+
+        gain.gain.setValueAtTime(0.24, musicCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, musicCtx.currentTime + dur);
+
+        osc.connect(gain);
+        gain.connect(musicGain);
+
+        osc.start();
+        osc.stop(musicCtx.currentTime + dur);
+      }
+
+      function melodyForLevel(lvl) {
+        return levelMelodies[(lvl - 1) % levelMelodies.length];
+      }
+
+      function musicStart(getLevelFn) {
+        ensureMusic();
+        if (musicOn) return;
+        musicOn = true;
+
+        let step = 0;
+        if (musicTimer) clearInterval(musicTimer);
+
+        musicTimer = setInterval(() => {
+          const melody = melodyForLevel(getLevelFn());
+          playNote(melody[step % melody.length], 0.28);
+          step++;
+        }, 300);
+      }
+
+      function musicStop() {
+        musicOn = false;
+        if (musicTimer) {
+          clearInterval(musicTimer);
+          musicTimer = null;
+        }
+      }
+
+      /* ---------------------------------------------------------
+       *  GAME STATE
+       * --------------------------------------------------------- */
+      const state = {
+        speed: BASE_SPEED,
+        frame: 0,
+        score: 0,
+        coins: 0,
+        level: 1,
+        playing: true,
+        banner: 0,
+        shake: 0
+      };
+
+      const player = {
+        x: 90,
+        y: groundY - 40,
+        w: 34,
+        h: 42,
+        vy: 0,
+        jumps: 0,
+        bob: 0
+      };
+
+      const coins = [];
+      const blocks = [];
+      const particles = [];
+
+      const layers = {
+        stars: [],
+        clouds: [],
+        hillsFar: [],
+        hillsMid: [],
+        hillsNear: []
+      };
+
+      /* ---------------------------------------------------------
+       *  WORLD GEN
+       * --------------------------------------------------------- */
+      function seedWorld() {
+        layers.stars.length = 0;
+        layers.clouds.length = 0;
+        layers.hillsFar.length = 0;
+        layers.hillsMid.length = 0;
+        layers.hillsNear.length = 0;
+
+        for (let i = 0; i < 46; i++) {
+          layers.stars.push({
+            x: Math.random() * W,
+            y: Math.random() * (H * 0.55),
+            r: rand(0.6, 1.6),
+            tw: rand(0.01, 0.03),
+            a: rand(0.35, 0.9)
+          });
+        }
+
+        for (let i = 0; i < 7; i++) {
+          layers.clouds.push({
+            x: rand(0, W),
+            y: rand(18, 110),
+            w: rand(80, 150),
+            h: rand(24, 44),
+            s: rand(0.08, 0.18)
+          });
+        }
+
+        for (let i = 0; i < 5; i++) {
+          layers.hillsFar.push({
+            x: i * 260,
+            y: groundY - 86 - Math.random() * 40,
+            w: 260,
+            h: 110 + Math.random() * 55
+          });
+        }
+
+        for (let i = 0; i < 4; i++) {
+          layers.hillsMid.push({
+            x: i * 290,
+            y: groundY - 62 - Math.random() * 34,
+            w: 290,
+            h: 84 + Math.random() * 44
+          });
+        }
+
+        for (let i = 0; i < 3; i++) {
+          layers.hillsNear.push({
+            x: i * 330,
+            y: groundY - 44 - Math.random() * 28,
+            w: 330,
+            h: 70 + Math.random() * 40
+          });
+        }
+      }
+
+      /* ---------------------------------------------------------
+       *  PARTICLES
+       * --------------------------------------------------------- */
+      function emitParticles(x, y, count, cfg = {}) {
+        const {
+          minVx = -1.8,
+          maxVx = 1.8,
+          minVy = -2.6,
+          maxVy = -0.8,
+          minR = 1.2,
+          maxR = 3.2,
+          life = 40,
+          gravity = 0.08,
+          drag = 0.985
+        } = cfg;
+
+        for (let i = 0; i < count; i++) {
+          particles.push({
+            x, y,
+            vx: rand(minVx, maxVx),
+            vy: rand(minVy, maxVy),
+            r: rand(minR, maxR),
+            life: life + Math.floor(rand(-8, 10)),
+            t: 0,
+            g: gravity,
+            d: drag
+          });
+        }
+      }
+
+      function updateParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.t++;
+          p.vx *= p.d;
+          p.vy = (p.vy + p.g) * p.d;
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.t >= p.life) particles.splice(i, 1);
+        }
+      }
+
+      function drawParticles() {
+        for (const p of particles) {
+          const a = 1 - (p.t / p.life);
+          ctx.globalAlpha = a;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = "#e2e8f0";
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      /* ---------------------------------------------------------
+       *  SPAWN
+       * --------------------------------------------------------- */
+      function spawnCoin() {
+        const x = W + 20;
+        let y = groundY - 70 - Math.random() * 70;
+        y = clamp(y, 36, groundY - 54);
+
+        const danger = blocks.some(b => {
+          const mx = 120;
+          const overlapX = (x - mx) < (b.x + b.w) && (x + mx) > b.x;
+          const overlapY = (y + 22) > b.y;
+          return overlapX && overlapY;
+        });
+        if (danger) return;
+
+        coins.push({
+          x, y,
+          r: 11,
+          spin: rand(0, Math.PI * 2),
+          collected: false,
+          glow: rand(0.35, 0.85)
+        });
+      }
+
+      function spawnBlock() {
+        const h = 30 + Math.random() * 22;
+        blocks.push({
+          x: W + 20,
+          y: groundY - h,
+          w: 34 + Math.random() * 26,
+          h,
+          cap: rand(0.2, 0.7)
+        });
+      }
+
+      /* ---------------------------------------------------------
+       *  RESET
+       * --------------------------------------------------------- */
+      function resetGame() {
+        state.speed = BASE_SPEED;
+        state.frame = 0;
+        state.score = 0;
+        state.coins = 0;
+        state.level = 1;
+        state.playing = true;
+        state.banner = 0;
+        state.shake = 0;
+
+        coins.length = 0;
+        blocks.length = 0;
+        particles.length = 0;
+
+        player.y = groundY - player.h;
+        player.vy = 0;
+        player.jumps = 0;
+        player.bob = 0;
+
+        hudScore.textContent = "0";
+        hudLevel.textContent = "1";
+        hudCoins.textContent = "0";
+
+        btnRestart.style.display = "none";
+        seedWorld();
+        musicStop();
+      }
+
+      /* ---------------------------------------------------------
+       *  INPUT
+       * --------------------------------------------------------- */
+      function doJump() {
+        if (!state.playing) return;
+        if (player.jumps >= MAX_JUMPS) return;
+
+        player.vy = -JUMP_FORCE;
+        player.jumps++;
+        playFx("jump");
+        musicStart(() => state.level);
+
+        emitParticles(player.x + player.w * 0.45, player.y + player.h, 10, {
+          minVx: -1.5, maxVx: 1.5,
+          minVy: -2.4, maxVy: -0.6,
+          minR: 1.0, maxR: 2.6,
+          life: 26,
+          gravity: 0.10
+        });
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (e.code === "Space" || e.code === "ArrowUp") {
+          e.preventDefault();
+          doJump();
+        }
+        if (!state.playing && (e.code === "Enter" || e.code === "KeyR")) {
+          resetGame();
+        }
+      });
+
+      canvas.addEventListener("click", () => doJump());
+      canvas.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        doJump();
+      }, { passive: false });
+
+      btnRestart.addEventListener("click", resetGame);
+
+      /* ---------------------------------------------------------
+       *  UPDATE
+       * --------------------------------------------------------- */
+      function updateWorldLayers() {
+        // Stars twinkle (no scroll)
+        for (const s of layers.stars) {
+          s.a = clamp(s.a + (Math.random() - 0.5) * s.tw, 0.18, 0.95);
+        }
+
+        // Clouds slow scroll
+        for (const c of layers.clouds) {
+          c.x -= state.speed * c.s;
+          if (c.x + c.w < -40) {
+            c.x = W + rand(30, 120);
+            c.y = rand(16, 110);
+            c.w = rand(80, 160);
+            c.h = rand(24, 48);
+            c.s = rand(0.08, 0.18);
+          }
+        }
+
+        // Hills parallax
+        const moveLayer = (arr, k, yBase, yVar, hBase, hVar, w) => {
+          for (const h of arr) {
+            h.x -= state.speed * k;
+            if (h.x + h.w < 0) {
+              h.x = W;
+              h.y = yBase - Math.random() * yVar;
+              h.h = hBase + Math.random() * hVar;
+              h.w = w;
+            }
+          }
+        };
+
+        moveLayer(layers.hillsFar, 0.18, groundY - 86, 40, 110, 55, 260);
+        moveLayer(layers.hillsMid, 0.30, groundY - 62, 34, 84, 44, 290);
+        moveLayer(layers.hillsNear, 0.48, groundY - 44, 28, 70, 40, 330);
+      }
+
+      function updatePlayer() {
+        if (!state.playing) return;
+
+        player.vy += GRAVITY;
+        player.y += player.vy;
+
+        const onGround = (player.y + player.h) >= groundY;
+        if (onGround) {
+          if (player.vy > 6) {
+            emitParticles(player.x + player.w * 0.45, groundY + 1, 12, {
+              minVx: -1.6, maxVx: 1.6,
+              minVy: -2.2, maxVy: -0.8,
+              minR: 1.2, maxR: 2.8,
+              life: 24,
+              gravity: 0.12
+            });
+          }
+
+          player.y = groundY - player.h;
+          player.vy = 0;
+          player.jumps = 0;
+        }
+
+        player.bob = lerp(player.bob, onGround ? 0 : 1, 0.10);
+      }
+
+      function updateEntities() {
+        // Spawn cadence
+        if (state.frame % SPAWN.coinEvery === 0) spawnCoin();
+        if (state.frame % SPAWN.blockEvery === 0) spawnBlock();
+
+        // Coins
+        for (let i = coins.length - 1; i >= 0; i--) {
+          const c = coins[i];
+          c.x -= state.speed;
+          c.spin += 0.09;
+          if (c.x < -40) coins.splice(i, 1);
+        }
+
+        // Blocks
+        for (let i = blocks.length - 1; i >= 0; i--) {
+          const b = blocks[i];
+          b.x -= state.speed;
+          if (b.x < -90) blocks.splice(i, 1);
+        }
+      }
+
+      function circleHit(px, py, pr, bx, by, bw, bh) {
+        const cx = clamp(px, bx, bx + bw);
+        const cy = clamp(py, by, by + bh);
+        const dx = px - cx;
+        const dy = py - cy;
+        return (dx * dx + dy * dy) <= pr * pr;
+      }
+
+      function checkCoinCollisions() {
+        const px = player.x + player.w * 0.5;
+        const py = player.y + player.h * 0.5;
+
+        for (const c of coins) {
+          if (c.collected) continue;
+
+          const hit = circleHit(px, py, 14, c.x - c.r, c.y - c.r, c.r * 2, c.r * 2);
+          if (!hit) continue;
+
+          c.collected = true;
+          state.coins++;
+          state.score += SCORE_PER_COIN;
+
+          hudCoins.textContent = String(state.coins);
+          hudScore.textContent = String(state.score);
+
+          playFx("coin");
+          emitParticles(c.x, c.y, 18, {
+            minVx: -2.4, maxVx: 2.4,
+            minVy: -3.2, maxVy: -1.0,
+            minR: 1.0, maxR: 3.0,
+            life: 32,
+            gravity: 0.09
+          });
+
+          const newLevel = Math.floor(state.score / POINTS_PER_LEVEL) + 1;
+          if (newLevel > state.level) {
+            state.level = newLevel;
+            state.speed += 0.55;
+            state.banner = 120;
+            hudLevel.textContent = String(state.level);
+            playFx("levelup");
+            musicStop();
+            musicStart(() => state.level);
+          }
+        }
+      }
+
+      function checkBlockCollisions() {
+        for (const b of blocks) {
+          const hit =
+            player.x < b.x + b.w &&
+            player.x + player.w > b.x &&
+            player.y < b.y + b.h &&
+            player.y + player.h > b.y;
+
+          if (!hit) continue;
+
+          state.playing = false;
+          btnRestart.style.display = "inline-block";
+
+          // feedback fuerte
+          state.shake = 18;
+          playFx("hit");
+          playFx("lose");
+          musicStop();
+
+          emitParticles(player.x + player.w * 0.55, player.y + player.h * 0.55, 28, {
+            minVx: -3.0, maxVx: 3.0,
+            minVy: -3.2, maxVy: -0.6,
+            minR: 1.2, maxR: 3.4,
+            life: 42,
+            gravity: 0.10
+          });
+          break;
+        }
+      }
+
+      function update() {
+        state.frame++;
+
+        if (state.shake > 0) state.shake--;
+
+        updateWorldLayers();
+        if (state.playing) {
+          updatePlayer();
+          updateEntities();
+          checkCoinCollisions();
+          checkBlockCollisions();
+          if (state.banner > 0) state.banner--;
+        }
+
+        updateParticles();
+      }
+
+      /* ---------------------------------------------------------
+       *  DRAW (ENHANCED LOOK)
+       * --------------------------------------------------------- */
+      function applyShake() {
+        if (state.shake <= 0) return { x: 0, y: 0 };
+        const power = state.shake / 18;
+        return {
+          x: (Math.random() - 0.5) * 10 * power,
+          y: (Math.random() - 0.5) * 6 * power
+        };
+      }
+
+      function drawSky() {
+        const grad = ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0, "#78b6ff");
+        grad.addColorStop(0.55, "#1d4ed8");
+        grad.addColorStop(1, "#0b1224");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Soft vignette
+        const v = ctx.createRadialGradient(W * 0.5, H * 0.4, 60, W * 0.5, H * 0.5, 520);
+        v.addColorStop(0, "rgba(255,255,255,0.06)");
+        v.addColorStop(1, "rgba(0,0,0,0.22)");
+        ctx.fillStyle = v;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      function drawStars() {
+        for (const s of layers.stars) {
+          ctx.globalAlpha = s.a;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = "#e2e8f0";
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function drawClouds() {
+        for (const c of layers.clouds) {
+          ctx.globalAlpha = 0.22;
+          ctx.fillStyle = "#e2e8f0";
+          ctx.beginPath();
+          ctx.ellipse(c.x, c.y, c.w * 0.42, c.h * 0.50, 0, 0, Math.PI * 2);
+          ctx.ellipse(c.x + c.w * 0.18, c.y - c.h * 0.20, c.w * 0.36, c.h * 0.46, 0, 0, Math.PI * 2);
+          ctx.ellipse(c.x - c.w * 0.18, c.y - c.h * 0.10, c.w * 0.32, c.h * 0.40, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      function drawHills(arr, fillA, fillB) {
+        const g = ctx.createLinearGradient(0, groundY - 120, 0, groundY + 20);
+        g.addColorStop(0, fillA);
+        g.addColorStop(1, fillB);
+        ctx.fillStyle = g;
+
+        for (const h of arr) {
+          ctx.beginPath();
+          ctx.moveTo(h.x, groundY);
+          ctx.quadraticCurveTo(h.x + h.w * 0.5, h.y, h.x + h.w, groundY);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      function drawGround() {
+        // base
+        const g = ctx.createLinearGradient(0, groundY, 0, H);
+        g.addColorStop(0, "#f6c04c");
+        g.addColorStop(1, "#b45309");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, groundY, W, H - groundY);
+
+        // top edge
+        ctx.fillStyle = "rgba(15,23,42,0.20)";
+        ctx.fillRect(0, groundY, W, 6);
+
+        // subtle texture dots
+        ctx.globalAlpha = 0.18;
+        ctx.fillStyle = "#7c2d12";
+        for (let i = 0; i < 70; i++) {
+          const x = (i * 19 + (state.frame * 2)) % W;
+          const y = groundY + 10 + (i % 4) * 8;
+          ctx.beginPath();
+          ctx.arc(x, y, 1.1, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function drawPlayer() {
+        // Shadow
+        ctx.fillStyle = "rgba(15,23,42,0.35)";
+        ctx.beginPath();
+        ctx.ellipse(player.x + player.w * 0.5, groundY + 6, player.w * 0.70, 6.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const x = player.x;
+        const y = player.y;
+        const w = player.w;
+        const h = player.h;
+
+        // Body with highlight
+        const body = ctx.createLinearGradient(x, y, x, y + h);
+        body.addColorStop(0, "#34d399");
+        body.addColorStop(1, "#15803d");
+
+        roundedRectPath(ctx, x, y, w, h, 8);
+        ctx.fillStyle = body;
+        ctx.fill();
+
+        // Specular highlight
+        const hl = ctx.createLinearGradient(x, y, x + w, y);
+        hl.addColorStop(0, "rgba(255,255,255,0.18)");
+        hl.addColorStop(0.6, "rgba(255,255,255,0.05)");
+        hl.addColorStop(1, "rgba(255,255,255,0.00)");
+        ctx.fillStyle = hl;
+        roundedRectPath(ctx, x + 2, y + 2, w - 4, h - 4, 7);
+        ctx.fill();
+
+        // Visor
+        ctx.fillStyle = "#ecfeff";
+        roundedRectPath(ctx, x + 6, y + 8, w - 12, 13, 6);
+        ctx.fill();
+
+        ctx.fillStyle = "#0b1224";
+        ctx.beginPath();
+        ctx.arc(x + 13, y + 14, 2.1, 0, Math.PI * 2);
+        ctx.arc(x + 22, y + 14, 2.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Belt
+        ctx.fillStyle = "rgba(56,189,248,0.85)";
+        roundedRectPath(ctx, x + 5, y + 24, w - 10, 4.5, 4);
+        ctx.fill();
+
+        // Outline
+        ctx.strokeStyle = "rgba(15,23,42,0.40)";
+        ctx.lineWidth = 1.2;
+        roundedRectPath(ctx, x + 0.6, y + 0.6, w - 1.2, h - 1.2, 8);
+        ctx.stroke();
+      }
+
+      function drawCoins() {
+        for (const c of coins) {
+          if (c.collected) continue;
+
+          const scale = 0.68 + 0.32 * Math.abs(Math.sin(c.spin));
+          const rx = c.r * scale;
+          const ry = c.r;
+
+          ctx.save();
+          ctx.translate(c.x, c.y);
+
+          // glow
+          ctx.globalAlpha = 0.28 + c.glow * 0.25;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, rx + 8, ry + 8, 0, 0, Math.PI * 2);
+          ctx.fillStyle = "#fde047";
+          ctx.fill();
+          ctx.globalAlpha = 1;
+
+          const grad = ctx.createRadialGradient(-4, -4, 2, 0, 0, ry + 6);
+          grad.addColorStop(0, "#fff7c2");
+          grad.addColorStop(0.45, "#fde047");
+          grad.addColorStop(1, "#a16207");
+
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // inner ring
+          ctx.strokeStyle = "rgba(0,0,0,0.22)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, rx - 2.6, ry - 2.6, 0, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // icon
+          ctx.fillStyle = "#78350f";
+          ctx.font = "12px Lato";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("★", 0, 1);
+
+          ctx.restore();
+        }
+      }
+
+      function drawBlocks() {
+        for (const b of blocks) {
+          const g = ctx.createLinearGradient(b.x, b.y, b.x, b.y + b.h);
+          g.addColorStop(0, "#fb7185");
+          g.addColorStop(1, "#7f1d1d");
+          ctx.fillStyle = g;
+          ctx.fillRect(b.x, b.y, b.w, b.h);
+
+          // top cap shine
+          ctx.fillStyle = "rgba(254,242,242,0.55)";
+          ctx.fillRect(b.x, b.y, b.w, 4);
+
+          // subtle side shade
+          ctx.fillStyle = "rgba(0,0,0,0.18)";
+          ctx.fillRect(b.x + b.w - 5, b.y, 5, b.h);
+
+          ctx.strokeStyle = "rgba(0,0,0,0.32)";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(b.x + 0.5, b.y + 0.5, b.w - 1, b.h - 1);
+        }
+      }
+
+      function drawLevelBanner() {
+        if (state.banner <= 0) return;
+
+        const alpha = Math.min(1, state.banner / 40);
+        const w = 270, h = 64;
+        const x = (W - w) / 2;
+        const y = 52;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        // panel
+        ctx.fillStyle = "rgba(15,23,42,0.88)";
+        roundedRectPath(ctx, x, y, w, h, 12);
+        ctx.fill();
+
+        // border glow
+        ctx.shadowColor = "rgba(56,189,248,0.55)";
+        ctx.shadowBlur = 12;
+        ctx.strokeStyle = "#38bdf8";
+        ctx.lineWidth = 2;
+        roundedRectPath(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 12);
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#f9fafb";
+        ctx.font = "800 22px Lato";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Nivel " + state.level, W / 2, y + h / 2);
+
+        ctx.restore();
+      }
+
+      function drawGameOver() {
+        // overlay
+        ctx.fillStyle = "rgba(10, 15, 30, 0.74)";
+        ctx.fillRect(0, 0, W, H);
+
+        // neon box
+        const bw = 520, bh = 150;
+        const bx = (W - bw) / 2;
+        const by = (H - bh) / 2 - 8;
+
+        ctx.save();
+        ctx.shadowColor = "rgba(56,189,248,0.35)";
+        ctx.shadowBlur = 22;
+
+        ctx.fillStyle = "rgba(15,23,42,0.90)";
+        roundedRectPath(ctx, bx, by, bw, bh, 16);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(56,189,248,0.75)";
+        ctx.lineWidth = 2;
+        roundedRectPath(ctx, bx + 0.5, by + 0.5, bw - 1, bh - 1, 16);
+        ctx.stroke();
+
+        ctx.fillStyle = "#f9fafb";
+        ctx.font = "900 30px Lato";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Juego terminado", W / 2, by + 48);
+
+        ctx.font = "700 16px Lato";
+        ctx.fillText(`Puntaje: ${state.score}  |  Nivel: ${state.level}  |  Monedas: ${state.coins}`, W / 2, by + 86);
+
+        ctx.font = "600 13px Lato";
+        ctx.fillStyle = "rgba(249,250,251,0.85)";
+        ctx.fillText(`Pulsa "Reintentar" (o Enter / R) para jugar de nuevo.`, W / 2, by + 116);
+
+        ctx.restore();
+      }
+
+      function draw() {
+        const shake = applyShake();
+
+        ctx.save();
+        ctx.clearRect(0, 0, W, H);
+        ctx.translate(shake.x, shake.y);
+
+        drawSky();
+        drawStars();
+        drawClouds();
+
+        drawHills(layers.hillsFar, "rgba(30,58,138,0.90)", "rgba(2,6,23,0.10)");
+        drawHills(layers.hillsMid, "rgba(29,78,216,0.92)", "rgba(2,6,23,0.16)");
+        drawHills(layers.hillsNear, "rgba(37,99,235,0.96)", "rgba(2,6,23,0.20)");
+
+        drawGround();
+
+        drawCoins();
+        drawBlocks();
+        drawParticles();
+        drawPlayer();
+        drawLevelBanner();
+
+        if (!state.playing) drawGameOver();
+
+        ctx.restore();
+      }
+
+      /* ---------------------------------------------------------
+       *  LOOP
+       * --------------------------------------------------------- */
+      function loop() {
+        update();
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      resetGame();
+      loop();
+    })();
+  </script>
+</body>
+</html>

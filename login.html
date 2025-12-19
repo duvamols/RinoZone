@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ingresar - Juego Plataforma</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Lato", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(#4a90e2, #1a3c6e);
+      color: #1a3c6e;
+    }
+
+    .game-background {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      z-index: -1;
+    }
+
+    .game-background::before,
+    .game-background::after {
+      content: "";
+      position: absolute;
+      width: 180%;
+      height: 60%;
+      left: -40%;
+      border-radius: 50%;
+      background: #3a6ab0;
+      opacity: 0.25;
+    }
+
+    .game-background::before {
+      bottom: 10%;
+    }
+
+    .game-background::after {
+      bottom: -10%;
+      background: #274472;
+      opacity: 0.45;
+    }
+
+    .ground {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background: #f3b34a;
+      box-shadow: 0 -6px 0 #e2922f;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 360px;
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 22px;
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.25);
+      padding: 24px 22px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffffff, #4a90e2);
+      opacity: 0.3;
+    }
+
+    .avatar-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    .avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffffff, #4a90e2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .avatar span {
+      font-size: 34px;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    .card-title {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #1a3c6e;
+    }
+
+    .card-subtitle {
+      text-align: center;
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 18px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .input-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f5f7fa;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 6px 10px;
+      transition: all 0.18s ease;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: #4a90e2;
+      box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.25);
+      background: #ffffff;
+    }
+
+    .input-icon {
+      font-size: 16px;
+      opacity: 0.7;
+    }
+
+    .field input {
+      border: none;
+      outline: none;
+      width: 100%;
+      background: transparent;
+      font-size: 13px;
+      color: #1e293b;
+    }
+
+    .field input::placeholder {
+      color: #9ca3af;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      border: none;
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4caf50, #2e7d32);
+      color: #ffffff;
+      box-shadow: 0 6px 0 #1b5e20;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 0 #1b5e20;
+    }
+
+    .btn-primary:active {
+      transform: translateY(2px);
+      box-shadow: 0 3px 0 #1b5e20;
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #475569;
+      box-shadow: 0 4px 0 #cbd5e1;
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 0 #cbd5e1;
+    }
+
+    .btn-secondary:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #cbd5e1;
+    }
+
+    .msg {
+      font-size: 12px;
+      margin-top: 8px;
+      min-height: 16px;
+    }
+
+    .msg.error {
+      color: #d9534f;
+    }
+
+    .msg.success {
+      color: #15803d;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-background">
+    <div class="ground"></div>
+  </div>
+
+  <div class="card">
+    <div class="avatar-wrapper">
+      <div class="avatar">
+        <span>🔐</span>
+      </div>
+    </div>
+
+    <h1 class="card-title">Inicia sesión</h1>
+    <p class="card-subtitle">Ingresa con tu usuario o correo y tu contraseña.</p>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="identificador">Usuario o correo</label>
+        <div class="input-wrapper">
+          <span class="input-icon">👤</span>
+          <input id="identificador" name="identificador" type="text" placeholder="Tu usuario o correo" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input id="password" name="password" type="password" placeholder="Tu contraseña" required />
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button type="submit" class="btn btn-primary" id="btnLogin">
+          Entrar
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">
+          Registrarme
+        </button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+    </form>
+  </div>
+  <script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbwSyfmUq5hqQEXHjX_026bun0Q6yr0-FGV2n1Bs0VZDE8IjuhHAHF9cD4a16QpYvtaKiA/exec";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("loginForm");
+    const msg  = document.getElementById("msg");
+    const btn  = document.getElementById("btnLogin");
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      msg.textContent = "";
+      msg.className = "msg";
+
+      const identificador = document.getElementById("identificador").value.trim();
+      const password      = document.getElementById("password").value;
+
+      if (!identificador || !password) {
+        msg.textContent = "Por favor, completa todos los campos.";
+        msg.classList.add("error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Validando...";
+
+      const payload = {
+        action: "login",
+        identificador: identificador,
+        password: password
+      };
+
+      fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+        .then(() => {
+          // Guardamos "sesión" mínima en el navegador
+          localStorage.setItem("juego_user", JSON.stringify({
+            identificador: identificador,
+            login_time: new Date().toISOString()
+          }));
+
+          msg.textContent = "Ingreso exitoso. Redirigiendo a tu panel...";
+          msg.classList.add("success");
+
+          // Pequeño delay y vamos al panel
+          setTimeout(() => {
+            window.location.href = "panel.html";
+          }, 800);
+        })
+        .catch((err) => {
+          console.error(err);
+          msg.textContent = "Hubo un error al enviar los datos. Intenta de nuevo.";
+          msg.classList.add("error");
+          btn.disabled = false;
+          btn.textContent = "Entrar";
+        });
+    });
+  });
+  </script>
+</body>
+</html>

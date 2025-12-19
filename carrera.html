@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RinoZone · Carrera Turbo</title>
+  <style>
+    :root{
+      --bg1:#0b1020;
+      --bg2:#020617;
+      --panel:#0f172af0;
+      --text:#e5e7eb;
+      --muted:#a5b4fc;
+      --accent:#38bdf8;
+      --gold:#facc15;
+      --green:#22c55e;
+      --red:#fb7185;
+      --road:#0b1225;
+      --line:#e2e8f0;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;}
+    body{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      background:radial-gradient(1000px 600px at 20% 0%, #1d4ed8 0%, transparent 50%),
+                 radial-gradient(900px 600px at 80% 0%, #7c3aed 0%, transparent 55%),
+                 linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:var(--text);
+    }
+
+    /* Top HUD */
+    .topbar{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+      background:linear-gradient(180deg, rgba(15,23,42,.9), rgba(15,23,42,.55));
+      border-bottom:1px solid rgba(148,163,184,.18);
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+    }
+    .brand{display:flex; gap:10px; align-items:center;}
+    .logo{
+      width:36px;height:36px;border-radius:12px;
+      background:linear-gradient(135deg,#22c55e,#38bdf8,#a78bfa);
+      box-shadow:0 10px 25px rgba(56,189,248,.15);
+    }
+    .brand h1{font-size:14px; letter-spacing:.5px; font-weight:800;}
+    .brand p{font-size:12px; color:rgba(226,232,240,.7); margin-top:2px;}
+    .hud{
+      display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .pill{
+      display:flex; gap:8px; align-items:center;
+      padding:10px 12px; border-radius:14px;
+      background:rgba(2,6,23,.55);
+      border:1px solid rgba(148,163,184,.18);
+      box-shadow:0 8px 20px rgba(0,0,0,.25);
+      font-size:12px;
+    }
+    .dot{width:8px;height:8px;border-radius:999px;background:var(--accent);}
+    .dot.gold{background:var(--gold);}
+    .dot.green{background:var(--green);}
+    .dot.red{background:var(--red);}
+
+    /* Layout */
+    .wrap{
+      display:grid;
+      grid-template-columns: 1fr 320px;
+      gap:14px;
+      padding:14px 16px 18px;
+      max-width:1100px;
+      width:100%;
+      margin:0 auto;
+    }
+    @media (max-width:980px){
+      .wrap{grid-template-columns:1fr; }
+    }
+
+    /* Game Card */
+    .card{
+      background:rgba(15,23,42,.75);
+      border:1px solid rgba(148,163,184,.18);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:0 18px 45px rgba(0,0,0,.35);
+    }
+    .cardHead{
+      display:flex; justify-content:space-between; align-items:center;
+      padding:12px 12px 10px;
+      border-bottom:1px solid rgba(148,163,184,.12);
+      background:linear-gradient(180deg, rgba(2,6,23,.35), transparent);
+    }
+    .cardHead .title{font-weight:900; font-size:13px; letter-spacing:.4px;}
+    .btns{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
+    button{
+      border:none;
+      cursor:pointer;
+      padding:10px 12px;
+      border-radius:14px;
+      color:var(--text);
+      font-weight:800;
+      font-size:12px;
+      background:rgba(2,6,23,.55);
+      border:1px solid rgba(148,163,184,.18);
+      transition:transform .08s ease, background .15s ease;
+    }
+    button:hover{transform:translateY(-1px); background:rgba(56,189,248,.12);}
+    button.primary{
+      background:linear-gradient(135deg, rgba(34,197,94,.95), rgba(56,189,248,.95));
+      border:0;
+      color:#031018;
+    }
+    button.danger{
+      background:rgba(251,113,133,.12);
+      border:1px solid rgba(251,113,133,.35);
+    }
+
+    /* Canvas */
+    .gameArea{
+      position:relative;
+      padding:12px;
+    }
+    canvas{
+      width:100%;
+      height:auto;
+      display:block;
+      background:radial-gradient(900px 600px at 50% -10%, rgba(56,189,248,.08), transparent 55%),
+                 linear-gradient(180deg, rgba(2,6,23,.1), rgba(2,6,23,.6));
+      border-radius:16px;
+      border:1px solid rgba(148,163,184,.14);
+    }
+    .hint{
+      padding:10px 12px 12px;
+      color:rgba(226,232,240,.75);
+      font-size:12px;
+      line-height:1.45;
+    }
+    .kbd{
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:26px; padding:2px 8px; margin:0 2px;
+      border-radius:10px;
+      background:rgba(2,6,23,.6);
+      border:1px solid rgba(148,163,184,.18);
+      font-weight:900;
+      color:rgba(226,232,240,.9);
+    }
+
+    /* Side panel */
+    .side{
+      display:flex; flex-direction:column; gap:14px;
+    }
+    .box{
+      padding:12px;
+      border-radius:18px;
+      background:rgba(15,23,42,.75);
+      border:1px solid rgba(148,163,184,.18);
+      box-shadow:0 18px 45px rgba(0,0,0,.35);
+    }
+    .box h3{font-size:13px; font-weight:900; letter-spacing:.4px; margin-bottom:8px;}
+    .statgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    .stat{
+      padding:10px; border-radius:14px;
+      background:rgba(2,6,23,.55);
+      border:1px solid rgba(148,163,184,.14);
+    }
+    .stat .k{font-size:11px;color:rgba(226,232,240,.7);}
+    .stat .v{margin-top:6px;font-weight:1000; font-size:16px;}
+    .small{font-size:12px;color:rgba(226,232,240,.75); line-height:1.45;}
+    a.link{
+      color:var(--accent);
+      text-decoration:none;
+      font-weight:900;
+    }
+    .toast{
+      position:fixed;
+      left:16px;
+      bottom:16px;
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(2,6,23,.8);
+      border:1px solid rgba(148,163,184,.18);
+      box-shadow:0 18px 40px rgba(0,0,0,.35);
+      color:rgba(226,232,240,.92);
+      font-size:12px;
+      opacity:0;
+      transform:translateY(12px);
+      transition:opacity .2s ease, transform .2s ease;
+      pointer-events:none;
+      max-width:380px;
+    }
+    .toast.show{opacity:1; transform:translateY(0);}
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>RinoZone · Carrera Turbo</h1>
+        <p id="hello">Jugador</p>
+      </div>
+    </div>
+
+    <div class="hud">
+      <div class="pill"><span class="dot"></span> <b>Score</b> <span id="hudScore">0</span></div>
+      <div class="pill"><span class="dot gold"></span> <b>Monedas</b> <span id="hudCoins">0</span></div>
+      <div class="pill"><span class="dot green"></span> <b>Vel</b> <span id="hudSpeed">1.0x</span></div>
+      <div class="pill"><span class="dot red"></span> <b>Vidas</b> <span id="hudLives">3</span></div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="cardHead">
+        <div class="title">Pista: Esquiva tráfico, recoge monedas y sube velocidad</div>
+        <div class="btns">
+          <button onclick="goPanel()">Volver al Panel</button>
+          <button class="primary" id="btnStart">Iniciar</button>
+          <button class="danger" id="btnReset">Reiniciar</button>
+        </div>
+      </div>
+
+      <div class="gameArea">
+        <canvas id="cv" width="900" height="540"></canvas>
+        <div class="hint">
+          Controles: <span class="kbd">←</span> <span class="kbd">→</span> (mover) ·
+          <span class="kbd">A</span> / <span class="kbd">D</span> ·
+          <span class="kbd">ESPACIO</span> (pausa) ·
+          Objetivo: sobrevivir, sumar score y <b>monedas para tu billetera</b>.
+        </div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="box">
+        <h3>Tu billetera (central)</h3>
+        <div class="statgrid">
+          <div class="stat"><div class="k">Monedas totales</div><div class="v" id="wCoins">0</div></div>
+          <div class="stat"><div class="k">Nivel</div><div class="v" id="wLevel">1</div></div>
+          <div class="stat"><div class="k">XP</div><div class="v" id="wXp">0</div></div>
+          <div class="stat"><div class="k">Récord (este juego)</div><div class="v" id="best">0</div></div>
+        </div>
+        <p class="small" style="margin-top:10px;">
+          Esto se guarda en <b>localStorage</b> por usuario. Lo que ganes acá se verá en el panel.
+        </p>
+      </div>
+
+      <div class="box">
+        <h3>Consejos de diseño (para que se sienta PRO)</h3>
+        <p class="small">
+          1) Mantén partidas de 45–90s, reinicio rápido. <br/>
+          2) Premia “casi choques” con bonus de score. <br/>
+          3) Misiones diarias: “Recolecta 25 monedas”, “Sobrevive 60s”.
+        </p>
+        <p class="small" style="margin-top:10px;">
+          Siguiente upgrade: tienda (skins) + ranking + misiones.
+        </p>
+      </div>
+
+      <div class="box">
+        <h3>Atajos</h3>
+        <p class="small">
+          <a class="link" href="panel.html">Panel</a> ·
+          <a class="link" href="juego.html">Mundo de Monedas</a> ·
+          <a class="link" href="snake.html">Culebra Cósmica</a> ·
+          <a class="link" href="invasores_cosmicos.html">Invasores</a> ·
+          <a class="link" href="impostor.html">Impostor</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /********************
+     *  Identidad + Wallet
+     ********************/
+    const user = localStorage.getItem("juego_user") || "Invitado";
+    document.getElementById("hello").textContent = "Jugador: " + user;
+
+    // Billetera central por usuario
+    const WALLET_KEY = `rz_wallet_${user}`;
+    function loadWallet(){
+      const w = JSON.parse(localStorage.getItem(WALLET_KEY) || "null");
+      if(w) return w;
+      const fresh = { coins: 0, level: 1, xp: 0 };
+      localStorage.setItem(WALLET_KEY, JSON.stringify(fresh));
+      return fresh;
+    }
+    function saveWallet(w){
+      localStorage.setItem(WALLET_KEY, JSON.stringify(w));
+      renderWallet();
+    }
+    function addCoins(n){
+      const w = loadWallet();
+      w.coins = Math.max(0, (w.coins|0) + (n|0));
+      saveWallet(w);
+    }
+    function addXp(n){
+      const w = loadWallet();
+      w.xp = Math.max(0, (w.xp|0) + (n|0));
+      // Nivel simple: cada 250 XP sube 1 nivel
+      const newLevel = 1 + Math.floor(w.xp / 250);
+      if(newLevel > w.level) {
+        w.level = newLevel;
+        toast(`Subiste a nivel ${w.level}.`);
+      }
+      saveWallet(w);
+    }
+    function renderWallet(){
+      const w = loadWallet();
+      document.getElementById("wCoins").textContent = w.coins;
+      document.getElementById("wLevel").textContent = w.level;
+      document.getElementById("wXp").textContent = w.xp;
+    }
+    renderWallet();
+
+    function goPanel(){ window.location.href = "panel.html"; }
+
+    /********************
+     *  Juego
+     ********************/
+    const cv = document.getElementById("cv");
+    const ctx = cv.getContext("2d");
+
+    const hudScore = document.getElementById("hudScore");
+    const hudCoins = document.getElementById("hudCoins");
+    const hudSpeed = document.getElementById("hudSpeed");
+    const hudLives = document.getElementById("hudLives");
+    const bestEl = document.getElementById("best");
+
+    const BEST_KEY = `rz_best_race_${user}`;
+    function getBest(){ return +(localStorage.getItem(BEST_KEY) || 0); }
+    function setBest(v){ localStorage.setItem(BEST_KEY, String(v)); bestEl.textContent = v; }
+    bestEl.textContent = getBest();
+
+    // Pista
+    const ROAD = { x: 300, y: 0, w: 300, h: cv.height };
+    const LANE_COUNT = 3;
+    const laneW = ROAD.w / LANE_COUNT;
+
+    // Jugador
+    const player = { lane: 1, x: 0, y: 0, w: 44, h: 78, inv: 0 };
+    function laneCenter(l){ return ROAD.x + laneW*l + laneW/2; }
+
+    // Entidades
+    let enemies = [];
+    let coins = [];
+    let lines = [];
+
+    // Estado
+    let running = false;
+    let paused = false;
+    let score = 0;
+    let runCoins = 0;
+    let lives = 3;
+    let speed = 5;        // base
+    let mult = 1.0;       // multiplicador visual
+    let t = 0;
+    let last = performance.now();
+
+    // UI
+    const btnStart = document.getElementById("btnStart");
+    const btnReset = document.getElementById("btnReset");
+
+    btnStart.addEventListener("click", () => {
+      if(!running) start();
+      else paused = !paused;
+      btnStart.textContent = (!running) ? "Iniciar" : (paused ? "Reanudar" : "Pausar");
+      toast(paused ? "Pausa" : "En marcha");
+    });
+
+    btnReset.addEventListener("click", () => reset(true));
+
+    function start(){
+      reset(false);
+      running = true;
+      paused = false;
+      btnStart.textContent = "Pausar";
+      last = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    function reset(hard){
+      running = hard ? false : running;
+      paused = false;
+      score = 0;
+      runCoins = 0;
+      lives = 3;
+      speed = 5;
+      mult = 1.0;
+      t = 0;
+      enemies = [];
+      coins = [];
+      lines = [];
+      player.lane = 1;
+      player.inv = 0;
+      player.x = laneCenter(player.lane) - player.w/2;
+      player.y = cv.height - 110;
+
+      // generar líneas de pista
+      for(let i=0;i<18;i++){
+        lines.push({ y: i*40, h: 24 });
+      }
+
+      syncHUD();
+      drawSplash();
+    }
+
+    function syncHUD(){
+      hudScore.textContent = score|0;
+      hudCoins.textContent = runCoins|0;
+      hudLives.textContent = lives|0;
+      hudSpeed.textContent = (mult).toFixed(1) + "x";
+    }
+
+    function spawnEnemy(){
+      const lane = Math.floor(Math.random()*LANE_COUNT);
+      const w = 46, h = 86;
+      enemies.push({
+        lane,
+        x: laneCenter(lane) - w/2,
+        y: -h - 10,
+        w, h,
+        vy: speed + 2 + Math.random()*2
+      });
+    }
+
+    function spawnCoin(){
+      const lane = Math.floor(Math.random()*LANE_COUNT);
+      coins.push({
+        lane,
+        x: laneCenter(lane),
+        y: -20,
+        r: 12,
+        vy: speed + 1.5
+      });
+    }
+
+    function loop(now){
+      if(!running) return;
+      const dt = Math.min(0.03, (now - last)/1000);
+      last = now;
+
+      if(!paused){
+        update(dt);
+        render();
+      }else{
+        render(); // para mostrar overlay de pausa
+      }
+      requestAnimationFrame(loop);
+    }
+
+    function update(dt){
+      t += dt;
+
+      // dificultad progresiva
+      const target = 1 + Math.min(2.5, t/35);
+      mult += (target - mult)*0.02;
+      speed = 5 * mult;
+
+      // spawns (frecuencia)
+      if(Math.random() < 0.045 * mult) spawnEnemy();
+      if(Math.random() < 0.035 * mult) spawnCoin();
+
+      // líneas
+      for(const ln of lines){
+        ln.y += speed*16*dt;
+        if(ln.y > cv.height + 40) ln.y = -40;
+      }
+
+      // mover enemigos
+      for(const e of enemies) e.y += (e.vy + speed)*10*dt;
+      enemies = enemies.filter(e => e.y < cv.height + 120);
+
+      // mover monedas
+      for(const c of coins) c.y += (c.vy + speed)*10*dt;
+      coins = coins.filter(c => c.y < cv.height + 60);
+
+      // score
+      score += 35 * mult * dt;
+
+      // invencibilidad tras choque
+      if(player.inv > 0) player.inv -= dt;
+
+      // colisiones
+      const px = player.x, py = player.y, pw = player.w, ph = player.h;
+
+      // con autos
+      for(const e of enemies){
+        if(rectHit(px,py,pw,ph, e.x,e.y,e.w,e.h)){
+          if(player.inv <= 0){
+            lives--;
+            player.inv = 1.0;
+            toast("Choque. Pierdes 1 vida.");
+            if(lives <= 0){
+              endRun();
+              return;
+            }
+          }
+        }
+      }
+
+      // con monedas
+      for(let i=coins.length-1;i>=0;i--){
+        const c = coins[i];
+        // hitbox circular vs rect
+        const cx = c.x, cy = c.y, r = c.r;
+        const nearestX = Math.max(px, Math.min(cx, px+pw));
+        const nearestY = Math.max(py, Math.min(cy, py+ph));
+        const dx = cx - nearestX;
+        const dy = cy - nearestY;
+        if((dx*dx + dy*dy) < r*r){
+          coins.splice(i,1);
+          runCoins += 1;
+          score += 20;
+          addXp(4); // XP por moneda
+        }
+      }
+
+      // actualizar HUD
+      syncHUD();
+    }
+
+    function endRun(){
+      running = false;
+      paused = false;
+      btnStart.textContent = "Iniciar";
+
+      // Persistencia: sumar monedas ganadas al wallet
+      addCoins(runCoins);
+
+      // XP adicional por score
+      addXp(Math.floor(score/10));
+
+      // récord
+      const best = getBest();
+      const s = Math.floor(score);
+      if(s > best) {
+        setBest(s);
+        toast("Nuevo récord: " + s);
+      } else {
+        toast("Fin. Score: " + s + " · Monedas: +" + runCoins);
+      }
+
+      render();
+      drawGameOver();
+      renderWallet();
+    }
+
+    function rectHit(ax,ay,aw,ah, bx,by,bw,bh){
+      return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+    }
+
+    function render(){
+      // fondo
+      ctx.clearRect(0,0,cv.width,cv.height);
+
+      // cielo/escena
+      ctx.fillStyle = "rgba(2,6,23,1)";
+      ctx.fillRect(0,0,cv.width,cv.height);
+
+      // carretera
+      ctx.fillStyle = getCss("--road");
+      roundRect(ctx, ROAD.x-22, 0, ROAD.w+44, ROAD.h, 18);
+      ctx.fill();
+
+      // borde
+      ctx.strokeStyle = "rgba(226,232,240,.18)";
+      ctx.lineWidth = 2;
+      roundRect(ctx, ROAD.x-22, 0, ROAD.w+44, ROAD.h, 18);
+      ctx.stroke();
+
+      // líneas carril
+      ctx.strokeStyle = "rgba(226,232,240,.18)";
+      ctx.lineWidth = 2;
+      for(let i=1;i<LANE_COUNT;i++){
+        const x = ROAD.x + laneW*i;
+        ctx.beginPath();
+        ctx.moveTo(x,0);
+        ctx.lineTo(x,cv.height);
+        ctx.stroke();
+      }
+
+      // líneas centro (dash)
+      ctx.fillStyle = "rgba(226,232,240,.55)";
+      for(const ln of lines){
+        for(let i=0;i<LANE_COUNT;i++){
+          const x = ROAD.x + laneW*i + laneW/2 - 5;
+          ctx.globalAlpha = 0.15;
+          ctx.fillRect(x, ln.y, 10, ln.h);
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      // monedas
+      for(const c of coins){
+        drawCoin(c.x, c.y, c.r);
+      }
+
+      // enemigos
+      for(const e of enemies){
+        drawCar(e.x, e.y, e.w, e.h, "enemy");
+      }
+
+      // jugador
+      const blink = player.inv > 0 ? (Math.floor(t*16)%2===0) : false;
+      if(!blink) drawCar(player.x, player.y, player.w, player.h, "player");
+
+      // overlay pausa
+      if(running && paused){
+        ctx.fillStyle = "rgba(2,6,23,.55)";
+        ctx.fillRect(0,0,cv.width,cv.height);
+        drawCenterText("PAUSA", "Presiona ESPACIO o el botón Reanudar");
+      }
+    }
+
+    function drawSplash(){
+      render();
+      ctx.fillStyle = "rgba(2,6,23,.55)";
+      ctx.fillRect(0,0,cv.width,cv.height);
+      drawCenterText("Carrera Turbo", "Inicia y esquiva el tráfico. Monedas se guardan al finalizar.");
+    }
+
+    function drawGameOver(){
+      ctx.fillStyle = "rgba(2,6,23,.62)";
+      ctx.fillRect(0,0,cv.width,cv.height);
+      const s = Math.floor(score);
+      drawCenterText("GAME OVER", `Score: ${s}  ·  Monedas: +${runCoins} (guardadas)`);
+    }
+
+    function drawCenterText(title, subtitle){
+      ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(226,232,240,.95)";
+      ctx.font = "900 44px system-ui";
+      ctx.fillText(title, cv.width/2, cv.height/2 - 18);
+      ctx.fillStyle = "rgba(226,232,240,.75)";
+      ctx.font = "700 16px system-ui";
+      ctx.fillText(subtitle, cv.width/2, cv.height/2 + 22);
+    }
+
+    function drawCar(x,y,w,h,type){
+      // cuerpo
+      ctx.save();
+      ctx.translate(x,y);
+
+      const isPlayer = type==="player";
+      const base = isPlayer ? "rgba(56,189,248,.95)" : "rgba(251,113,133,.92)";
+      const shade = isPlayer ? "rgba(34,197,94,.65)" : "rgba(248,113,113,.6)";
+
+      // sombra
+      ctx.fillStyle = "rgba(0,0,0,.25)";
+      roundRect(ctx, 2, 6, w, h, 14);
+      ctx.fill();
+
+      // carro
+      ctx.fillStyle = base;
+      roundRect(ctx, 0, 0, w, h, 14);
+      ctx.fill();
+
+      // cabina
+      ctx.fillStyle = "rgba(2,6,23,.55)";
+      roundRect(ctx, 8, 10, w-16, 22, 10);
+      ctx.fill();
+
+      // franjas
+      ctx.fillStyle = shade;
+      ctx.globalAlpha = 0.9;
+      roundRect(ctx, w/2 - 4, 36, 8, h-50, 8);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // luces
+      ctx.fillStyle = "rgba(250,204,21,.9)";
+      ctx.fillRect(6, h-14, 10, 6);
+      ctx.fillRect(w-16, h-14, 10, 6);
+
+      ctx.restore();
+    }
+
+    function drawCoin(x,y,r){
+      ctx.save();
+      ctx.translate(x,y);
+      // borde
+      ctx.fillStyle = "rgba(250,204,21,.95)";
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
+      // brillo
+      ctx.fillStyle = "rgba(255,255,255,.22)";
+      ctx.beginPath(); ctx.arc(-r*0.25,-r*0.25,r*0.55,0,Math.PI*2); ctx.fill();
+      // centro
+      ctx.strokeStyle = "rgba(2,6,23,.35)";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0,0,r*0.62,0,Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+
+    function roundRect(c, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      c.beginPath();
+      c.moveTo(x+rr, y);
+      c.arcTo(x+w, y, x+w, y+h, rr);
+      c.arcTo(x+w, y+h, x, y+h, rr);
+      c.arcTo(x, y+h, x, y, rr);
+      c.arcTo(x, y, x+w, y, rr);
+      c.closePath();
+    }
+
+    function getCss(name){
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    /********************
+     * Controles
+     ********************/
+    function moveLane(dir){
+      if(!running || paused) return;
+      player.lane = Math.max(0, Math.min(LANE_COUNT-1, player.lane + dir));
+      player.x = laneCenter(player.lane) - player.w/2;
+    }
+
+    window.addEventListener("keydown", (e) => {
+      const k = e.key.toLowerCase();
+      if(k === "arrowleft" || k === "a") moveLane(-1);
+      if(k === "arrowright" || k === "d") moveLane(1);
+
+      if(k === " "){
+        if(!running) return;
+        paused = !paused;
+        btnStart.textContent = paused ? "Reanudar" : "Pausar";
+        toast(paused ? "Pausa" : "En marcha");
+        e.preventDefault();
+      }
+    });
+
+    /********************
+     * Toast
+     ********************/
+    const toastEl = document.getElementById("toast");
+    let toastTimer = null;
+    function toast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>toastEl.classList.remove("show"), 2400);
+    }
+
+    // Arranque visual
+    reset(true);
+  </script>
+</body>
+</html>

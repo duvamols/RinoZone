@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Registro - Juego Plataforma</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Fuente Lato -->
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Lato", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(#4a90e2, #1a3c6e);
+      color: #1a3c6e;
+    }
+
+    /* Fondo estilo juego (cielo + montañas) */
+    .game-background {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      z-index: -1;
+    }
+
+    .game-background::before,
+    .game-background::after {
+      content: "";
+      position: absolute;
+      width: 180%;
+      height: 60%;
+      left: -40%;
+      border-radius: 50%;
+      background: #3a6ab0;
+      opacity: 0.25;
+    }
+
+    .game-background::before {
+      bottom: 10%;
+    }
+
+    .game-background::after {
+      bottom: -10%;
+      background: #274472;
+      opacity: 0.45;
+    }
+
+    .ground {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background: #f3b34a;
+      box-shadow: 0 -6px 0 #e2922f;
+    }
+
+    .coin {
+      position: absolute;
+      top: 15%;
+      left: 12%;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #fffaa8, #f2c94c 40%, #c98b1c);
+      box-shadow: 0 0 10px rgba(0,0,0,0.25);
+    }
+
+    .coin::after {
+      content: "★";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #8b5a00;
+    }
+
+    /* Tarjeta de registro */
+    .card {
+      width: 100%;
+      max-width: 380px;
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 22px;
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.25);
+      padding: 26px 24px 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffffff, #4a90e2);
+      opacity: 0.3;
+    }
+
+    .avatar-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    .avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffffff, #4a90e2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .avatar span {
+      font-size: 34px;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    .card-title {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #1a3c6e;
+    }
+
+    .card-subtitle {
+      text-align: center;
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 18px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .input-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f5f7fa;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 6px 10px;
+      transition: all 0.18s ease;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: #4a90e2;
+      box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.25);
+      background: #ffffff;
+    }
+
+    .input-icon {
+      font-size: 16px;
+      opacity: 0.7;
+    }
+
+    .field input {
+      border: none;
+      outline: none;
+      width: 100%;
+      background: transparent;
+      font-size: 13px;
+      color: #1e293b;
+    }
+
+    .field input::placeholder {
+      color: #9ca3af;
+    }
+
+    .info-ref {
+      font-size: 11px;
+      color: #0f766e;
+      background: #ecfeff;
+      border-radius: 10px;
+      padding: 6px 8px;
+      margin-bottom: 6px;
+      display: none; /* se muestra solo si hay ref */
+    }
+
+    .buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      border: none;
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4caf50, #2e7d32);
+      color: #ffffff;
+      box-shadow: 0 6px 0 #1b5e20;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 0 #1b5e20;
+    }
+
+    .btn-primary:active {
+      transform: translateY(2px);
+      box-shadow: 0 3px 0 #1b5e20;
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #475569;
+      box-shadow: 0 4px 0 #cbd5e1;
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 0 #cbd5e1;
+    }
+
+    .btn-secondary:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #cbd5e1;
+    }
+
+    .msg {
+      font-size: 12px;
+      margin-top: 8px;
+      min-height: 16px;
+    }
+
+    .msg.error {
+      color: #d9534f;
+    }
+
+    .msg.success {
+      color: #15803d;
+    }
+
+    @media (max-width: 480px) {
+      .card {
+        margin: 16px;
+        padding: 22px 18px 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fondo estilo juego -->
+  <div class="game-background">
+    <div class="coin"></div>
+    <div class="ground"></div>
+  </div>
+
+  <!-- Tarjeta de registro -->
+  <div class="card">
+    <div class="avatar-wrapper">
+      <div class="avatar">
+        <span>🎮</span>
+      </div>
+    </div>
+
+    <h1 class="card-title">Crea tu cuenta</h1>
+    <p class="card-subtitle">Activa tu acceso para empezar a jugar y ganar recompensas.</p>
+
+    <div id="refInfo" class="info-ref"></div>
+
+    <form id="registerForm">
+      <div class="field">
+        <label for="nombre">Nombre completo</label>
+        <div class="input-wrapper">
+          <span class="input-icon">👤</span>
+          <input id="nombre" name="nombre" type="text" placeholder="Ej: Duván Molina" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="username">Usuario</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🏷️</span>
+          <input id="username" name="username" type="text" placeholder="Ej: duvan_gamer" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="email">Correo electrónico</label>
+        <div class="input-wrapper">
+          <span class="input-icon">✉️</span>
+          <input id="email" name="email" type="email" placeholder="tucorreo@ejemplo.com" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="whatsapp">WhatsApp</label>
+        <div class="input-wrapper">
+          <span class="input-icon">📱</span>
+          <input id="whatsapp" name="whatsapp" type="tel" placeholder="Ej: 3001234567" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input id="password" name="password" type="password" placeholder="Mínimo 6 caracteres" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password2">Confirmar contraseña</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input id="password2" name="password2" type="password" placeholder="Repite tu contraseña" required />
+        </div>
+      </div>
+
+      <!-- input oculto para patrocinador (ref de la URL) -->
+      <input type="hidden" id="id_patrocinador" name="id_patrocinador" />
+
+      <div class="buttons">
+        <button type="submit" class="btn btn-primary" id="btnSubmit">
+          Crear cuenta
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="location.reload()">
+          Cancelar
+        </button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+    </form>
+  </div>
+
+  <script>
+    // URL de tu Apps Script
+    const API_URL = "https://script.google.com/macros/s/AKfycbwSyfmUq5hqQEXHjX_026bun0Q6yr0-FGV2n1Bs0VZDE8IjuhHAHF9cD4a16QpYvtaKiA/exec";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get("ref") || "";
+
+      const refInput = document.getElementById("id_patrocinador");
+      const refInfo = document.getElementById("refInfo");
+
+      // Si viene ?ref= en la URL, lo mostramos y lo guardamos
+      if (ref && refInput) {
+        refInput.value = ref;
+        if (refInfo) {
+          refInfo.style.display = "block";
+          refInfo.textContent = "Estás siendo invitado con el código: " + ref;
+        }
+      }
+
+      const form = document.getElementById("registerForm");
+      const msg = document.getElementById("msg");
+      const btn = document.getElementById("btnSubmit");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        msg.textContent = "";
+        msg.className = "msg";
+
+        const nombre = document.getElementById("nombre").value.trim();
+        const username = document.getElementById("username").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const whatsapp = document.getElementById("whatsapp").value.trim();
+        const password = document.getElementById("password").value;
+        const password2 = document.getElementById("password2").value;
+        const id_patrocinador = refInput ? refInput.value.trim() : "";
+
+        if (password.length < 6) {
+          msg.textContent = "La contraseña debe tener al menos 6 caracteres.";
+          msg.classList.add("error");
+          return;
+        }
+
+        if (password !== password2) {
+          msg.textContent = "Las contraseñas no coinciden.";
+          msg.classList.add("error");
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "Creando cuenta...";
+
+        const payload = {
+          action: "register",
+          username: username,
+          nombre_completo: nombre,
+          email: email,
+          whatsapp: whatsapp,
+          password: password,
+          id_patrocinador: id_patrocinador
+        };
+
+        // Igual que en tu otro proyecto: no-cors y sin leer respuesta
+        fetch(API_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        })
+          .then(() => {
+            msg.textContent = "Registro enviado. Revisa tu acceso en unos minutos.";
+            msg.classList.add("success");
+            form.reset();
+            if (refInput) refInput.value = id_patrocinador;
+          })
+          .catch((err) => {
+            console.error(err);
+            msg.textContent = "Hubo un error enviando el registro. Intenta de nuevo.";
+            msg.classList.add("error");
+          })
+          .finally(() => {
+            btn.disabled = false;
+            btn.textContent = "Crear cuenta";
+          });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Panel del jugador</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Lato", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(#4a90e2, #1a3c6e);
+      color: #1a3c6e;
+    }
+
+    .game-background {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      z-index: -1;
+    }
+
+    .game-background::before,
+    .game-background::after {
+      content: "";
+      position: absolute;
+      width: 180%;
+      height: 60%;
+      left: -40%;
+      border-radius: 50%;
+      background: #3a6ab0;
+      opacity: 0.25;
+    }
+
+    .game-background::before {
+      bottom: 10%;
+    }
+
+    .game-background::after {
+      bottom: -10%;
+      background: #274472;
+      opacity: 0.45;
+    }
+
+    .ground {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background: #f3b34a;
+      box-shadow: 0 -6px 0 #e2922f;
+    }
+
+    .panel {
+      width: 100%;
+      max-width: 900px;
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 24px;
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
+      padding: 26px 26px 30px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 780px) {
+      .panel {
+        grid-template-columns: 1fr;
+        margin: 16px;
+      }
+    }
+
+    .panel-header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .panel-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a3c6e;
+    }
+
+    .panel-subtitle {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .btn-logout {
+      border: none;
+      border-radius: 14px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #fee2e2;
+      color: #b91c1c;
+      box-shadow: 0 4px 0 #fecaca;
+    }
+
+    .btn-logout:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 0 #fecaca;
+    }
+
+    .btn-logout:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #fecaca;
+    }
+
+    .card {
+      background: #f8fafc;
+      border-radius: 18px;
+      padding: 16px 16px 18px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #1e293b;
+    }
+
+    .card p {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #ecfdf5;
+      color: #15803d;
+      font-weight: 600;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .stat {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 8px 10px;
+      border: 1px solid #e2e8f0;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .stat-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .timeline {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .timeline strong {
+      color: #1e293b;
+    }
+
+    .progress-bar {
+      margin-top: 8px;
+      width: 100%;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-bar-inner {
+      height: 100%;
+      width: 35%;
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+    }
+
+    .btn-jugar {
+      border: none;
+      border-radius: 14px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(135deg, #4caf50, #2e7d32);
+      color: #ffffff;
+      box-shadow: 0 4px 0 #1b5e20;
+    }
+
+    .btn-jugar:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 0 #1b5e20;
+    }
+
+    .btn-jugar:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #1b5e20;
+    }
+
+    /* Tarjeta a ancho completo para invitaciones */
+    .card-full {
+      grid-column: 1 / -1;
+    }
+
+    .inv-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .inv-input {
+      flex: 1;
+      min-width: 220px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      font-size: 12px;
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    .btn-copy {
+      border: none;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #1d4ed8;
+      color: #ffffff;
+      box-shadow: 0 3px 0 #1e3a8a;
+      white-space: nowrap;
+    }
+
+    .btn-copy:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 0 #1e3a8a;
+    }
+
+    .btn-copy:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #1e3a8a;
+    }
+
+    .inv-hint {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-background">
+    <div class="ground"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title" id="bienvenidaTitulo">Hola, jugador</div>
+        <div class="panel-subtitle">Este es tu panel principal del juego.</div>
+      </div>
+      <button class="btn-logout" id="btnLogout">Cerrar sesión</button>
+    </div>
+
+    <!-- Columna izquierda: info del jugador -->
+    <div class="card">
+      <h3>Perfil del jugador</h3>
+      <p id="textoIdentificador">Cargando datos de tu perfil...</p>
+
+      <span class="badge">
+        🟢 Estado: <span id="estadoMembresia">Registrado</span>
+      </span>
+
+      <div class="timeline">
+        <p><strong>Membresía:</strong> pendiente de activación por pago.</p>
+        <p><strong>Próximo paso:</strong> realiza tus pagos y avisa a tu patrocinador para desbloquear el juego completo.</p>
+      </div>
+    </div>
+
+    <!-- Columna derecha: progreso y juego -->
+    <div class="card">
+      <h3>Progreso en el juego</h3>
+      <p>Cuando empieces a jugar, aquí verás tu nivel, monedas y recompensas.</p>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Nivel</div>
+          <div class="stat-value" id="statNivel">1</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Monedas</div>
+          <div class="stat-value" id="statMonedas">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Referidos</div>
+          <div class="stat-value" id="statReferidos">0</div>
+        </div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-bar-inner" id="barraProgreso"></div>
+      </div>
+
+      <div style="margin-top: 14px; text-align: right;">
+        <button class="btn-jugar" onclick="window.location.href='juego.html'">
+          🎮 Empezar a jugar
+        </button>
+      </div>
+    </div>
+
+    <!-- Tarjeta ancho completo: invitaciones -->
+    <div class="card card-full">
+      <h3>Invitaciones y link personal</h3>
+      <p>
+        Comparte tu enlace para que otras personas se registren con tu usuario
+        como patrocinador. Cuando se inscriban y activen su pago, podrás ganar tu comisión.
+      </p>
+
+      <div class="inv-row">
+        <input
+          type="text"
+          id="invLink"
+          class="inv-input"
+          readonly
+          value="Generando tu enlace..."
+        />
+        <button id="btnCopyLink" class="btn-copy">
+          Copiar enlace
+        </button>
+      </div>
+      <div class="inv-hint" id="invHint">
+        Usa este enlace cuando lo publiques en redes, envíes por WhatsApp o lo compartas con tus contactos.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const rawUser = localStorage.getItem("juego_user");
+      const titulo = document.getElementById("bienvenidaTitulo");
+      const textoIdentificador = document.getElementById("textoIdentificador");
+      const btnLogout = document.getElementById("btnLogout");
+
+      const invLinkInput = document.getElementById("invLink");
+      const btnCopyLink = document.getElementById("btnCopyLink");
+
+      if (!rawUser) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      let user;
+      try {
+        user = JSON.parse(rawUser);
+      } catch {
+        user = null;
+      }
+
+      if (!user || !user.identificador) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      const idTexto = user.identificador;
+      titulo.textContent = "Hola, " + idTexto;
+      textoIdentificador.textContent =
+        "Estás conectado como: " + idTexto +
+        ". Aquí verás tu progreso, tu membresía y tus próximas recompensas.";
+
+      const estadoSpan = document.getElementById("estadoMembresia");
+      estadoSpan.textContent = "Registrado";
+
+      // 🔗 Generar enlace de invitación
+      let baseUrl = "";
+
+      if (window.location.origin === "null" || window.location.origin === "file://") {
+        // Si estás probando desde el PC (doble click al HTML)
+        baseUrl = "index.html";
+      } else {
+        // Cuando lo subas a hosting / GitHub Pages
+        const path = window.location.pathname;
+        const newPath = path.replace("panel.html", "index.html");
+        baseUrl = window.location.origin + newPath;
+      }
+
+      const inviteUrl = baseUrl + "?ref=" + encodeURIComponent(idTexto);
+      invLinkInput.value = inviteUrl;
+
+      // Copiar al portapapeles
+      btnCopyLink.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(inviteUrl);
+          btnCopyLink.textContent = "✔ Copiado";
+          setTimeout(() => {
+            btnCopyLink.textContent = "Copiar enlace";
+          }, 1500);
+        } catch (err) {
+          console.error(err);
+          alert("No se pudo copiar el enlace. Cópialo manualmente.");
+        }
+      });
+
+      // Logout
+      btnLogout.addEventListener("click", () => {
+        localStorage.removeItem("juego_user");
+        window.location.href = "login.html";
+      });
+    });
+  </script>
+</body>
+</html>
