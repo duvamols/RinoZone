@@ -51,7 +51,7 @@
 
     .game-wrapper{
       width:100%;
-      max-width:900px;
+      max-width:1200px;
       background:var(--panel);
       border-radius:24px;
       box-shadow:0 14px 28px rgba(0,0,0,.35);
@@ -127,7 +127,8 @@
       margin-top:6px;
       background:linear-gradient(#1d4ed8, #1e293b);
       border-radius:20px;
-      padding:10px 10px 12px;
+            overflow:hidden;
+padding:10px 10px 12px;
       box-shadow:inset 0 0 0 1px rgba(15,23,42,.4);
       display:flex;
       flex-direction:column;
@@ -137,8 +138,9 @@
     /* Canvas: el tamaño visual lo controla JS (para que en rotate se ajuste perfecto) */
     canvas{
       display:block;
+      margin:0 auto;
       width:100%;
-      max-width:860px;
+      max-width:1160px;
       height:auto;
       border-radius:16px;
       background:linear-gradient(#60a5fa, #0ea5e9);
@@ -336,6 +338,38 @@
       }
     }
 
+  
+    /* iOS Safari: sugerencia para experiencia tipo app (sin barras) */
+    #iosHint{
+      position:absolute;
+      left:12px;
+      right:12px;
+      top:12px;
+      z-index:30;
+      display:none;
+      padding:10px 12px;
+      border-radius:16px;
+      background:rgba(15,23,42,0.92);
+      border:1px solid rgba(56,189,248,0.30);
+      color:#f9fafb;
+      font:700 12px/1.25 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      box-shadow:0 14px 30px rgba(0,0,0,0.35);
+    }
+    #iosHint .row{ display:flex; align-items:flex-start; gap:10px; }
+    #iosHint .ttl{ font-size:13px; font-weight:900; margin-bottom:2px; }
+    #iosHint .mut{ color:rgba(203,213,245,0.92); font-weight:650; }
+    #iosHint .x{
+      margin-left:auto;
+      border:0;
+      background:rgba(255,255,255,0.10);
+      color:#fff;
+      border-radius:10px;
+      padding:6px 8px;
+      font:900 12px system-ui;
+      cursor:pointer;
+      flex:0 0 auto;
+    }
+
   </style>
 </head>
 
@@ -401,6 +435,7 @@
         </div>
       </div>
     </div>
+    <div id="iosHint" style="display:none"></div>
     <button id="fsBtn" type="button">Pantalla completa</button>
   </div>
 
@@ -418,6 +453,38 @@
       const gameContainer = document.getElementById("gameContainer");
       const rotateHint = document.getElementById("rotateHint");
       const fsBtn = document.getElementById("fsBtn");
+
+      const iosHint = document.getElementById("iosHint");
+
+      function isIOS() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      }
+      function isStandalone() {
+        // iOS: navigator.standalone (cuando se abre desde "Añadir a pantalla de inicio")
+        // iPadOS/otros: matchMedia display-mode
+        return (window.navigator.standalone === true) || window.matchMedia("(display-mode: standalone)").matches;
+      }
+      function showIOSHint() {
+        if (!iosHint) return;
+        const vw = window.innerWidth;
+        const isMobile = vw <= 820;
+        if (isIOS() && isMobile && !isStandalone()) {
+          iosHint.style.display = "block";
+          iosHint.innerHTML = `
+            <div class="row">
+              <div>
+                <div class="ttl">iPhone (Safari)</div>
+                <div class="mut">Safari no permite pantalla completa real en la web. Para verlo como app (sin barras), usa: <b>Compartir → Añadir a pantalla de inicio</b> y ábrelo desde ahí.</div>
+              </div>
+              <button class="x" type="button" aria-label="Cerrar">✕</button>
+            </div>
+          `;
+          iosHint.querySelector(".x")?.addEventListener("click", () => (iosHint.style.display = "none"), { once:true });
+        } else {
+          iosHint.style.display = "none";
+        }
+      }
+
 
       const GAME_W = canvas.width;
       const GAME_H = canvas.height;
@@ -441,7 +508,9 @@
         const availH = Math.max(0, containerRect.height - padY - helpH - 8); // 8px gap
 
         // "contain" sin deformar
-        const scale = Math.min(availW / GAME_W, availH / GAME_H);
+        // En landscape móvil usamos "cover" para llenar todo el ancho (recorta un poco arriba/abajo si hace falta)
+        const useCover = (isMobile && isLandscape);
+        const scale = useCover ? Math.max(availW / GAME_W, availH / GAME_H) : Math.min(availW / GAME_W, availH / GAME_H);
 
         const cssW = Math.floor(GAME_W * scale);
         const cssH = Math.floor(GAME_H * scale);
@@ -460,6 +529,7 @@
 
         // If landscape and user already interacted, try fullscreen automatically
         maybeAutoFullscreen();
+        showIOSHint();
         // intenta minimizar barras del navegador
         window.scrollTo(0, 1);
       }
@@ -509,6 +579,7 @@
           userInteracted = true;
           // Try immediately (in case already landscape)
           maybeAutoFullscreen();
+        showIOSHint();
         }
       };
       window.addEventListener("pointerdown", markInteraction, { passive:true, once:false });
@@ -530,6 +601,7 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
 
       // Primera aplicación
       applyFit();
+      showIOSHint();
 
       /* ---------------------------------------------------------
        *  DOM / CANVAS (juego)
