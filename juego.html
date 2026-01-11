@@ -568,6 +568,7 @@
       const startOverlay = document.getElementById("startOverlay");
       const gameOverOverlay = document.getElementById("gameOverOverlay");
       const iosHint = document.getElementById("iosHint");
+      let awaitingLandscapeTap = false;
 
       const GAME_W = canvas.width;
       const GAME_H = canvas.height;
@@ -631,6 +632,18 @@
         // minimize browser bars
         window.scrollTo(0, 1);
         showIOSHint();
+
+        // Fullscreen (Android/Chrome y similares): al girar a horizontal, arma la petición para el próximo toque
+        const vw2 = window.innerWidth, vh2 = window.innerHeight;
+        const isMobile2 = vw2 <= 820;
+        const isLandscape2 = vw2 > vh2;
+        if (isMobile2 && isLandscape2 && !isIOS() && !document.fullscreenElement) {
+          awaitingLandscapeTap = true;
+          // si ya hubo interacción previa, intenta también en caliente
+          maybeAutoFullscreen();
+        } else {
+          awaitingLandscapeTap = false;
+        }
       }
 
       window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true });
@@ -702,9 +715,25 @@
       const SCORE_PER_COIN = 12;
 
       // Progresión: más rápida, pero controlada
-      const POINTS_PER_LEVEL = 320;
+      // Progresión: más emocionante (sube más lento y exige más a medida que avanzas)
+      const BASE_LEVEL_POINTS = 520;      // puntos para pasar de nivel 1→2 (antes 320)
+      const LEVEL_POINTS_STEP = 90;       // cada nivel requiere +step puntos extra
       const BASE_SPEED = 4.8;
       const SPEED_PER_LEVEL = 0.42;
+
+      function computeLevelFromScore(scoreInt){
+        // Serie aritmética acumulada: sum_{k=0..n-2} (BASE + k*STEP)
+        let lvl = 1;
+        let need = BASE_LEVEL_POINTS; // puntos necesarios para llegar al nivel 2
+        let k = 0;
+        while (scoreInt >= need){
+          lvl++;
+          k++;
+          need += (BASE_LEVEL_POINTS + k * LEVEL_POINTS_STEP);
+          if (lvl > 99) break;
+        }
+        return lvl;
+      }
 
       const GROUND_HEIGHT = 52;
       const groundY = H - GROUND_HEIGHT;
@@ -1163,7 +1192,35 @@
         });
       }
 
-      /* ---------------------------------------------------------
+      
+      function updateLevelFromScore(){
+        const scoreInt = Math.floor(state.score);
+        const newLevel = computeLevelFromScore(scoreInt);
+        if (newLevel <= state.level) return;
+
+        state.level = newLevel;
+        state.speed = BASE_SPEED + SPEED_PER_LEVEL * (state.level - 1);
+        state.banner = 140;
+        state.shake = Math.max(state.shake, 10);
+        hudLevel.textContent = String(state.level);
+
+        // feedback visual/sonoro
+        playFx("levelup");
+        emitParticles(player.x + player.w*0.6, player.y + player.h*0.35, 26, {
+          minVx: -2.6, maxVx: 2.6,
+          minVy: -3.2, maxVy: -0.8,
+          minR: 1.0, maxR: 3.2,
+          life: 34,
+          gravity: 0.09,
+          color: "rgba(56,189,248,0.92)"
+        });
+
+        // acelera música levemente con el nivel: reinicio sutil
+        musicStop();
+        if (audioEnabled) musicStart(() => state.level);
+      }
+
+/* ---------------------------------------------------------
        *  SCORING / COMBO
        * --------------------------------------------------------- */
       function setCombo(n){
@@ -1370,14 +1427,25 @@
 
       // Primer interacción global: habilitar audio si el usuario ya lo marcó ON y mejorar fullscreen en Android
       let userInteracted = false;
+
       const markInteraction = () => {
-        if (userInteracted) return;
-        userInteracted = true;
-        // si el usuario quiere sonido, activarlo en el primer gesto
-        if (btnSound.getAttribute("aria-pressed") === "true") enableAudio();
-        maybeAutoFullscreen();
+        // Primer gesto: habilita audio si el usuario ya lo marcó ON
+        if (!userInteracted){
+          userInteracted = true;
+          if (btnSound.getAttribute("aria-pressed") === "true") enableAudio();
+        }
+
+        // Fullscreen: si el usuario está en horizontal (Android/Chrome), el primer toque tras girar dispara fullscreen
+        if (awaitingLandscapeTap){
+          awaitingLandscapeTap = false;
+          requestFullscreenAuto().then(() => setTimeout(applyFit, 60));
+        } else {
+          // si ya está en horizontal y no se intentó aún, intenta automático
+          maybeAutoFullscreen();
+        }
       };
-      window.addEventListener("pointerdown", markInteraction, { passive:true });
+
+      window.addEventListener("pointerdown", markInteraction, { passive:true });, markInteraction, { passive:true });
       window.addEventListener("touchstart", markInteraction, { passive:true });
       window.addEventListener("keydown", markInteraction, { passive:true });
 
@@ -1539,18 +1607,8 @@
 
           vibrate(8);
 
-          // recalcula nivel
-          const newLevel = Math.floor(state.score / POINTS_PER_LEVEL) + 1;
-          if (newLevel > state.level) {
-            state.level = newLevel;
-            state.speed = BASE_SPEED + SPEED_PER_LEVEL * (state.level - 1);
-            state.banner = 120;
-            hudLevel.textContent = String(state.level);
-            playFx("levelup");
-            // acelera música levemente con el nivel: reinicio sutil
-            musicStop();
-            musicStart(() => state.level);
-          }
+          // nivel (se recalcula centralmente)
+          updateLevelFromScore();
         }
       }
 
@@ -1683,6 +1741,7 @@
         updatePlayer();
         updateEntities();
         updateScoreDistance();
+        updateLevelFromScore();
         updateTimers();
 
         checkCoinCollisions();
@@ -1794,76 +1853,149 @@
         ctx.globalAlpha = 1;
       }
 
+      
       function drawPlayer() {
-        // Shadow
-        ctx.fillStyle = "rgba(15,23,42,0.35)";
-        ctx.beginPath();
-        ctx.ellipse(player.x + player.w * 0.5, groundY + 6, player.w * 0.70, 6.5, 0, 0, Math.PI * 2);
-        ctx.fill();
-
+        // Animación: squash/stretch según velocidad vertical
         const x = player.x;
         const y = player.y;
         const w = player.w;
         const h = player.h;
 
-        // Body
-        const body = ctx.createLinearGradient(x, y, x, y + h);
-        body.addColorStop(0, "#34d399");
-        body.addColorStop(1, "#15803d");
+        const vy = player.vy;
+        const t = state.frame * 0.12;
 
-        roundedRectPath(ctx, x, y, w, h, 9);
+        const squash = clamp(1 + (vy * 0.010), 0.86, 1.14);
+        const stretch = clamp(1 - (vy * 0.010), 0.86, 1.22);
+
+        // Shadow
+        ctx.fillStyle = "rgba(15,23,42,0.38)";
+        ctx.beginPath();
+        ctx.ellipse(x + w * 0.52, groundY + 6, (w * 0.78) * stretch, 6.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Trail glow (cuando está en el aire)
+        if (player.y + player.h < groundY - 2) {
+          const glow = ctx.createRadialGradient(x + w * 0.40, y + h * 0.70, 4, x + w * 0.20, y + h * 0.70, 44);
+          glow.addColorStop(0, "rgba(56,189,248,0.20)");
+          glow.addColorStop(0.55, "rgba(167,139,250,0.16)");
+          glow.addColorStop(1, "rgba(56,189,248,0.00)");
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(x + w * 0.35, y + h * 0.70, 44, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // “Runner” futurista: casco + cuerpo + botas
+        ctx.save();
+        ctx.translate(x + w * 0.5, y + h * 0.5);
+        ctx.scale(stretch, squash);
+        ctx.translate(-(x + w * 0.5), -(y + h * 0.5));
+
+        // Body gradient (neón premium)
+        const body = ctx.createLinearGradient(x, y, x + w, y + h);
+        body.addColorStop(0, "#38bdf8");
+        body.addColorStop(0.55, "#a78bfa");
+        body.addColorStop(1, "#22c55e");
+
+        // Main body
+        roundedRectPath(ctx, x, y + 6, w, h - 6, 11);
         ctx.fillStyle = body;
         ctx.fill();
 
-        // highlight
-        const hl = ctx.createLinearGradient(x, y, x + w, y);
-        hl.addColorStop(0, "rgba(255,255,255,0.18)");
-        hl.addColorStop(0.6, "rgba(255,255,255,0.05)");
-        hl.addColorStop(1, "rgba(255,255,255,0.00)");
-        ctx.fillStyle = hl;
-        roundedRectPath(ctx, x + 2, y + 2, w - 4, h - 4, 8);
+        // Helmet (top cap)
+        const helmet = ctx.createLinearGradient(x, y, x, y + 18);
+        helmet.addColorStop(0, "rgba(248,250,252,0.35)");
+        helmet.addColorStop(1, "rgba(15,23,42,0.15)");
+        roundedRectPath(ctx, x + 2, y + 2, w - 4, 18, 10);
+        ctx.fillStyle = helmet;
         ctx.fill();
 
-        // visor
-        ctx.fillStyle = "#ecfeff";
-        roundedRectPath(ctx, x + 6, y + 8, w - 12, 13, 7);
+        // Visor
+        const visor = ctx.createLinearGradient(x, y, x + w, y);
+        visor.addColorStop(0, "rgba(236,254,255,0.95)");
+        visor.addColorStop(1, "rgba(203,213,245,0.70)");
+        roundedRectPath(ctx, x + 5, y + 9, w - 10, 12, 7);
+        ctx.fillStyle = visor;
         ctx.fill();
 
-        ctx.fillStyle = "#0b1224";
+        // “Eyes” sparkle
+        ctx.fillStyle = "rgba(11,18,36,0.88)";
         ctx.beginPath();
-        ctx.arc(x + 13, y + 14, 2.1, 0, Math.PI * 2);
-        ctx.arc(x + 22, y + 14, 2.1, 0, Math.PI * 2);
+        ctx.arc(x + w * 0.38, y + 15, 2.15, 0, Math.PI * 2);
+        ctx.arc(x + w * 0.64, y + 15, 2.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.beginPath();
+        ctx.arc(x + w * 0.40, y + 14, 0.9, 0, Math.PI * 2);
+        ctx.arc(x + w * 0.66, y + 14, 0.9, 0, Math.PI * 2);
         ctx.fill();
 
-        // belt glow
-        ctx.fillStyle = "rgba(56,189,248,0.85)";
-        roundedRectPath(ctx, x + 5, y + 24, w - 10, 4.5, 4);
+        // Chest “coin” emblem
+        const cx = x + w * 0.52;
+        const cy = y + h * 0.60;
+        const rr = 5.6 + 0.9 * Math.sin(t);
+        const emblem = ctx.createRadialGradient(cx, cy, 1, cx, cy, rr + 6);
+        emblem.addColorStop(0, "rgba(250,204,21,0.95)");
+        emblem.addColorStop(0.55, "rgba(250,204,21,0.55)");
+        emblem.addColorStop(1, "rgba(250,204,21,0.00)");
+        ctx.fillStyle = emblem;
+        ctx.beginPath();
+        ctx.arc(cx, cy, rr + 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(250,204,21,0.90)";
+        ctx.beginPath();
+        ctx.arc(cx, cy, rr, 0, Math.PI * 2);
         ctx.fill();
 
-        // shield aura
+        // Belt
+        ctx.fillStyle = "rgba(2,6,23,0.35)";
+        roundedRectPath(ctx, x + 4, y + 27, w - 8, 6, 5);
+        ctx.fill();
+        const beltGlow = ctx.createLinearGradient(x, y, x + w, y);
+        beltGlow.addColorStop(0, "rgba(56,189,248,0.95)");
+        beltGlow.addColorStop(1, "rgba(167,139,250,0.95)");
+        ctx.fillStyle = beltGlow;
+        roundedRectPath(ctx, x + 6, y + 28.3, w - 12, 3.4, 4);
+        ctx.fill();
+
+        // Boots
+        ctx.fillStyle = "rgba(11,18,36,0.82)";
+        roundedRectPath(ctx, x + 4, y + h - 6, w * 0.40, 7.5, 5);
+        ctx.fill();
+        roundedRectPath(ctx, x + w * 0.56, y + h - 6, w * 0.40, 7.5, 5);
+        ctx.fill();
+        ctx.fillStyle = "rgba(56,189,248,0.65)";
+        roundedRectPath(ctx, x + 6, y + h - 4.8, w * 0.36, 2.4, 3);
+        ctx.fill();
+        roundedRectPath(ctx, x + w * 0.58, y + h - 4.8, w * 0.36, 2.4, 3);
+        ctx.fill();
+
+        // Outline
+        ctx.strokeStyle = "rgba(15,23,42,0.46)";
+        ctx.lineWidth = 1.2;
+        roundedRectPath(ctx, x + 0.6, y + 6.6, w - 1.2, h - 7.2, 11);
+        ctx.stroke();
+
+        ctx.restore();
+
+        // Shield aura
         if (state.shield > 0){
-          const t = (state.shield / SHIELD_DURATION_FRAMES);
-          const aura = ctx.createRadialGradient(x+w*0.5, y+h*0.55, 6, x+w*0.5, y+h*0.55, 32);
-          aura.addColorStop(0, `rgba(56,189,248,${0.12 + 0.10*(1-t)})`);
-          aura.addColorStop(0.55, `rgba(167,139,250,${0.10 + 0.10*(1-t)})`);
+          const tt = (state.shield / SHIELD_DURATION_FRAMES);
+          const aura = ctx.createRadialGradient(x+w*0.5, y+h*0.55, 6, x+w*0.5, y+h*0.55, 34);
+          aura.addColorStop(0, `rgba(56,189,248,${0.14 + 0.10*(1-tt)})`);
+          aura.addColorStop(0.55, `rgba(167,139,250,${0.12 + 0.10*(1-tt)})`);
           aura.addColorStop(1, "rgba(56,189,248,0.00)");
           ctx.fillStyle = aura;
           ctx.beginPath();
-          ctx.arc(x+w*0.5, y+h*0.55, 32, 0, Math.PI*2);
+          ctx.arc(x+w*0.5, y+h*0.55, 34, 0, Math.PI*2);
           ctx.fill();
 
-          ctx.strokeStyle = "rgba(56,189,248,0.55)";
+          ctx.strokeStyle = "rgba(56,189,248,0.60)";
           ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.arc(x+w*0.5, y+h*0.55, 22, 0, Math.PI*2);
+          ctx.arc(x+w*0.5, y+h*0.55, 24, 0, Math.PI*2);
           ctx.stroke();
         }
-
-        // outline
-        ctx.strokeStyle = "rgba(15,23,42,0.40)";
-        ctx.lineWidth = 1.2;
-        roundedRectPath(ctx, x + 0.6, y + 0.6, w - 1.2, h - 1.2, 9);
-        ctx.stroke();
       }
 
       function drawCoins() {
