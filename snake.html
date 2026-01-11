@@ -270,51 +270,44 @@
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
     }
 
-    /* Touch controls overlay */
-    .touch-controls{
+    /* Virtual joystick (móvil) */
+    .joystick{
       position:absolute;
-      inset:auto 0 16px 0;
+      left: max(14px, env(safe-area-inset-left));
+      bottom: max(18px, env(safe-area-inset-bottom));
+      width: 150px;
+      height: 150px;
       display:none;
-      justify-content:center;
-      z-index:25;
-      pointer-events:none;
+      z-index:35;
+      pointer-events:auto; /* only this area should capture movement input */
+      touch-action:none;
+      -webkit-user-select:none;
+      user-select:none;
     }
-    .touch-pad{
-      pointer-events:auto;
-      display:grid;
-      grid-template-columns: 52px 52px 52px;
-      grid-template-rows: 52px 52px;
-      gap:10px;
-      padding:10px;
-      border-radius:20px;
-      background: rgba(2,6,23,0.30);
-      border: 1px solid rgba(148,163,184,0.16);
+    .joy-base{
+      position:absolute;
+      inset:0;
+      border-radius:999px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.14);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+      box-shadow: 0 18px 38px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.10);
     }
-    .tbtn{
-      width:52px; height:52px;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.10);
-      color: rgba(248,250,252,0.95);
-      font: 1000 16px/1 system-ui;
-      display:grid;
-      place-items:center;
-      user-select:none;
-      -webkit-user-select:none;
-      touch-action:manipulation;
-      transition: transform .08s ease, filter .08s ease, background .08s ease;
+    .joy-knob{
+      position:absolute;
+      width: 68px;
+      height: 68px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      border-radius:999px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow: 0 14px 26px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.10);
     }
-    .tbtn:active{ transform: translateY(1px) scale(0.98); filter: brightness(1.04); background: rgba(255,255,255,0.14); }
-
-    .tbtn.up{ grid-column:2; grid-row:1; }
-    .tbtn.left{ grid-column:1; grid-row:2; }
-    .tbtn.down{ grid-column:2; grid-row:2; }
-    .tbtn.right{ grid-column:3; grid-row:2; }
-
-    /* Overlays */
+    .joystick:active .joy-base{ background: rgba(255,255,255,0.10); }
+/* Overlays */
     .overlay{
       position:absolute;
       inset:0;
@@ -435,7 +428,7 @@
       }
       .brand p{ display:none; }
       .game-container{ flex:1; min-height:0; }
-      .touch-controls{ display:flex; }
+      .joystick{ display:block; }
     }
 
     @media (max-width: 420px){
@@ -527,17 +520,14 @@
         </div>
 
         <canvas id="gameCanvas" width="900" height="600"></canvas>
-
-        <div class="touch-controls" id="touchControls" aria-label="Controles táctiles">
-          <div class="touch-pad">
-            <button class="tbtn up" data-dir="U" type="button">▲</button>
-            <button class="tbtn left" data-dir="L" type="button">◀</button>
-            <button class="tbtn down" data-dir="D" type="button">▼</button>
-            <button class="tbtn right" data-dir="R" type="button">▶</button>
-          </div>
+        <!-- Virtual Joystick (móvil) -->
+        <div class="joystick" id="joystick" aria-label="Joystick">
+          <div class="joy-base" id="joyBase" aria-hidden="true"></div>
+          <div class="joy-knob" id="joyKnob" aria-hidden="true"></div>
         </div>
 
         <!-- Start overlay -->
+
         <div id="startOverlay" class="overlay show" role="dialog" aria-modal="true">
           <div class="card">
             <div class="icon" aria-hidden="true">🐍</div>
@@ -1078,49 +1068,107 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// Touch controls buttons
-const touchControls = document.getElementById("touchControls");
-touchControls.querySelectorAll(".tbtn").forEach(btn => {
-  const dirKey = btn.dataset.dir;
-  const map = {U:[0,-1],D:[0,1],L:[-1,0],R:[1,0]};
-  const [dx,dy] = map[dirKey];
-  const handler = (e) => {
-    e.preventDefault();
-    audioEnabled = true;
-    setDir(dx,dy);
-    maybeAutoFullscreen();
-  };
-  btn.addEventListener("pointerdown", handler);
-});
+// Virtual joystick (solo móvil). En pantalla, la culebra SOLO se mueve con este joystick.
+const joystick = document.getElementById("joystick");
+const joyBase  = document.getElementById("joyBase");
+const joyKnob  = document.getElementById("joyKnob");
 
-// Swipe fallback (on canvas)
-let touchStart = null;
-canvas.addEventListener("touchstart", (e) => {
-  e.preventDefault();
-  audioEnabled = true;
-  const t = e.touches[0];
-  touchStart = { x: t.clientX, y: t.clientY };
-  maybeAutoFullscreen();
-}, { passive:false });
+let joyActive = false;
+let joyCenter = {x:0,y:0};
+let joyRadius = 0;
+let joyPointerId = null;
+let lastJoyDir = null;
 
-canvas.addEventListener("touchmove", (e) => {
-  e.preventDefault();
-  if(!touchStart) return;
-  const t = e.touches[0];
-  const dx = t.clientX - touchStart.x;
-  const dy = t.clientY - touchStart.y;
+function joyRecalc(){
+  if(!joystick) return;
+  const r = joystick.getBoundingClientRect();
+  joyCenter = { x: r.left + r.width/2, y: r.top + r.height/2 };
+  joyRadius = Math.min(r.width, r.height) * 0.42; // usable radius
+}
+window.addEventListener("resize", () => setTimeout(joyRecalc, 60), { passive:true });
+window.addEventListener("orientationchange", () => setTimeout(joyRecalc, 160), { passive:true });
+document.addEventListener("fullscreenchange", () => setTimeout(joyRecalc, 60), { passive:true });
+setTimeout(joyRecalc, 0);
 
-  if(Math.abs(dx) < 18 && Math.abs(dy) < 18) return;
+function joySetKnob(dx, dy){
+  if(!joyKnob) return;
+  joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+}
 
+function joyDirFromVector(dx, dy){
+  const dead = Math.max(10, joyRadius * 0.22);
+  if(Math.hypot(dx,dy) < dead) return null;
+
+  // choose cardinal direction based on dominant axis
   if(Math.abs(dx) > Math.abs(dy)){
-    setDir(dx > 0 ? 1 : -1, 0);
+    return (dx > 0) ? "R" : "L";
   } else {
-    setDir(0, dy > 0 ? 1 : -1);
+    return (dy > 0) ? "D" : "U";
   }
-  touchStart = null;
-}, { passive:false });
+}
 
-canvas.addEventListener("touchend", () => { touchStart = null; });
+function joyApplyDir(d){
+  if(!d) return;
+  if(d === lastJoyDir) return;
+  lastJoyDir = d;
+
+  audioEnabled = true;
+  maybeAutoFullscreen();
+
+  if(d === "U") setDir(0,-1);
+  if(d === "D") setDir(0, 1);
+  if(d === "L") setDir(-1,0);
+  if(d === "R") setDir(1, 0);
+}
+
+if(joystick){
+  // Prevent movement input from any other surface on mobile:
+  // - We keep canvas touch-action none, but we do NOT attach swipe handlers.
+  joystick.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    joyActive = true;
+    joyPointerId = e.pointerId;
+    joystick.setPointerCapture?.(joyPointerId);
+    joyRecalc();
+
+    const dx0 = e.clientX - joyCenter.x;
+    const dy0 = e.clientY - joyCenter.y;
+    const mag = Math.hypot(dx0, dy0) || 1;
+    const k = Math.min(1, joyRadius / mag);
+    const dx = dx0 * k;
+    const dy = dy0 * k;
+
+    joySetKnob(dx, dy);
+    joyApplyDir(joyDirFromVector(dx0, dy0));
+  });
+
+  joystick.addEventListener("pointermove", (e) => {
+    if(!joyActive || e.pointerId !== joyPointerId) return;
+    e.preventDefault();
+
+    const dx0 = e.clientX - joyCenter.x;
+    const dy0 = e.clientY - joyCenter.y;
+    const mag = Math.hypot(dx0, dy0) || 1;
+    const k = Math.min(1, joyRadius / mag);
+    const dx = dx0 * k;
+    const dy = dy0 * k;
+
+    joySetKnob(dx, dy);
+    joyApplyDir(joyDirFromVector(dx0, dy0));
+  });
+
+  function joyEnd(e){
+    if(!joyActive) return;
+    if(e && e.pointerId !== joyPointerId) return;
+    joyActive = false;
+    joyPointerId = null;
+    lastJoyDir = null;
+    joySetKnob(0,0);
+  }
+
+  joystick.addEventListener("pointerup", joyEnd);
+  joystick.addEventListener("pointercancel", joyEnd);
+}
 
 /* ---------------------------------------------------------
  *  UI actions
