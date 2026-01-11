@@ -442,6 +442,54 @@
       .card{ flex-direction:column; text-align:center; align-items:center; }
       .card .row{ justify-content:center; }
     }
+  
+    /* Landscape mobile + Fullscreen optimizations:
+       - In landscape (mobile), topbar becomes overlay (does not consume vertical space)
+       - In fullscreen, remove paddings/borders so canvas can truly fit the viewport
+    */
+    body.mobile-land .topbar{
+      position:absolute;
+      left:12px;
+      right:12px;
+      top:12px;
+      z-index:30;
+      pointer-events:none;
+    }
+    body.mobile-land .topbar .actions,
+    body.mobile-land .topbar .btn,
+    body.mobile-land .topbar .chip{
+      pointer-events:auto;
+    }
+    body.mobile-land .game-wrapper{ padding-top:84px; } /* reserve just enough so buttons don't cover HUD */
+
+    body.fs{
+      padding:0 !important;
+      overflow:hidden;
+    }
+    body.fs #app{ padding:0 !important; }
+    body.fs .game-wrapper{
+      border-radius:0 !important;
+      box-shadow:none !important;
+      border:0 !important;
+      padding:0 !important;
+      height:100% !important;
+    }
+    body.fs .game-container{
+      border-radius:0 !important;
+      box-shadow:none !important;
+    }
+    body.fs .topbar{
+      position:absolute;
+      left:12px;
+      right:12px;
+      top:12px;
+      z-index:30;
+      pointer-events:none;
+    }
+    body.fs .topbar .actions,
+    body.fs .topbar .btn{ pointer-events:auto; }
+    body.fs .hud-overlay{ top:56px; } /* keep HUD clear from topbar */
+
   </style>
 </head>
 
@@ -603,6 +651,11 @@ function maybeAutoFullscreen(){
 }
 
 function applyFit(){
+  // Use visualViewport when available (mobile browsers with dynamic bars)
+  const vv = window.visualViewport;
+  const vw = vv ? vv.width : window.innerWidth;
+  const vh = vv ? vv.height : window.innerHeight;
+
   const rect = gameContainer.getBoundingClientRect();
   const styles = getComputedStyle(gameContainer);
   const padX = parseFloat(styles.paddingLeft||"0") + parseFloat(styles.paddingRight||"0");
@@ -614,31 +667,38 @@ function applyFit(){
   // IMPORTANT: contain (min), never overflow
   const scale = Math.max(0.1, Math.min(availW / GAME_W, availH / GAME_H));
 
-  canvas.style.width = Math.floor(GAME_W * scale) + "px";
+  canvas.style.width  = Math.floor(GAME_W * scale) + "px";
   canvas.style.height = Math.floor(GAME_H * scale) + "px";
 
-  // Rotate hint: prefer landscape on mobile
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  // Rotate hint + landscape mode class
   const isMobile = Math.min(vw, vh) <= 900;
   const isPortrait = vh > vw;
+  const isLandscape = vw > vh;
+
   rotateHint.classList.toggle("show", (isMobile && isPortrait));
   rotateHint.setAttribute("aria-hidden", rotateHint.classList.contains("show") ? "false" : "true");
 
+  // Make topbar overlay in mobile landscape so it doesn't steal vertical space
+  document.body.classList.toggle("mobile-land", (isMobile && isLandscape && !rotateHint.classList.contains("show")));
+
   // Fullscreen arming in landscape on non-iOS
-  const isLandscape = vw > vh;
   if(isMobile && isLandscape && !isIOS() && !document.fullscreenElement){
     awaitingLandscapeTap = true;
   } else {
     awaitingLandscapeTap = false;
   }
 
+  // Fullscreen class (helps CSS expand canvas area)
+  document.body.classList.toggle("fs", !!document.fullscreenElement);
+
   showIOSHint();
+  // avoid "rubber-band" leaving blank bars
   window.scrollTo(0, 1);
 }
 
 window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true });
 window.addEventListener("orientationchange", () => setTimeout(applyFit, 160), { passive:true });
+if(window.visualViewport){ window.visualViewport.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true }); }
 document.addEventListener("fullscreenchange", () => setTimeout(applyFit, 60));
 document.addEventListener("touchend", () => setTimeout(applyFit, 60), { passive:true });
 
