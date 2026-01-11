@@ -112,7 +112,8 @@
       display:flex;
       align-items:center;
       gap:10px;
-      min-width: 220px;
+      min-width: 0;
+      flex: 1 1 auto;
     }
 
     .logo{
@@ -135,6 +136,10 @@
       font-weight:900;
       letter-spacing:.2px;
       margin-bottom:1px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 44vw;
     }
     .brand p{
       font-size:12px;
@@ -147,9 +152,15 @@
       display:flex;
       align-items:center;
       gap:10px;
-      flex-wrap:wrap;
+      flex-wrap:nowrap;
       justify-content:flex-end;
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:none;
+      max-width: 56vw;
     }
+    .actions::-webkit-scrollbar{ display:none; }
+    .actions .btn{ flex:0 0 auto; }
 
     .chip{
       display:flex;
@@ -540,17 +551,17 @@ canvas{
             <div>
               <h2>Listo para competir</h2>
               <p>
-                Juega rápido. Cada moneda suma, pero la racha es lo que dispara tu puntaje:
-                si encadenas monedas, sube el <b>combo</b> y el multiplicador.
+                Juega rápido. Todo gira en torno a las <b>monedas</b>: recoge, encadena y mantén la racha.
+                Entre más monedas seguidas logres, mayor será el <b>bono</b> de recompensa.
               </p>
               <div class="row">
                 <button class="btn btn-primary" id="btnStart" type="button">▶ Empezar</button>
                 <button class="btn" id="btnHow" type="button">¿Cómo ganar?</button>
               </div>
               <div class="mini" id="howText" style="display:none">
-                • Mantén la racha: recoge monedas antes de que se acabe el temporizador del combo.<br/>
+                • Mantén la racha: recoge monedas sin fallar para sostener el bono.<br/>
                 • Bloques: un choque termina la partida (o consume escudo si lo tienes).<br/>
-                • Mientras más nivel, más velocidad y más patrones.
+                • A mayor tiempo vivo, más velocidad y más patrones.
               </div>
             </div>
           </div>
@@ -1433,7 +1444,7 @@ if (state.combo > 0){
 
       // Share: usa Web Share API si existe, si no, copia al portapapeles
       btnShare.addEventListener("click", async () => {
-        const text = `Mi puntaje en Mundo de Monedas · Turbo: ${Math.floor(state.score)} (Nivel ${state.level}, Monedas ${state.coins}, Récord ${bestCoins})`;
+        const text = `Mis monedas en Mundo de Monedas · Turbo: ${state.coins} · Récord: ${bestCoins}`;
         try{
           if (navigator.share){
             await navigator.share({ title: "Mundo de Monedas · Turbo", text });
