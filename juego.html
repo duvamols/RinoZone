@@ -249,7 +249,7 @@
         linear-gradient(180deg, rgba(2,6,23,0.60), rgba(2,6,23,0.35));
       border-radius:22px;
       overflow:hidden;
-      padding:10px 10px 12px;
+      padding:0;
       box-shadow:
         inset 0 0 0 1px rgba(15,23,42,.35),
         0 20px 40px rgba(0,0,0,0.28);
@@ -259,12 +259,36 @@
       position:relative;
     }
 
-    canvas{
+    
+/* HUD overlay sobre el cielo (no reduce el tamaño del juego) */
+.game-container .topbar,
+.game-container .hudrow{
+  position:absolute;
+  left:12px;
+  right:12px;
+  z-index:8;
+  pointer-events:none; /* el juego sigue recibiendo taps */
+}
+.game-container .topbar{ top:12px; }
+.game-container .hudrow{ top:82px; }
+
+/* Los botones sí deben poder clicarse */
+.game-container .topbar .btn,
+.game-container .topbar button,
+.game-container .hudrow .chip,
+.game-container .hudrow .meter{
+  pointer-events:auto;
+}
+
+/* Oculta la barra de controles para no tapar el juego (se mantiene el botón Reintentar del overlay) */
+.help{ display:none !important; }
+
+canvas{
       display:block;
       margin:0 auto;
       width:100%;
-      max-width:1160px;
-      height:auto;
+      max-width:none;
+      height:100%;
       border-radius:18px;
       background: radial-gradient(820px 260px at 50% 10%, rgba(255,255,255,0.08), transparent 60%),
                   linear-gradient(180deg, #60a5fa, #0ea5e9);
@@ -456,7 +480,8 @@
 <body>
   <div id="app">
     <div class="game-wrapper">
-      <div class="topbar">
+      <div class="game-container" id="gameContainer">
+<div class="topbar">
         <div class="brand" aria-label="Encabezado del juego">
           <div class="logo" aria-hidden="true">MM</div>
           <div>
@@ -488,8 +513,8 @@
         </div>
       </div>
 
-      <div class="game-container" id="gameContainer">
-        <canvas id="gameCanvas" width="840" height="320"></canvas>
+      
+      <canvas id="gameCanvas" width="840" height="320"></canvas>
 
         <div class="help">
           <span>
@@ -614,8 +639,7 @@
         const availW = Math.max(0, containerRect.width - padX);
         const availH = Math.max(0, containerRect.height - padY - helpH - 8);
 
-        const useCover = (isMobile && isLandscape);
-        const scale = useCover ? Math.max(availW / GAME_W, availH / GAME_H) : Math.min(availW / GAME_W, availH / GAME_H);
+        const scale = Math.max(availW / GAME_W, availH / GAME_H);
 
         canvas.style.width = Math.floor(GAME_W * scale) + "px";
         canvas.style.height = Math.floor(GAME_H * scale) + "px";
@@ -694,7 +718,7 @@
        *  PERSISTENCIA (mejor puntaje local)
        * --------------------------------------------------------- */
       const BEST_KEY = "mm_turbo_best";
-      const getBest = () => Number(localStorage.getItem(BEST_KEY) || "0") || 0;
+      const getBest = () => Math.floor(Number(localStorage.getItem(BEST_KEY) || "0")) || 0;
       const setBest = (v) => localStorage.setItem(BEST_KEY, String(v|0));
 
       let bestScore = getBest();
@@ -1413,7 +1437,7 @@
 
       // Share: usa Web Share API si existe, si no, copia al portapapeles
       btnShare.addEventListener("click", async () => {
-        const text = `Mi puntaje en Mundo de Monedas · Turbo: ${state.score} (Nivel ${state.level}, Monedas ${state.coins}, Mejor ${bestScore})`;
+        const text = `Mi puntaje en Mundo de Monedas · Turbo: ${Math.floor(state.score)} (Nivel ${state.level}, Monedas ${state.coins}, Mejor ${bestScore})`;
         try{
           if (navigator.share){
             await navigator.share({ title: "Mundo de Monedas · Turbo", text });
@@ -1594,7 +1618,7 @@
           state.score += Math.floor(SCORE_PER_COIN * state.multiplier);
 
           hudCoins.textContent = String(state.coins);
-          hudScore.textContent = String(state.score);
+          hudScore.textContent = String(Math.floor(state.score));
 
           emitParticles(c.x, c.y, 18, {
             minVx: -2.6, maxVx: 2.6,
@@ -1640,6 +1664,7 @@
 
       function endGame(reason = "hit") {
         state.playing = false;
+        const sInt = Math.floor(state.score);
         btnRestart.style.display = "inline-flex";
 
         // feedback fuerte
@@ -1650,15 +1675,15 @@
         vibrate(80);
 
         // best
-        if (state.score > bestScore){
-          bestScore = state.score;
+        if (sInt > bestScore){
+          bestScore = sInt;
           setBest(bestScore);
           hudBest.textContent = String(bestScore);
         }
 
         // overlay stats
-        goTitle.textContent = (state.score >= bestScore) ? "Nuevo récord" : "Fin de partida";
-        goStats.innerHTML = `Puntaje: <b>${state.score}</b> · Nivel: <b>${state.level}</b> · Monedas: <b>${state.coins}</b> · Mejor: <b>${bestScore}</b>`;
+        goTitle.textContent = (sInt >= bestScore) ? "Nuevo récord" : "Fin de partida";
+        goStats.innerHTML = `Puntaje: <b>${sInt}</b> · Nivel: <b>${state.level}</b> · Monedas: <b>${state.coins}</b> · Mejor: <b>${bestScore}</b>`;
         gameOverOverlay.classList.add("show");
         gameOverOverlay.setAttribute("aria-hidden", "false");
       }
