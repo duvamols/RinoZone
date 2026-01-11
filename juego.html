@@ -6,23 +6,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Mundo de Monedas</title>
+  <title>Mundo de Monedas · Turbo</title>
+
   <style>
     :root{
-      --bg1:#4a90e2;
-      --bg2:#1a3c6e;
-      --panel:#0f172af5;
+      /* Paleta más “gaming premium” (alto contraste + neón controlado) */
+      --bg0:#05060d;
+      --bg1:#0b1020;
+      --bg2:#020617;
+
+      --panel: rgba(15, 23, 42, 0.82);
+      --panel2: rgba(2, 6, 23, 0.55);
+      --stroke: rgba(148, 163, 184, 0.18);
+
+      --text:#f8fafc;
       --muted:#cbd5f5;
-      --text:#f9fafb;
+
       --accent:#38bdf8;
+      --accent2:#a78bfa;
+
       --gold:#facc15;
+      --green:#22c55e;
+      --red:#fb7185;
+      --amber:#f59e0b;
     }
 
     *{
       box-sizing:border-box;
       margin:0;
       padding:0;
-      font-family:"Lato", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
 
     html, body{ height:100%; width:100%; }
@@ -32,16 +45,20 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      background:linear-gradient(var(--bg1), var(--bg2));
       color:var(--text);
       padding:16px;
-      overflow:hidden;           /* evita scroll en móvil */
-      touch-action:none;         /* evita gestos que desplazan */
+      overflow:hidden;
+      touch-action:none;
       -webkit-user-select:none;
       user-select:none;
+
+      background:
+        radial-gradient(1100px 520px at 18% 12%, rgba(56,189,248,0.18), transparent 60%),
+        radial-gradient(900px 500px at 82% 18%, rgba(167,139,250,0.18), transparent 60%),
+        radial-gradient(1000px 600px at 50% 88%, rgba(250,204,21,0.10), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
     }
 
-    /* Contenedor tipo "app" (en móvil ocupa todo) */
     #app{
       position:relative;
       width:100%;
@@ -49,171 +66,339 @@
       justify-content:center;
     }
 
+    /* “App shell” */
     .game-wrapper{
       width:100%;
       max-width:1200px;
-      background:var(--panel);
-      border-radius:24px;
-      box-shadow:0 14px 28px rgba(0,0,0,.35);
-      padding:18px 18px 22px;
+      background: linear-gradient(180deg, var(--panel), rgba(15,23,42,0.68));
+      border:1px solid var(--stroke);
+      border-radius:26px;
+      box-shadow:
+        0 26px 70px rgba(0,0,0,.48),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      padding:16px 16px 18px;
       display:flex;
       flex-direction:column;
       gap:12px;
       position:relative;
       overflow:hidden;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
-    .game-header{
+    /* brillo diagonal sutil */
+    .game-wrapper::before{
+      content:"";
+      position:absolute;
+      inset:-40% -30%;
+      background: linear-gradient(120deg,
+        transparent 35%,
+        rgba(255,255,255,0.05) 46%,
+        transparent 58%);
+      transform: rotate(10deg);
+      pointer-events:none;
+    }
+
+    .topbar{
       display:flex;
       justify-content:space-between;
       align-items:center;
       gap:12px;
+      position:relative;
+      z-index:2;
     }
 
-    .game-header-left h1{
-      font-size:18px;
-      font-weight:800;
-      letter-spacing:.2px;
-    }
-
-    .game-header-left p{
-      font-size:13px;
-      color:var(--muted);
-      line-height:1.25;
-      max-width:520px;
-    }
-
-    .game-header-right{
+    .brand{
       display:flex;
-      flex-direction:column;
-      align-items:flex-end;
-      gap:6px;
+      align-items:center;
+      gap:10px;
+      min-width: 220px;
     }
 
-    .btn-volver{
-      border:none;
+    .logo{
+      width:40px;
+      height:40px;
       border-radius:14px;
-      padding:7px 12px;
-      font-size:13px;
-      font-weight:800;
-      cursor:pointer;
-      background:#e2e8f0;
-      color:#0f172a;
-      box-shadow:0 3px 0 #cbd5e1;
-      transition:transform .12s ease, box-shadow .12s ease;
-      user-select:none;
+      display:grid;
+      place-items:center;
+      background:
+        radial-gradient(20px 20px at 30% 30%, rgba(255,255,255,0.28), transparent 60%),
+        linear-gradient(135deg, rgba(56,189,248,0.95), rgba(167,139,250,0.95));
+      box-shadow: 0 10px 22px rgba(0,0,0,0.35);
+      border:1px solid rgba(255,255,255,0.18);
+      font-weight: 1000;
+      letter-spacing:.4px;
     }
 
-    .btn-volver:hover{
-      transform:translateY(-1px);
-      box-shadow:0 5px 0 #cbd5e1;
+    .brand h1{
+      font-size:16px;
+      font-weight:900;
+      letter-spacing:.2px;
+      margin-bottom:1px;
     }
-    .btn-volver:active{
-      transform:translateY(2px);
-      box-shadow:0 1px 0 #cbd5e1;
+    .brand p{
+      font-size:12px;
+      color: rgba(203,213,245,0.92);
+      line-height:1.25;
+      max-width: 560px;
     }
 
-    .hud{
+    .actions{
       display:flex;
-      gap:12px;
-      font-size:13px;
-      color:#e5e7eb;
+      align-items:center;
+      gap:10px;
       flex-wrap:wrap;
       justify-content:flex-end;
     }
-    .hud span strong{ color:var(--gold); }
+
+    .chip{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:14px;
+      background: rgba(2,6,23,0.45);
+      border:1px solid rgba(148,163,184,0.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+      font-size:12px;
+      font-weight:800;
+      color: rgba(248,250,252,0.95);
+      white-space:nowrap;
+    }
+    .chip b{ color: var(--gold); }
+
+    .btn{
+      border:none;
+      border-radius:14px;
+      padding:9px 12px;
+      font-size:12px;
+      font-weight:900;
+      cursor:pointer;
+      color:var(--text);
+      background: rgba(255,255,255,0.10);
+      border:1px solid rgba(255,255,255,0.14);
+      transition:transform .12s ease, filter .12s ease, background .12s ease;
+      user-select:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .btn:hover{ transform: translateY(-1px); filter: brightness(1.03); background: rgba(255,255,255,0.12); }
+    .btn:active{ transform: translateY(1px); }
+
+    .btn-primary{
+      background: linear-gradient(135deg, rgba(56,189,248,0.92), rgba(167,139,250,0.92));
+      border:1px solid rgba(255,255,255,0.20);
+    }
+
+    .btn-danger{
+      background: linear-gradient(135deg, rgba(251,113,133,0.92), rgba(245,158,11,0.70));
+      border:1px solid rgba(255,255,255,0.18);
+    }
+
+    .btn-volver{
+      background: rgba(226,232,240,0.90);
+      color:#0b1020;
+      border:1px solid rgba(255,255,255,0.35);
+    }
+
+    .hudrow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      position:relative;
+      z-index:2;
+      margin-top:2px;
+    }
+
+    .hud-left, .hud-right{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .meter{
+      width: 220px;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(2,6,23,0.45);
+      border: 1px solid rgba(148,163,184,0.18);
+      overflow:hidden;
+      position:relative;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .meter > i{
+      display:block;
+      height:100%;
+      width:0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(250,204,21,0.95), rgba(56,189,248,0.95), rgba(167,139,250,0.95));
+      box-shadow: 0 0 16px rgba(56,189,248,0.22);
+      transition: width .10s linear;
+    }
 
     .game-container{
       margin-top:6px;
-      background:linear-gradient(#1d4ed8, #1e293b);
-      border-radius:20px;
-            overflow:hidden;
-padding:10px 10px 12px;
-      box-shadow:inset 0 0 0 1px rgba(15,23,42,.4);
+      background:
+        radial-gradient(900px 260px at 50% 0%, rgba(56,189,248,0.14), transparent 60%),
+        linear-gradient(180deg, rgba(2,6,23,0.60), rgba(2,6,23,0.35));
+      border-radius:22px;
+      overflow:hidden;
+      padding:10px 10px 12px;
+      box-shadow:
+        inset 0 0 0 1px rgba(15,23,42,.35),
+        0 20px 40px rgba(0,0,0,0.28);
       display:flex;
       flex-direction:column;
       gap:8px;
+      position:relative;
     }
 
-    /* Canvas: el tamaño visual lo controla JS (para que en rotate se ajuste perfecto) */
     canvas{
       display:block;
       margin:0 auto;
       width:100%;
       max-width:1160px;
       height:auto;
-      border-radius:16px;
-      background:linear-gradient(#60a5fa, #0ea5e9);
+      border-radius:18px;
+      background: radial-gradient(820px 260px at 50% 10%, rgba(255,255,255,0.08), transparent 60%),
+                  linear-gradient(180deg, #60a5fa, #0ea5e9);
       touch-action:none;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
     }
 
+    /* Help overlay */
     .help{
       font-size:12px;
-      color:var(--muted);
-      margin-top:0;
+      color:rgba(203,213,245,0.92);
       display:flex;
       justify-content:space-between;
       align-items:center;
-      gap:8px;
+      gap:10px;
       flex-wrap:wrap;
+      padding:8px 10px;
+      border-radius:16px;
+      background: rgba(2,6,23,0.35);
+      border: 1px solid rgba(148,163,184,0.14);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .help kbd{
+      font: 900 11px/1 system-ui;
+      padding:4px 7px;
+      border-radius:10px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(248,250,252,0.95);
     }
 
     .btn-restart{
-      border:none;
-      border-radius:14px;
-      padding:7px 14px;
-      font-size:12px;
-      font-weight:900;
-      cursor:pointer;
-      background:linear-gradient(135deg,#22c55e,#16a34a);
-      color:var(--text);
-      box-shadow:0 3px 0 #15803d;
       display:none;
-      transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
-      user-select:none;
-    }
-    .btn-restart:hover{
-      transform:translateY(-1px);
-      box-shadow:0 5px 0 #15803d;
-      filter:brightness(1.03);
-    }
-    .btn-restart:active{
-      transform:translateY(2px);
-      box-shadow:0 1px 0 #15803d;
     }
 
-    /* Overlay para sugerir rotación */
-    #rotateHint{
+    /* Overlays (start / rotate / gameover) */
+    .overlay{
       position:absolute;
       inset:0;
       display:none;
       align-items:center;
       justify-content:center;
-      text-align:center;
       padding:24px;
-      background:rgba(0,0,0,0.86);
-      color:#fff;
-      z-index:20;
-      font:700 16px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      z-index:50;
+      background: rgba(0,0,0,0.70);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .overlay.show{ display:flex; }
+
+    .card{
+      width:min(560px, 94vw);
+      border-radius:24px;
+      padding:18px 18px 16px;
+      background: rgba(15,23,42,0.92);
+      border:1px solid rgba(56,189,248,0.26);
+      box-shadow: 0 22px 60px rgba(0,0,0,0.55);
+      text-align:left;
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+    }
+    .card .icon{
+      width:56px;
+      height:56px;
+      border-radius:18px;
+      display:grid;
+      place-items:center;
+      flex: 0 0 auto;
+      background: radial-gradient(20px 20px at 30% 30%, rgba(255,255,255,0.22), transparent 60%),
+                  linear-gradient(135deg, rgba(56,189,248,0.95), rgba(167,139,250,0.95));
+      border:1px solid rgba(255,255,255,0.16);
+    }
+    .card h2{
+      font-size:18px;
+      font-weight:1000;
+      letter-spacing:.2px;
+      margin-bottom:6px;
+    }
+    .card p{
+      font-size:13px;
+      font-weight:650;
+      color: rgba(203,213,245,0.92);
+      line-height:1.35;
+      margin-bottom:10px;
+    }
+    .card .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .card .mini{
+      font-size:12px;
+      color: rgba(203,213,245,0.88);
+      line-height:1.35;
+      margin-top:8px;
     }
 
-    /* Botón de fullscreen (Android/Chrome lo aprovecha; iOS es limitado) */
-    #fsBtn{
+    /* Rotate hint overlay uses same card */
+    #rotateHint{ z-index:60; }
+
+    /* iOS Hint */
+    #iosHint{
       position:absolute;
+      left:12px;
       right:12px;
-      bottom:12px;
-      z-index:21;
+      top:12px;
+      z-index:70;
+      display:none;
       padding:10px 12px;
+      border-radius:16px;
+      background:rgba(15,23,42,0.92);
+      border:1px solid rgba(56,189,248,0.24);
+      color:#f9fafb;
+      font:700 12px/1.25 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      box-shadow:0 14px 30px rgba(0,0,0,0.35);
+    }
+    #iosHint .row{ display:flex; align-items:flex-start; gap:10px; }
+    #iosHint .ttl{ font-size:13px; font-weight:1000; margin-bottom:2px; }
+    #iosHint .mut{ color:rgba(203,213,245,0.92); font-weight:650; }
+    #iosHint .x{
+      margin-left:auto;
       border:0;
-      border-radius:12px;
-      background:rgba(255,255,255,0.14);
+      background:rgba(255,255,255,0.10);
       color:#fff;
-      font:800 13px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      border-radius:10px;
+      padding:6px 8px;
+      font:900 12px system-ui;
       cursor:pointer;
-      display:none; /* se muestra solo en móvil */
+      flex:0 0 auto;
     }
 
-    /* MODO MÓVIL: ocupa toda la pantalla y se comporta tipo app */
+    /* Mobile layout: full screen app */
     @media (max-width: 820px){
       body{
         padding:0;
@@ -233,210 +418,141 @@ padding:10px 10px 12px;
         border-radius:0;
         box-shadow:none;
         padding:12px;
+        border-left:0; border-right:0;
       }
-      .game-header-left p{
-        max-width:none;
-      }
-      .game-container{
-        flex:1;
-      }
-      #fsBtn{ display:block; }
-    }
-  
-    /* Hint card */
-    #rotateHint{
-      display:none; /* JS controls */
-      align-items:center;
-      justify-content:center;
-      text-align:left;
-      padding:24px;
-    }
-    #rotateHint .hint-card{
-      width:min(520px, 92vw);
-      border-radius:22px;
-      padding:18px 18px 16px;
-      background:rgba(15,23,42,0.92);
-      box-shadow:0 18px 40px rgba(0,0,0,0.45);
-      border:1px solid rgba(56,189,248,0.35);
-      display:flex;
-      gap:14px;
-      align-items:center;
-    }
-    #rotateHint .hint-icon{ flex:0 0 auto; }
-    #rotateHint .hint-title{
-      font-size:18px;
-      font-weight:900;
-      letter-spacing:.2px;
-      margin-bottom:4px;
-    }
-    #rotateHint .hint-sub{
-      font-size:14px;
-      font-weight:650;
-      color:rgba(249,250,251,0.92);
-      line-height:1.25;
-      margin-bottom:6px;
-    }
-    #rotateHint .hint-sub2{
-      font-size:12px;
-      font-weight:600;
-      color:rgba(203,213,245,0.90);
-      line-height:1.3;
-    }
-    @media (max-width: 420px){
-      #rotateHint .hint-card{ flex-direction:column; text-align:center; }
+      .brand p{ display:none; } /* gana espacio */
+      .meter{ width: 180px; }
+      .game-container{ flex:1; }
+      .help{ font-size:11px; }
     }
 
-    /* Fullscreen button: hidden by default, only shown if fullscreen fails */
-    #fsBtn{ display:none !important; }
-
-  
-    /* LANDSCAPE MÓVIL: maximiza el área jugable (canvas a lado y lado) */
+    /* Landscape móvil: maximiza canvas */
     @media (max-width: 920px) and (orientation: landscape){
-      .game-wrapper{
-        padding:10px 10px 12px;
-      }
-      .game-header-left p{ display:none; }              /* recorta texto para ganar alto */
-      .game-header-left h1{ font-size:16px; }
-      .hud{ font-size:12px; gap:10px; }
-      .btn-volver{ padding:6px 10px; font-size:12px; border-radius:12px; }
-
-      .game-container{
-        position:relative;
-        padding:8px;                                   /* menos padding para más ancho útil */
-        border-radius:18px;
-      }
-
-      /* La ayuda pasa a overlay (no “quita” altura al canvas) */
-      .game-container .help{
+      .game-wrapper{ padding:10px 10px 12px; }
+      .brand h1{ font-size:14px; }
+      .actions{ gap:8px; }
+      .chip{ padding:7px 9px; font-size:11px; border-radius:13px; }
+      .meter{ width: 200px; }
+      .game-container{ padding:8px; border-radius:18px; }
+      .help{
         position:absolute;
-        left:10px;
-        right:10px;
-        bottom:10px;
+        left:10px; right:10px; bottom:10px;
         margin:0;
-        padding:8px 10px;
-        border-radius:14px;
-        background:rgba(15,23,42,0.55);
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
         font-size:11px;
-        gap:10px;
+        background: rgba(15,23,42,0.46);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
       }
-
-      /* Botón reintentar siempre por encima del overlay */
-      #btnRestart{
-        display:none; /* JS lo muestra cuando corresponde */
-        position:absolute;
-        right:14px;
-        bottom:14px;
-        z-index:5;
-      }
-
-      /* Canvas ocupa el ancho disponible (JS calcula el tamaño exacto) */
-      canvas{
-        max-width:none;
-        border-radius:16px;
-      }
+      canvas{ max-width:none; }
     }
 
-  
-    /* iOS Safari: sugerencia para experiencia tipo app (sin barras) */
-    #iosHint{
-      position:absolute;
-      left:12px;
-      right:12px;
-      top:12px;
-      z-index:30;
-      display:none;
-      padding:10px 12px;
-      border-radius:16px;
-      background:rgba(15,23,42,0.92);
-      border:1px solid rgba(56,189,248,0.30);
-      color:#f9fafb;
-      font:700 12px/1.25 system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      box-shadow:0 14px 30px rgba(0,0,0,0.35);
+    @media (max-width: 420px){
+      .card{ flex-direction:column; text-align:center; align-items:center; }
+      .card .row{ justify-content:center; }
     }
-    #iosHint .row{ display:flex; align-items:flex-start; gap:10px; }
-    #iosHint .ttl{ font-size:13px; font-weight:900; margin-bottom:2px; }
-    #iosHint .mut{ color:rgba(203,213,245,0.92); font-weight:650; }
-    #iosHint .x{
-      margin-left:auto;
-      border:0;
-      background:rgba(255,255,255,0.10);
-      color:#fff;
-      border-radius:10px;
-      padding:6px 8px;
-      font:900 12px system-ui;
-      cursor:pointer;
-      flex:0 0 auto;
-    }
-
   </style>
 </head>
 
 <body>
   <div id="app">
     <div class="game-wrapper">
-      <div class="game-header">
-        <div class="game-header-left">
-          <h1>Mundo de Monedas</h1>
-          <p>Salta, esquiva bloques y recoge monedas. El nivel sube según tu puntaje.</p>
+      <div class="topbar">
+        <div class="brand" aria-label="Encabezado del juego">
+          <div class="logo" aria-hidden="true">MM</div>
+          <div>
+            <h1>Mundo de Monedas · Turbo</h1>
+            <p>Runner competitivo: encadena monedas para multiplicar puntos. Un fallo te corta la racha.</p>
+          </div>
         </div>
 
-        <div class="game-header-right">
-          <button class="btn-volver" onclick="window.location.href='panel.html'">⬅ Volver al panel</button>
-          <div class="hud">
-            <span>Puntaje: <strong id="hudScore">0</strong></span>
-            <span>| Nivel: <strong id="hudLevel">1</strong></span>
-            <span>| Monedas: <strong id="hudCoins">0</strong></span>
-          </div>
+        <div class="actions">
+          <button class="btn btn-volver" id="btnBack" type="button">⬅ Volver</button>
+          <button class="btn" id="btnSound" type="button" aria-pressed="false" title="Activar/Desactivar sonido">🔊 Sonido</button>
+          <button class="btn" id="btnVibrate" type="button" aria-pressed="true" title="Vibración (móvil)">📳 Vibración</button>
+          <button class="btn btn-primary" id="btnStartTop" type="button">▶ Jugar</button>
+        </div>
+      </div>
+
+      <div class="hudrow">
+        <div class="hud-left">
+          <div class="chip">Puntaje: <b id="hudScore">0</b></div>
+          <div class="chip">Mejor: <b id="hudBest">0</b></div>
+          <div class="chip">Nivel: <b id="hudLevel">1</b></div>
+          <div class="chip">Monedas: <b id="hudCoins">0</b></div>
+          <div class="chip">Combo: <b id="hudCombo">x1</b></div>
+        </div>
+
+        <div class="hud-right" aria-label="Medidores">
+          <div class="chip" title="Racha: recoge monedas seguidas para subir multiplicador">Racha</div>
+          <div class="meter" aria-hidden="true"><i id="comboBar"></i></div>
         </div>
       </div>
 
       <div class="game-container" id="gameContainer">
         <canvas id="gameCanvas" width="840" height="320"></canvas>
+
         <div class="help">
-          <span>Controles: barra espaciadora, flecha ↑ o tocar/click para saltar (doble salto).</span>
-          <button id="btnRestart" class="btn-restart">🔄 Reintentar</button>
+          <span>
+            Controles: <kbd>Espacio</kbd> / <kbd>↑</kbd> / tocar para saltar (doble salto).
+            Consejo: encadena monedas sin fallar para subir el multiplicador.
+          </span>
+          <button id="btnRestart" class="btn btn-danger btn-restart" type="button">↻ Reintentar</button>
+        </div>
+
+        <!-- Start overlay -->
+        <div id="startOverlay" class="overlay show" role="dialog" aria-modal="true">
+          <div class="card">
+            <div class="icon" aria-hidden="true">⚡</div>
+            <div>
+              <h2>Listo para competir</h2>
+              <p>
+                Juega rápido. Cada moneda suma, pero la racha es lo que dispara tu puntaje:
+                si encadenas monedas, sube el <b>combo</b> y el multiplicador.
+              </p>
+              <div class="row">
+                <button class="btn btn-primary" id="btnStart" type="button">▶ Empezar</button>
+                <button class="btn" id="btnHow" type="button">¿Cómo ganar?</button>
+              </div>
+              <div class="mini" id="howText" style="display:none">
+                • Mantén la racha: recoge monedas antes de que se acabe el temporizador del combo.<br/>
+                • Bloques: un choque termina la partida (o consume escudo si lo tienes).<br/>
+                • Mientras más nivel, más velocidad y más patrones.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rotate overlay -->
+        <div id="rotateHint" class="overlay" aria-hidden="true">
+          <div class="card">
+            <div class="icon" aria-hidden="true">↔</div>
+            <div>
+              <h2>Gira el teléfono</h2>
+              <p>Para una experiencia más intensa, usa el modo horizontal. Al girar, el juego se ajusta automáticamente.</p>
+              <div class="mini">En iPhone, para verlo tipo app sin barras: Compartir → Añadir a pantalla de inicio.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gameover overlay -->
+        <div id="gameOverOverlay" class="overlay" aria-hidden="true">
+          <div class="card">
+            <div class="icon" aria-hidden="true">🏁</div>
+            <div>
+              <h2 id="goTitle">Fin de partida</h2>
+              <p id="goStats">—</p>
+              <div class="row">
+                <button class="btn btn-primary" id="btnRestart2" type="button">↻ Reintentar</button>
+                <button class="btn" id="btnShare" type="button">📤 Compartir</button>
+              </div>
+              <div class="mini">Tip: si tu combo se cae, prioriza la siguiente moneda para reactivarlo rápido.</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div id="rotateHint">
-      <div class="hint-card">
-        <div class="hint-icon" aria-hidden="true">
-          <!-- Simple "rotate phone" cartoon icon as inline SVG -->
-          <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="g1" x1="20" y1="20" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#38bdf8"/>
-                <stop offset="1" stop-color="#a78bfa"/>
-              </linearGradient>
-              <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
-                <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="rgba(0,0,0,0.35)"/>
-              </filter>
-            </defs>
-            <!-- Phone -->
-            <g filter="url(#sh)">
-              <rect x="40" y="22" width="40" height="70" rx="10" fill="#0f172a" stroke="url(#g1)" stroke-width="3"/>
-              <rect x="47" y="30" width="26" height="48" rx="6" fill="#111827"/>
-              <circle cx="60" cy="82" r="4" fill="#334155"/>
-            </g>
-            <!-- Curved arrows -->
-            <path d="M33 74C27 64 27 51 35 41C43 31 56 27 68 30" stroke="#facc15" stroke-width="6" stroke-linecap="round"/>
-            <path d="M70 21L78 33L63 33" fill="#facc15"/>
-            <path d="M87 47C93 57 93 70 85 80C77 90 64 94 52 91" stroke="#22c55e" stroke-width="6" stroke-linecap="round"/>
-            <path d="M50 100L42 88L57 88" fill="#22c55e"/>
-          </svg>
-        </div>
-        <div class="hint-text">
-          <div class="hint-title">Gira tu teléfono</div>
-          <div class="hint-sub">Para una mejor experiencia, usa el modo horizontal.</div>
-          <div class="hint-sub2">Al girarlo, el juego se ajusta a pantalla completa automáticamente.</div>
-        </div>
-      </div>
-    </div>
     <div id="iosHint" style="display:none"></div>
-    <button id="fsBtn" type="button">Pantalla completa</button>
   </div>
 
   <script>
@@ -444,24 +560,22 @@ padding:10px 10px 12px;
       "use strict";
 
       /* ---------------------------------------------------------
-       *  RESPONSIVE FIT (móvil tipo app)
-       *  - Mantiene resolución interna (840x320)
-       *  - Ajusta el tamaño visual del canvas al espacio disponible
-       *  - Reacciona a rotate/resize/fullscreen
+       *  RESPONSIVE FIT
        * --------------------------------------------------------- */
       const canvas = document.getElementById("gameCanvas");
       const gameContainer = document.getElementById("gameContainer");
       const rotateHint = document.getElementById("rotateHint");
-      const fsBtn = document.getElementById("fsBtn");
-
+      const startOverlay = document.getElementById("startOverlay");
+      const gameOverOverlay = document.getElementById("gameOverOverlay");
       const iosHint = document.getElementById("iosHint");
+
+      const GAME_W = canvas.width;
+      const GAME_H = canvas.height;
 
       function isIOS() {
         return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
       }
       function isStandalone() {
-        // iOS: navigator.standalone (cuando se abre desde "Añadir a pantalla de inicio")
-        // iPadOS/otros: matchMedia display-mode
         return (window.navigator.standalone === true) || window.matchMedia("(display-mode: standalone)").matches;
       }
       function showIOSHint() {
@@ -485,158 +599,134 @@ padding:10px 10px 12px;
         }
       }
 
-
-      const GAME_W = canvas.width;
-      const GAME_H = canvas.height;
-
       function applyFit() {
-        // espacio disponible dentro del contenedor (evita que el canvas tape la ayuda)
         const containerRect = gameContainer.getBoundingClientRect();
-
-        // Calcula alto disponible descontando el bloque .help
         const helpEl = gameContainer.querySelector(".help");
         const isLandscape = window.innerWidth > window.innerHeight;
         const isMobile = window.innerWidth <= 820;
-        // En landscape móvil, la ayuda es overlay (no resta alto al canvas)
+
         const helpH = (isMobile && isLandscape) ? 0 : (helpEl ? helpEl.getBoundingClientRect().height : 0);
-// Padding interno del contenedor (10px arriba/abajo en CSS)
         const styles = getComputedStyle(gameContainer);
         const padY = parseFloat(styles.paddingTop || "0") + parseFloat(styles.paddingBottom || "0");
         const padX = parseFloat(styles.paddingLeft || "0") + parseFloat(styles.paddingRight || "0");
 
         const availW = Math.max(0, containerRect.width - padX);
-        const availH = Math.max(0, containerRect.height - padY - helpH - 8); // 8px gap
+        const availH = Math.max(0, containerRect.height - padY - helpH - 8);
 
-        // "contain" sin deformar
-        // En landscape móvil usamos "cover" para llenar todo el ancho (recorta un poco arriba/abajo si hace falta)
         const useCover = (isMobile && isLandscape);
         const scale = useCover ? Math.max(availW / GAME_W, availH / GAME_H) : Math.min(availW / GAME_W, availH / GAME_H);
 
-        const cssW = Math.floor(GAME_W * scale);
-        const cssH = Math.floor(GAME_H * scale);
+        canvas.style.width = Math.floor(GAME_W * scale) + "px";
+        canvas.style.height = Math.floor(GAME_H * scale) + "px";
 
-        canvas.style.width = cssW + "px";
-        canvas.style.height = cssH + "px";
-
-        // Hint de rotación: preferimos horizontal en móvil
+        // Rotate hint: prefer landscape on mobile
         const vw = window.innerWidth;
         const vh = window.innerHeight;
+        const isPortrait = vh > vw;
         const preferLandscape = true;
 
-        const isPortrait = vh > vw;
-        rotateHint.style.display = (isMobile && preferLandscape && isPortrait) ? "flex" : "none";
+        rotateHint.classList.toggle("show", (isMobile && preferLandscape && isPortrait));
+        rotateHint.setAttribute("aria-hidden", rotateHint.classList.contains("show") ? "false" : "true");
 
-
-        // If landscape and user already interacted, try fullscreen automatically
-        maybeAutoFullscreen();
-        showIOSHint();
-        // intenta minimizar barras del navegador
+        // minimize browser bars
         window.scrollTo(0, 1);
-      }
-
-      let userInteracted = false;
-      let fsAttempted = false;
-
-      async function requestFullscreenAuto(reason = "auto") {
-        const el = document.getElementById("app");
-        // Fullscreen requires user gesture on most browsers; this will fail silently if not allowed.
-        if (!el || document.fullscreenElement) return true;
-        if (!el.requestFullscreen) return false;
-        try {
-          await el.requestFullscreen();
-          return true;
-        } catch (e) {
-          return false;
-        }
-      }
-
-      // We try to go fullscreen automatically AFTER the first user interaction (tap/click/keydown),
-      // and also when rotating to landscape.
-      async function maybeAutoFullscreen() {
-        const vw = window.innerWidth, vh = window.innerHeight;
-        const isMobile = vw <= 820;
-        const isLandscape = vw > vh;
-
-        if (!isMobile) return;
-
-        // Only attempt if we have at least one user interaction (gesture requirement)
-        if (!userInteracted) return;
-
-        // Avoid spamming attempts
-        if (fsAttempted && document.fullscreenElement) return;
-
-        if (isLandscape && !document.fullscreenElement) {
-          fsAttempted = true;
-          const ok = await requestFullscreenAuto("landscape");
-          // If fails, we keep button hidden (per your request) but the game still fits responsively.
-          // If you later want it, we can re-enable the button only on failure.
-        }
-      }
-
-      // Track user interaction (first gesture)
-      const markInteraction = () => {
-        if (!userInteracted) {
-          userInteracted = true;
-          // Try immediately (in case already landscape)
-          maybeAutoFullscreen();
         showIOSHint();
-        }
-      };
-      window.addEventListener("pointerdown", markInteraction, { passive:true, once:false });
-      window.addEventListener("touchstart", markInteraction, { passive:true, once:false });
-      window.addEventListener("keydown", markInteraction, { passive:true, once:false });
-
-      // keep the function for future (not used by UI)
-      async function requestFullscreen() {
-        userInteracted = true;
-        await requestFullscreenAuto("manual");
-        applyFit();
       }
-window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true });
+
+      window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true });
       window.addEventListener("orientationchange", () => setTimeout(applyFit, 160), { passive:true });
       document.addEventListener("fullscreenchange", () => setTimeout(applyFit, 60));
-
-      // iOS: tras la primera interacción a veces cambia el viewport
       window.addEventListener("touchend", () => setTimeout(applyFit, 60), { passive:true });
 
-      // Primera aplicación
       applyFit();
       showIOSHint();
 
       /* ---------------------------------------------------------
-       *  DOM / CANVAS (juego)
+       *  DOM / HUD
        * --------------------------------------------------------- */
       const ctx = canvas.getContext("2d", { alpha: true });
 
       const hudScore = document.getElementById("hudScore");
+      const hudBest = document.getElementById("hudBest");
       const hudLevel = document.getElementById("hudLevel");
       const hudCoins = document.getElementById("hudCoins");
-      const btnRestart = document.getElementById("btnRestart");
+      const hudCombo = document.getElementById("hudCombo");
+      const comboBar = document.getElementById("comboBar");
 
+      const btnRestart = document.getElementById("btnRestart");
+      const btnRestart2 = document.getElementById("btnRestart2");
+
+      const btnBack = document.getElementById("btnBack");
+      const btnSound = document.getElementById("btnSound");
+      const btnVibrate = document.getElementById("btnVibrate");
+      const btnStartTop = document.getElementById("btnStartTop");
+      const btnStart = document.getElementById("btnStart");
+      const btnHow = document.getElementById("btnHow");
+      const howText = document.getElementById("howText");
+      const btnShare = document.getElementById("btnShare");
+
+      const goTitle = document.getElementById("goTitle");
+      const goStats = document.getElementById("goStats");
+
+      btnBack.addEventListener("click", () => {
+        // Mantengo tu comportamiento original, pero robusto
+        window.location.href = "panel.html";
+      });
+
+      btnHow.addEventListener("click", () => {
+        howText.style.display = (howText.style.display === "none") ? "block" : "none";
+      });
+
+      /* ---------------------------------------------------------
+       *  PERSISTENCIA (mejor puntaje local)
+       * --------------------------------------------------------- */
+      const BEST_KEY = "mm_turbo_best";
+      const getBest = () => Number(localStorage.getItem(BEST_KEY) || "0") || 0;
+      const setBest = (v) => localStorage.setItem(BEST_KEY, String(v|0));
+
+      let bestScore = getBest();
+      hudBest.textContent = String(bestScore);
+
+      /* ---------------------------------------------------------
+       *  CONFIG (más competitivo)
+       * --------------------------------------------------------- */
       const W = canvas.width;
       const H = canvas.height;
 
-      /* ---------------------------------------------------------
-       *  CONFIG
-       * --------------------------------------------------------- */
-      const GRAVITY = 1.6;
-      const JUMP_FORCE = 20;
+      const GRAVITY = 1.65;
+      const JUMP_FORCE = 20.2;
       const MAX_JUMPS = 2;
 
-      const SCORE_PER_COIN = 10;
-      const POINTS_PER_LEVEL = 200;
-      const BASE_SPEED = 4.6;
+      // Puntuación: ahora mezcla distancia + monedas, con multiplicador por combo
+      const BASE_DISTANCE_RATE = 0.26;      // pts por frame (escala con speed)
+      const SCORE_PER_COIN = 12;
+
+      // Progresión: más rápida, pero controlada
+      const POINTS_PER_LEVEL = 320;
+      const BASE_SPEED = 4.8;
+      const SPEED_PER_LEVEL = 0.42;
 
       const GROUND_HEIGHT = 52;
       const groundY = H - GROUND_HEIGHT;
 
+      // Combo: ventana de tiempo para encadenar monedas
+      const COMBO_WINDOW_FRAMES = 150; // ~2.5s a 60fps
+      const COMBO_MAX = 12;            // cap por balance
+      const COMBO_TIER = [1,2,3,4,5,6,8,10,12,14,16,18]; // multiplicador por nivel de combo (1..12)
+
+      // Powerups (raros): escudo
+      const POWERUP_EVERY = 520;       // cada N frames en promedio, luego random
+      const POWERUP_CHANCE = 0.55;     // chance cuando toca el frame
+      const SHIELD_DURATION_FRAMES = 360; // 6s
+
+      // Spawn base (se ajusta dinámicamente con nivel)
       const SPAWN = {
         coinEvery: 70,
-        blockEvery: 110
+        blockEvery: 108
       };
 
       /* ---------------------------------------------------------
-       *  SMALL UTILS
+       *  UTILS
        * --------------------------------------------------------- */
       const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
       const rand = (a, b) => a + Math.random() * (b - a);
@@ -657,10 +747,17 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         g.closePath();
       }
 
+      function vibrate(ms){
+        if (!vibrationOn) return;
+        if (navigator.vibrate) navigator.vibrate(ms);
+      }
+
       /* ---------------------------------------------------------
-       *  AUDIO (FX + MUSIC)
+       *  AUDIO (premium + control)
        * --------------------------------------------------------- */
+      let audioEnabled = false;    // se habilita con primer gesto
       let fxCtx = null;
+
       function getFxCtx() {
         if (!fxCtx) {
           const AC = window.AudioContext || window.webkitAudioContext;
@@ -669,7 +766,8 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         return fxCtx;
       }
 
-      function fxBeep(steps, dur = 0.28, vol = 0.18, type = "square") {
+      function fxBeep(steps, dur = 0.22, vol = 0.16, type = "triangle", filterHz = 1800) {
+        if (!audioEnabled) return;
         const ac = getFxCtx();
         if (!ac) return;
 
@@ -678,18 +776,21 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         const now = ac.currentTime;
         const osc = ac.createOscillator();
         const gain = ac.createGain();
+        const filter = ac.createBiquadFilter();
 
         osc.type = type;
-        gain.gain.setValueAtTime(vol, now);
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(filterHz, now);
 
-        osc.connect(gain);
+        gain.gain.setValueAtTime(vol, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+        osc.connect(filter);
+        filter.connect(gain);
         gain.connect(ac.destination);
 
-        for (const s of steps) {
-          osc.frequency.setValueAtTime(s.freq, now + s.time);
-        }
+        for (const s of steps) osc.frequency.setValueAtTime(s.freq, now + s.time);
 
-        gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
         osc.start(now);
         osc.stop(now + dur + 0.02);
       }
@@ -697,19 +798,28 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
       function playFx(kind) {
         switch (kind) {
           case "jump":
-            fxBeep([{ time: 0.00, freq: 440 }, { time: 0.05, freq: 580 }, { time: 0.10, freq: 720 }], 0.25);
+            fxBeep([{ time: 0.00, freq: 520 }, { time: 0.05, freq: 680 }, { time: 0.10, freq: 820 }], 0.18, 0.14, "triangle", 2200);
             break;
           case "coin":
-            fxBeep([{ time: 0.00, freq: 900 }, { time: 0.05, freq: 1100 }, { time: 0.10, freq: 1350 }], 0.22, 0.20);
+            fxBeep([{ time: 0.00, freq: 980 }, { time: 0.05, freq: 1250 }, { time: 0.10, freq: 1560 }], 0.16, 0.16, "triangle", 2800);
+            break;
+          case "combo":
+            fxBeep([{ time: 0.00, freq: 740 }, { time: 0.05, freq: 880 }, { time: 0.10, freq: 1040 }], 0.18, 0.16, "sine", 2600);
+            break;
+          case "power":
+            fxBeep([{ time: 0.00, freq: 420 }, { time: 0.06, freq: 540 }, { time: 0.12, freq: 720 }], 0.22, 0.16, "triangle", 2400);
+            break;
+          case "shieldBreak":
+            fxBeep([{ time: 0.00, freq: 520 }, { time: 0.06, freq: 320 }, { time: 0.12, freq: 220 }], 0.22, 0.17, "square", 1600);
             break;
           case "hit":
-            fxBeep([{ time: 0.00, freq: 400 }, { time: 0.05, freq: 260 }, { time: 0.10, freq: 180 }], 0.26, 0.20);
+            fxBeep([{ time: 0.00, freq: 260 }, { time: 0.05, freq: 190 }, { time: 0.10, freq: 140 }], 0.25, 0.18, "square", 1400);
             break;
           case "levelup":
-            fxBeep([{ time: 0.00, freq: 600 }, { time: 0.06, freq: 800 }, { time: 0.12, freq: 1000 }], 0.28, 0.18);
+            fxBeep([{ time: 0.00, freq: 660 }, { time: 0.07, freq: 880 }, { time: 0.14, freq: 1180 }], 0.22, 0.16, "triangle", 2800);
             break;
           case "lose": {
-            /* Sonido de derrota: caída + “apagón” retro (más largo y con sweep) */
+            if (!audioEnabled) return;
             const ac = getFxCtx();
             if (!ac) return;
             if (ac.state === "suspended") ac.resume();
@@ -721,28 +831,27 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
 
             osc.type = "square";
             filter.type = "lowpass";
-            filter.frequency.setValueAtTime(1800, now);
-            filter.frequency.exponentialRampToValueAtTime(250, now + 0.75);
+            filter.frequency.setValueAtTime(1600, now);
+            filter.frequency.exponentialRampToValueAtTime(220, now + 0.75);
 
-            gain.gain.setValueAtTime(0.22, now);
+            gain.gain.setValueAtTime(0.20, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
 
             osc.connect(filter);
             filter.connect(gain);
             gain.connect(ac.destination);
 
-            osc.frequency.setValueAtTime(520, now);
-            osc.frequency.exponentialRampToValueAtTime(110, now + 0.85);
+            osc.frequency.setValueAtTime(480, now);
+            osc.frequency.exponentialRampToValueAtTime(105, now + 0.85);
 
             osc.start(now);
             osc.stop(now + 0.9);
             break;
           }
-          default:
-            fxBeep([{ time: 0.00, freq: 500 }, { time: 0.07, freq: 650 }], 0.22, 0.14);
         }
       }
 
+      // Música procedural ligera (se acelera levemente con el nivel)
       let musicCtx = null;
       let musicGain = null;
       let musicTimer = null;
@@ -757,22 +866,24 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
       ];
 
       function ensureMusic() {
+        if (!audioEnabled) return;
         const AC = window.AudioContext || window.webkitAudioContext;
         if (!musicCtx) {
           musicCtx = new AC();
           musicGain = musicCtx.createGain();
-          musicGain.gain.value = 0.14;
+          musicGain.gain.value = 0.10;
           musicGain.connect(musicCtx.destination);
         }
       }
 
-      function playNote(freq, dur = 0.28) {
+      function playNote(freq, dur = 0.22) {
+        if (!audioEnabled) return;
         const osc = musicCtx.createOscillator();
         const gain = musicCtx.createGain();
-        osc.type = "square";
+        osc.type = "triangle";
         osc.frequency.setValueAtTime(freq, musicCtx.currentTime);
 
-        gain.gain.setValueAtTime(0.24, musicCtx.currentTime);
+        gain.gain.setValueAtTime(0.18, musicCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, musicCtx.currentTime + dur);
 
         osc.connect(gain);
@@ -787,6 +898,7 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
       }
 
       function musicStart(getLevelFn) {
+        if (!audioEnabled) return;
         ensureMusic();
         if (musicOn) return;
         musicOn = true;
@@ -796,9 +908,9 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
 
         musicTimer = setInterval(() => {
           const melody = melodyForLevel(getLevelFn());
-          playNote(melody[step % melody.length], 0.28);
+          playNote(melody[step % melody.length], 0.22);
           step++;
-        }, 300);
+        }, 250);
       }
 
       function musicStop() {
@@ -818,14 +930,24 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         score: 0,
         coins: 0,
         level: 1,
-        playing: true,
+        playing: false,     // empieza en pausa hasta "Start"
         banner: 0,
-        shake: 0
+        shake: 0,
+
+        // competitivo
+        distance: 0,
+        combo: 0,
+        comboT: 0,          // frames restantes
+        multiplier: 1,
+
+        // powerups
+        shield: 0,          // frames restantes
+        lastCoinFrame: -9999
       };
 
       const player = {
-        x: 90,
-        y: groundY - 40,
+        x: 96,
+        y: groundY - 42,
         w: 34,
         h: 42,
         vy: 0,
@@ -835,6 +957,7 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
 
       const coins = [];
       const blocks = [];
+      const powerups = []; // {x,y,r,type}
       const particles = [];
 
       const layers = {
@@ -855,22 +978,22 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         layers.hillsMid.length = 0;
         layers.hillsNear.length = 0;
 
-        for (let i = 0; i < 46; i++) {
+        for (let i = 0; i < 54; i++) {
           layers.stars.push({
             x: Math.random() * W,
-            y: Math.random() * (H * 0.55),
-            r: rand(0.6, 1.6),
+            y: Math.random() * (H * 0.58),
+            r: rand(0.6, 1.9),
             tw: rand(0.01, 0.03),
-            a: rand(0.35, 0.9)
+            a: rand(0.30, 0.92)
           });
         }
 
         for (let i = 0; i < 7; i++) {
           layers.clouds.push({
             x: rand(0, W),
-            y: rand(18, 110),
-            w: rand(80, 150),
-            h: rand(24, 44),
+            y: rand(16, 108),
+            w: rand(86, 160),
+            h: rand(24, 48),
             s: rand(0.08, 0.18)
           });
         }
@@ -878,27 +1001,27 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         for (let i = 0; i < 5; i++) {
           layers.hillsFar.push({
             x: i * 260,
-            y: groundY - 86 - Math.random() * 40,
+            y: groundY - 92 - Math.random() * 46,
             w: 260,
-            h: 110 + Math.random() * 55
+            h: 116 + Math.random() * 58
           });
         }
 
         for (let i = 0; i < 4; i++) {
           layers.hillsMid.push({
             x: i * 290,
-            y: groundY - 62 - Math.random() * 34,
+            y: groundY - 66 - Math.random() * 36,
             w: 290,
-            h: 84 + Math.random() * 44
+            h: 88 + Math.random() * 46
           });
         }
 
         for (let i = 0; i < 3; i++) {
           layers.hillsNear.push({
             x: i * 330,
-            y: groundY - 44 - Math.random() * 28,
+            y: groundY - 46 - Math.random() * 30,
             w: 330,
-            h: 70 + Math.random() * 40
+            h: 74 + Math.random() * 42
           });
         }
       }
@@ -916,7 +1039,8 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
           maxR = 3.2,
           life = 40,
           gravity = 0.08,
-          drag = 0.985
+          drag = 0.985,
+          color = "#e2e8f0"
         } = cfg;
 
         for (let i = 0; i < count; i++) {
@@ -928,7 +1052,8 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
             life: life + Math.floor(rand(-8, 10)),
             t: 0,
             g: gravity,
-            d: drag
+            d: drag,
+            c: color
           });
         }
       }
@@ -951,7 +1076,7 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
           ctx.globalAlpha = a;
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          ctx.fillStyle = "#e2e8f0";
+          ctx.fillStyle = p.c;
           ctx.fill();
         }
         ctx.globalAlpha = 1;
@@ -960,11 +1085,18 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
       /* ---------------------------------------------------------
        *  SPAWN
        * --------------------------------------------------------- */
+      function dynamicSpawnEvery(base, min, lvl){
+        // reduce interval as level increases; but keep within bounds
+        const k = Math.max(0, lvl - 1);
+        return Math.max(min, Math.floor(base - k * 2.2));
+      }
+
       function spawnCoin() {
         const x = W + 20;
-        let y = groundY - 70 - Math.random() * 70;
-        y = clamp(y, 36, groundY - 54);
+        let y = groundY - 70 - Math.random() * 78;
+        y = clamp(y, 34, groundY - 54);
 
+        // evita monedas “imposibles” pegadas a bloque
         const danger = blocks.some(b => {
           const mx = 120;
           const overlapX = (x - mx) < (b.x + b.w) && (x + mx) > b.x;
@@ -983,31 +1115,106 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
       }
 
       function spawnBlock() {
-        const h = 30 + Math.random() * 22;
-        blocks.push({
-          x: W + 20,
-          y: groundY - h,
-          w: 34 + Math.random() * 26,
-          h,
-          cap: rand(0.2, 0.7)
+        // patrones: normal / alto / doble (intenso pero justo)
+        const pattern = Math.random();
+        const baseH = 30 + Math.random() * 22;
+
+        if (pattern < 0.68){
+          blocks.push({
+            x: W + 20,
+            y: groundY - baseH,
+            w: 34 + Math.random() * 26,
+            h: baseH,
+            kind: "normal"
+          });
+          return;
+        }
+
+        if (pattern < 0.88){
+          const h = 44 + Math.random() * 26;
+          blocks.push({
+            x: W + 20,
+            y: groundY - h,
+            w: 34 + Math.random() * 22,
+            h,
+            kind: "tall"
+          });
+          return;
+        }
+
+        // doble bloque (espacio para pasar con timing)
+        const h1 = baseH;
+        const h2 = 28 + Math.random() * 18;
+        const w1 = 34 + Math.random() * 18;
+        const gap = 42 + Math.random() * 32;
+
+        blocks.push({ x: W + 20, y: groundY - h1, w: w1, h: h1, kind: "normal" });
+        blocks.push({ x: W + 20 + w1 + gap, y: groundY - h2, w: 30 + Math.random() * 18, h: h2, kind: "normal" });
+      }
+
+      function spawnShield() {
+        const x = W + 20;
+        const y = groundY - 95 - Math.random() * 70;
+        powerups.push({
+          x, y: clamp(y, 40, groundY - 80),
+          r: 12,
+          type: "shield",
+          spin: rand(0, Math.PI*2)
         });
       }
 
       /* ---------------------------------------------------------
-       *  RESET
+       *  SCORING / COMBO
        * --------------------------------------------------------- */
-      function resetGame() {
+      function setCombo(n){
+        state.combo = clamp(n, 0, COMBO_MAX);
+        state.multiplier = COMBO_TIER[Math.max(0, state.combo-1)] || 1;
+        hudCombo.textContent = "x" + state.multiplier;
+      }
+
+      function bumpCombo(){
+        // Si estás dentro de ventana, sube; si no, reinicia a 1
+        if (state.comboT > 0) setCombo(state.combo + 1);
+        else setCombo(Math.max(1, state.combo));
+
+        state.comboT = COMBO_WINDOW_FRAMES;
+        playFx(state.combo >= 3 ? "combo" : "coin");
+      }
+
+      function decayCombo(){
+        if (state.comboT > 0){
+          state.comboT--;
+          comboBar.style.width = Math.floor((state.comboT / COMBO_WINDOW_FRAMES) * 100) + "%";
+        } else {
+          comboBar.style.width = "0%";
+          if (state.combo > 0){
+            // “corta” la racha a x1, pero no borra monedas ni puntaje
+            setCombo(1);
+          }
+        }
+      }
+
+      /* ---------------------------------------------------------
+       *  RESET / START
+       * --------------------------------------------------------- */
+      function resetGame(hard = false) {
         state.speed = BASE_SPEED;
         state.frame = 0;
         state.score = 0;
         state.coins = 0;
         state.level = 1;
-        state.playing = true;
         state.banner = 0;
         state.shake = 0;
 
+        state.distance = 0;
+        state.combo = 0;
+        state.comboT = 0;
+        state.multiplier = 1;
+        state.shield = 0;
+
         coins.length = 0;
         blocks.length = 0;
+        powerups.length = 0;
         particles.length = 0;
 
         player.y = groundY - player.h;
@@ -1018,35 +1225,104 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         hudScore.textContent = "0";
         hudLevel.textContent = "1";
         hudCoins.textContent = "0";
-
+        hudCombo.textContent = "x1";
+        comboBar.style.width = "0%";
         btnRestart.style.display = "none";
+
         seedWorld();
         musicStop();
 
-        // importante: recalcular tamaño visual por si cambió el viewport
         applyFit();
+
+        if (hard){
+          // en hard reset, vuelve a overlay
+          state.playing = false;
+          startOverlay.classList.add("show");
+          gameOverOverlay.classList.remove("show");
+          gameOverOverlay.setAttribute("aria-hidden", "true");
+        }
+      }
+
+      function startGame(){
+        if (state.playing) return;
+        state.playing = true;
+        startOverlay.classList.remove("show");
+        // primer gesto habilita audio
+        audioEnabled = audioEnabled || (btnSound.getAttribute("aria-pressed") === "true");
+        if (audioEnabled){
+          playFx("levelup");
+          musicStart(() => state.level);
+        }
       }
 
       /* ---------------------------------------------------------
        *  INPUT
        * --------------------------------------------------------- */
+      let vibrationOn = true;
+
       function doJump() {
+        if (!state.playing) startGame();
         if (!state.playing) return;
         if (player.jumps >= MAX_JUMPS) return;
 
         player.vy = -JUMP_FORCE;
         player.jumps++;
-        playFx("jump");
-        musicStart(() => state.level);
+        if (audioEnabled) playFx("jump");
+        vibrate(10);
 
         emitParticles(player.x + player.w * 0.45, player.y + player.h, 10, {
-          minVx: -1.5, maxVx: 1.5,
-          minVy: -2.4, maxVy: -0.6,
+          minVx: -1.8, maxVx: 1.8,
+          minVy: -2.6, maxVy: -0.7,
           minR: 1.0, maxR: 2.6,
           life: 26,
-          gravity: 0.10
+          gravity: 0.10,
+          color: "rgba(56,189,248,0.92)"
         });
       }
+
+      // Activar sonido requiere gesto: usamos el overlay Start como gesto real
+      function enableAudio(){
+        audioEnabled = true;
+        btnSound.setAttribute("aria-pressed", "true");
+        btnSound.textContent = "🔊 Sonido";
+        // Despierta AudioContext
+        const ac = getFxCtx();
+        if (ac && ac.state === "suspended") ac.resume();
+      }
+
+      btnSound.addEventListener("click", () => {
+        const on = btnSound.getAttribute("aria-pressed") === "true";
+        if (on){
+          btnSound.setAttribute("aria-pressed", "false");
+          btnSound.textContent = "🔇 Silencio";
+          audioEnabled = false;
+          musicStop();
+        } else {
+          enableAudio();
+          btnSound.setAttribute("aria-pressed", "true");
+          btnSound.textContent = "🔊 Sonido";
+          if (state.playing) musicStart(() => state.level);
+          playFx("coin");
+        }
+      });
+
+      btnVibrate.addEventListener("click", () => {
+        vibrationOn = !vibrationOn;
+        btnVibrate.setAttribute("aria-pressed", vibrationOn ? "true" : "false");
+        btnVibrate.textContent = vibrationOn ? "📳 Vibración" : "📴 Sin vibración";
+        if (vibrationOn) vibrate(20);
+      });
+
+      btnStartTop.addEventListener("click", () => {
+        // es un gesto: habilita audio si estaba en ON
+        if (btnSound.getAttribute("aria-pressed") === "true") enableAudio();
+        startGame();
+      });
+
+      btnStart.addEventListener("click", () => {
+        if (btnSound.getAttribute("aria-pressed") === "true") enableAudio();
+        startGame();
+      });
 
       document.addEventListener("keydown", (e) => {
         if (e.code === "Space" || e.code === "ArrowUp") {
@@ -1054,7 +1330,11 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
           doJump();
         }
         if (!state.playing && (e.code === "Enter" || e.code === "KeyR")) {
-          resetGame();
+          resetGame(false);
+          startGame();
+        }
+        if (gameOverOverlay.classList.contains("show") && (e.code === "Enter" || e.code === "KeyR")) {
+          restartFromGameOver();
         }
       });
 
@@ -1064,18 +1344,71 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         doJump();
       }, { passive: false });
 
-      btnRestart.addEventListener("click", resetGame);
+      function restartFromGameOver(){
+        gameOverOverlay.classList.remove("show");
+        gameOverOverlay.setAttribute("aria-hidden", "true");
+        resetGame(false);
+        startGame();
+      }
+
+      btnRestart.addEventListener("click", restartFromGameOver);
+      btnRestart2.addEventListener("click", restartFromGameOver);
+
+      // Share: usa Web Share API si existe, si no, copia al portapapeles
+      btnShare.addEventListener("click", async () => {
+        const text = `Mi puntaje en Mundo de Monedas · Turbo: ${state.score} (Nivel ${state.level}, Monedas ${state.coins}, Mejor ${bestScore})`;
+        try{
+          if (navigator.share){
+            await navigator.share({ title: "Mundo de Monedas · Turbo", text });
+          } else if (navigator.clipboard){
+            await navigator.clipboard.writeText(text);
+            goTitle.textContent = "Copiado";
+            setTimeout(() => (goTitle.textContent = "Fin de partida"), 900);
+          }
+        } catch(_){}
+      });
+
+      // Primer interacción global: habilitar audio si el usuario ya lo marcó ON y mejorar fullscreen en Android
+      let userInteracted = false;
+      const markInteraction = () => {
+        if (userInteracted) return;
+        userInteracted = true;
+        // si el usuario quiere sonido, activarlo en el primer gesto
+        if (btnSound.getAttribute("aria-pressed") === "true") enableAudio();
+        maybeAutoFullscreen();
+      };
+      window.addEventListener("pointerdown", markInteraction, { passive:true });
+      window.addEventListener("touchstart", markInteraction, { passive:true });
+      window.addEventListener("keydown", markInteraction, { passive:true });
+
+      async function requestFullscreenAuto() {
+        if (document.fullscreenElement) return true;
+        const el = document.getElementById("app");
+        if (!el || !el.requestFullscreen) return false;
+        try { await el.requestFullscreen(); return true; } catch(e){ return false; }
+      }
+      let fsAttempted = false;
+      async function maybeAutoFullscreen() {
+        const vw = window.innerWidth, vh = window.innerHeight;
+        const isMobile = vw <= 820;
+        const isLandscape = vw > vh;
+        if (!isMobile || !isLandscape) return;
+        if (isIOS()) return; // iOS limita fullscreen
+        if (!userInteracted) return;
+        if (fsAttempted) return;
+        fsAttempted = true;
+        await requestFullscreenAuto();
+        setTimeout(applyFit, 60);
+      }
 
       /* ---------------------------------------------------------
-       *  UPDATE
+       *  UPDATE WORLD LAYERS
        * --------------------------------------------------------- */
       function updateWorldLayers() {
-        // Stars twinkle (no scroll)
         for (const s of layers.stars) {
           s.a = clamp(s.a + (Math.random() - 0.5) * s.tw, 0.18, 0.95);
         }
 
-        // Clouds slow scroll
         for (const c of layers.clouds) {
           c.x -= state.speed * c.s;
           if (c.x + c.w < -40) {
@@ -1087,7 +1420,6 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
           }
         }
 
-        // Hills parallax
         const moveLayer = (arr, k, yBase, yVar, hBase, hVar, w) => {
           for (const h of arr) {
             h.x -= state.speed * k;
@@ -1100,11 +1432,14 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
           }
         };
 
-        moveLayer(layers.hillsFar, 0.18, groundY - 86, 40, 110, 55, 260);
-        moveLayer(layers.hillsMid, 0.30, groundY - 62, 34, 84, 44, 290);
-        moveLayer(layers.hillsNear, 0.48, groundY - 44, 28, 70, 40, 330);
+        moveLayer(layers.hillsFar, 0.18, groundY - 92, 46, 116, 58, 260);
+        moveLayer(layers.hillsMid, 0.30, groundY - 66, 36, 88, 46, 290);
+        moveLayer(layers.hillsNear, 0.48, groundY - 46, 30, 74, 42, 330);
       }
 
+      /* ---------------------------------------------------------
+       *  ENTITIES / PHYSICS
+       * --------------------------------------------------------- */
       function updatePlayer() {
         if (!state.playing) return;
 
@@ -1115,14 +1450,14 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         if (onGround) {
           if (player.vy > 6) {
             emitParticles(player.x + player.w * 0.45, groundY + 1, 12, {
-              minVx: -1.6, maxVx: 1.6,
-              minVy: -2.2, maxVy: -0.8,
+              minVx: -1.8, maxVx: 1.8,
+              minVy: -2.4, maxVy: -0.9,
               minR: 1.2, maxR: 2.8,
-              life: 24,
-              gravity: 0.12
+              life: 22,
+              gravity: 0.12,
+              color: "rgba(250,204,21,0.92)"
             });
           }
-
           player.y = groundY - player.h;
           player.vy = 0;
           player.jumps = 0;
@@ -1132,23 +1467,37 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
       }
 
       function updateEntities() {
-        // Spawn cadence
-        if (state.frame % SPAWN.coinEvery === 0) spawnCoin();
-        if (state.frame % SPAWN.blockEvery === 0) spawnBlock();
+        // spawn cadence (más intenso con el nivel)
+        const coinEvery = dynamicSpawnEvery(SPAWN.coinEvery, 40, state.level);
+        const blockEvery = dynamicSpawnEvery(SPAWN.blockEvery, 64, state.level);
 
-        // Coins
+        if (state.frame % coinEvery === 0) spawnCoin();
+        if (state.frame % blockEvery === 0) spawnBlock();
+
+        // powerup raro
+        if (state.frame % POWERUP_EVERY === 0 && Math.random() < POWERUP_CHANCE) spawnShield();
+
+        // coins
         for (let i = coins.length - 1; i >= 0; i--) {
           const c = coins[i];
           c.x -= state.speed;
-          c.spin += 0.09;
+          c.spin += 0.11;
           if (c.x < -40) coins.splice(i, 1);
         }
 
-        // Blocks
+        // blocks
         for (let i = blocks.length - 1; i >= 0; i--) {
           const b = blocks[i];
           b.x -= state.speed;
-          if (b.x < -90) blocks.splice(i, 1);
+          if (b.x < -120) blocks.splice(i, 1);
+        }
+
+        // powerups
+        for (let i = powerups.length - 1; i >= 0; i--){
+          const p = powerups[i];
+          p.x -= state.speed;
+          p.spin += 0.10;
+          if (p.x < -80) powerups.splice(i, 1);
         }
       }
 
@@ -1172,31 +1521,88 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
 
           c.collected = true;
           state.coins++;
-          state.score += SCORE_PER_COIN;
+
+          bumpCombo();
+          state.score += Math.floor(SCORE_PER_COIN * state.multiplier);
 
           hudCoins.textContent = String(state.coins);
           hudScore.textContent = String(state.score);
 
-          playFx("coin");
           emitParticles(c.x, c.y, 18, {
-            minVx: -2.4, maxVx: 2.4,
+            minVx: -2.6, maxVx: 2.6,
             minVy: -3.2, maxVy: -1.0,
-            minR: 1.0, maxR: 3.0,
-            life: 32,
-            gravity: 0.09
+            minR: 1.0, maxR: 3.2,
+            life: 30,
+            gravity: 0.09,
+            color: "rgba(250,204,21,0.96)"
           });
 
+          vibrate(8);
+
+          // recalcula nivel
           const newLevel = Math.floor(state.score / POINTS_PER_LEVEL) + 1;
           if (newLevel > state.level) {
             state.level = newLevel;
-            state.speed += 0.55;
+            state.speed = BASE_SPEED + SPEED_PER_LEVEL * (state.level - 1);
             state.banner = 120;
             hudLevel.textContent = String(state.level);
             playFx("levelup");
+            // acelera música levemente con el nivel: reinicio sutil
             musicStop();
             musicStart(() => state.level);
           }
         }
+      }
+
+      function checkPowerupCollisions(){
+        const px = player.x + player.w * 0.5;
+        const py = player.y + player.h * 0.5;
+
+        for (let i = powerups.length - 1; i >= 0; i--){
+          const p = powerups[i];
+          const hit = circleHit(px, py, 15, p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+          if (!hit) continue;
+
+          powerups.splice(i, 1);
+          if (p.type === "shield"){
+            state.shield = SHIELD_DURATION_FRAMES;
+            playFx("power");
+            emitParticles(px, py, 22, {
+              minVx: -2.8, maxVx: 2.8,
+              minVy: -3.0, maxVy: -0.6,
+              minR: 1.0, maxR: 3.0,
+              life: 34,
+              gravity: 0.08,
+              color: "rgba(56,189,248,0.92)"
+            });
+            vibrate(14);
+          }
+        }
+      }
+
+      function endGame(reason = "hit") {
+        state.playing = false;
+        btnRestart.style.display = "inline-flex";
+
+        // feedback fuerte
+        state.shake = 18;
+        playFx("hit");
+        playFx("lose");
+        musicStop();
+        vibrate(80);
+
+        // best
+        if (state.score > bestScore){
+          bestScore = state.score;
+          setBest(bestScore);
+          hudBest.textContent = String(bestScore);
+        }
+
+        // overlay stats
+        goTitle.textContent = (state.score >= bestScore) ? "Nuevo récord" : "Fin de partida";
+        goStats.innerHTML = `Puntaje: <b>${state.score}</b> · Nivel: <b>${state.level}</b> · Monedas: <b>${state.coins}</b> · Mejor: <b>${bestScore}</b>`;
+        gameOverOverlay.classList.add("show");
+        gameOverOverlay.setAttribute("aria-hidden", "false");
       }
 
       function checkBlockCollisions() {
@@ -1209,45 +1615,85 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
 
           if (!hit) continue;
 
-          state.playing = false;
-          btnRestart.style.display = "inline-block";
+          if (state.shield > 0){
+            // Consume shield, push player a bit back and continue
+            state.shield = 0;
+            state.shake = 10;
+            playFx("shieldBreak");
+            emitParticles(player.x + player.w*0.5, player.y + player.h*0.6, 26, {
+              minVx: -3.2, maxVx: 3.2,
+              minVy: -3.2, maxVy: -0.6,
+              minR: 1.0, maxR: 3.4,
+              life: 38,
+              gravity: 0.10,
+              color: "rgba(167,139,250,0.92)"
+            });
+            // penaliza combo
+            setCombo(1);
+            state.comboT = 0;
+            // leve “knock”
+            player.vy = -10;
+            vibrate(40);
+            return;
+          }
 
-          // feedback fuerte
-          state.shake = 18;
-          playFx("hit");
-          playFx("lose");
-          musicStop();
-
-          emitParticles(player.x + player.w * 0.55, player.y + player.h * 0.55, 28, {
-            minVx: -3.0, maxVx: 3.0,
+          // sin shield: termina
+          emitParticles(player.x + player.w * 0.55, player.y + player.h * 0.55, 30, {
+            minVx: -3.2, maxVx: 3.2,
             minVy: -3.2, maxVy: -0.6,
-            minR: 1.2, maxR: 3.4,
+            minR: 1.2, maxR: 3.6,
             life: 42,
-            gravity: 0.10
+            gravity: 0.10,
+            color: "rgba(251,113,133,0.92)"
           });
+
+          endGame("hit");
           break;
         }
       }
 
+      function updateScoreDistance(){
+        // suma por distancia, escalado con speed y multiplicador (siente competitivo)
+        const add = (BASE_DISTANCE_RATE * state.speed) * state.multiplier;
+        state.distance += state.speed;
+        state.score += add;
+        // normaliza a entero para HUD
+        const s = Math.floor(state.score);
+        hudScore.textContent = String(s);
+      }
+
+      function updateTimers(){
+        if (state.shield > 0) state.shield--;
+        decayCombo();
+      }
+
+      /* ---------------------------------------------------------
+       *  UPDATE LOOP
+       * --------------------------------------------------------- */
       function update() {
         state.frame++;
 
         if (state.shake > 0) state.shake--;
 
         updateWorldLayers();
-        if (state.playing) {
-          updatePlayer();
-          updateEntities();
-          checkCoinCollisions();
-          checkBlockCollisions();
-          if (state.banner > 0) state.banner--;
-        }
-
         updateParticles();
+
+        if (!state.playing) return;
+
+        updatePlayer();
+        updateEntities();
+        updateScoreDistance();
+        updateTimers();
+
+        checkCoinCollisions();
+        checkPowerupCollisions();
+        checkBlockCollisions();
+
+        if (state.banner > 0) state.banner--;
       }
 
       /* ---------------------------------------------------------
-       *  DRAW (ENHANCED LOOK)
+       *  DRAW (impactante + competitivo)
        * --------------------------------------------------------- */
       function applyShake() {
         if (state.shake <= 0) return { x: 0, y: 0 };
@@ -1260,16 +1706,27 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
 
       function drawSky() {
         const grad = ctx.createLinearGradient(0, 0, 0, H);
-        grad.addColorStop(0, "#78b6ff");
-        grad.addColorStop(0.55, "#1d4ed8");
-        grad.addColorStop(1, "#0b1224");
+        grad.addColorStop(0, "#7cc3ff");
+        grad.addColorStop(0.52, "#1d4ed8");
+        grad.addColorStop(1, "#070b18");
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
-        // Soft vignette
-        const v = ctx.createRadialGradient(W * 0.5, H * 0.4, 60, W * 0.5, H * 0.5, 520);
+        // auroras / neón suave
+        const a1 = ctx.createRadialGradient(W*0.22, H*0.22, 30, W*0.22, H*0.22, 420);
+        a1.addColorStop(0, "rgba(56,189,248,0.20)");
+        a1.addColorStop(1, "rgba(56,189,248,0.00)");
+        ctx.fillStyle = a1; ctx.fillRect(0,0,W,H);
+
+        const a2 = ctx.createRadialGradient(W*0.82, H*0.28, 30, W*0.82, H*0.28, 440);
+        a2.addColorStop(0, "rgba(167,139,250,0.18)");
+        a2.addColorStop(1, "rgba(167,139,250,0.00)");
+        ctx.fillStyle = a2; ctx.fillRect(0,0,W,H);
+
+        // vignette
+        const v = ctx.createRadialGradient(W * 0.5, H * 0.45, 60, W * 0.5, H * 0.5, 560);
         v.addColorStop(0, "rgba(255,255,255,0.06)");
-        v.addColorStop(1, "rgba(0,0,0,0.22)");
+        v.addColorStop(1, "rgba(0,0,0,0.24)");
         ctx.fillStyle = v;
         ctx.fillRect(0, 0, W, H);
       }
@@ -1287,7 +1744,7 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
 
       function drawClouds() {
         for (const c of layers.clouds) {
-          ctx.globalAlpha = 0.22;
+          ctx.globalAlpha = 0.18;
           ctx.fillStyle = "#e2e8f0";
           ctx.beginPath();
           ctx.ellipse(c.x, c.y, c.w * 0.42, c.h * 0.50, 0, 0, Math.PI * 2);
@@ -1299,7 +1756,7 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
       }
 
       function drawHills(arr, fillA, fillB) {
-        const g = ctx.createLinearGradient(0, groundY - 120, 0, groundY + 20);
+        const g = ctx.createLinearGradient(0, groundY - 140, 0, groundY + 20);
         g.addColorStop(0, fillA);
         g.addColorStop(1, fillB);
         ctx.fillStyle = g;
@@ -1314,10 +1771,9 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
       }
 
       function drawGround() {
-        // base
         const g = ctx.createLinearGradient(0, groundY, 0, H);
-        g.addColorStop(0, "#f6c04c");
-        g.addColorStop(1, "#b45309");
+        g.addColorStop(0, "#f7c96a");
+        g.addColorStop(1, "#9a3412");
         ctx.fillStyle = g;
         ctx.fillRect(0, groundY, W, H - groundY);
 
@@ -1325,7 +1781,7 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         ctx.fillStyle = "rgba(15,23,42,0.20)";
         ctx.fillRect(0, groundY, W, 6);
 
-        // subtle texture dots
+        // texture
         ctx.globalAlpha = 0.18;
         ctx.fillStyle = "#7c2d12";
         for (let i = 0; i < 70; i++) {
@@ -1350,27 +1806,27 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         const w = player.w;
         const h = player.h;
 
-        // Body with highlight
+        // Body
         const body = ctx.createLinearGradient(x, y, x, y + h);
         body.addColorStop(0, "#34d399");
         body.addColorStop(1, "#15803d");
 
-        roundedRectPath(ctx, x, y, w, h, 8);
+        roundedRectPath(ctx, x, y, w, h, 9);
         ctx.fillStyle = body;
         ctx.fill();
 
-        // Specular highlight
+        // highlight
         const hl = ctx.createLinearGradient(x, y, x + w, y);
         hl.addColorStop(0, "rgba(255,255,255,0.18)");
         hl.addColorStop(0.6, "rgba(255,255,255,0.05)");
         hl.addColorStop(1, "rgba(255,255,255,0.00)");
         ctx.fillStyle = hl;
-        roundedRectPath(ctx, x + 2, y + 2, w - 4, h - 4, 7);
+        roundedRectPath(ctx, x + 2, y + 2, w - 4, h - 4, 8);
         ctx.fill();
 
-        // Visor
+        // visor
         ctx.fillStyle = "#ecfeff";
-        roundedRectPath(ctx, x + 6, y + 8, w - 12, 13, 6);
+        roundedRectPath(ctx, x + 6, y + 8, w - 12, 13, 7);
         ctx.fill();
 
         ctx.fillStyle = "#0b1224";
@@ -1379,15 +1835,34 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         ctx.arc(x + 22, y + 14, 2.1, 0, Math.PI * 2);
         ctx.fill();
 
-        // Belt
+        // belt glow
         ctx.fillStyle = "rgba(56,189,248,0.85)";
         roundedRectPath(ctx, x + 5, y + 24, w - 10, 4.5, 4);
         ctx.fill();
 
-        // Outline
+        // shield aura
+        if (state.shield > 0){
+          const t = (state.shield / SHIELD_DURATION_FRAMES);
+          const aura = ctx.createRadialGradient(x+w*0.5, y+h*0.55, 6, x+w*0.5, y+h*0.55, 32);
+          aura.addColorStop(0, `rgba(56,189,248,${0.12 + 0.10*(1-t)})`);
+          aura.addColorStop(0.55, `rgba(167,139,250,${0.10 + 0.10*(1-t)})`);
+          aura.addColorStop(1, "rgba(56,189,248,0.00)");
+          ctx.fillStyle = aura;
+          ctx.beginPath();
+          ctx.arc(x+w*0.5, y+h*0.55, 32, 0, Math.PI*2);
+          ctx.fill();
+
+          ctx.strokeStyle = "rgba(56,189,248,0.55)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(x+w*0.5, y+h*0.55, 22, 0, Math.PI*2);
+          ctx.stroke();
+        }
+
+        // outline
         ctx.strokeStyle = "rgba(15,23,42,0.40)";
         ctx.lineWidth = 1.2;
-        roundedRectPath(ctx, x + 0.6, y + 0.6, w - 1.2, h - 1.2, 8);
+        roundedRectPath(ctx, x + 0.6, y + 0.6, w - 1.2, h - 1.2, 9);
         ctx.stroke();
       }
 
@@ -1395,7 +1870,7 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         for (const c of coins) {
           if (c.collected) continue;
 
-          const scale = 0.68 + 0.32 * Math.abs(Math.sin(c.spin));
+          const scale = 0.66 + 0.34 * Math.abs(Math.sin(c.spin));
           const rx = c.r * scale;
           const ry = c.r;
 
@@ -1403,10 +1878,10 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
           ctx.translate(c.x, c.y);
 
           // glow
-          ctx.globalAlpha = 0.28 + c.glow * 0.25;
+          ctx.globalAlpha = 0.26 + c.glow * 0.28;
           ctx.beginPath();
-          ctx.ellipse(0, 0, rx + 8, ry + 8, 0, 0, Math.PI * 2);
-          ctx.fillStyle = "#fde047";
+          ctx.ellipse(0, 0, rx + 10, ry + 10, 0, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(250,204,21,0.95)";
           ctx.fill();
           ctx.globalAlpha = 1;
 
@@ -1420,16 +1895,14 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
           ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
           ctx.fill();
 
-          // inner ring
           ctx.strokeStyle = "rgba(0,0,0,0.22)";
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.ellipse(0, 0, rx - 2.6, ry - 2.6, 0, 0, Math.PI * 2);
           ctx.stroke();
 
-          // icon
           ctx.fillStyle = "#78350f";
-          ctx.font = "12px Lato";
+          ctx.font = "12px system-ui";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           ctx.fillText("★", 0, 1);
@@ -1438,21 +1911,73 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         }
       }
 
+      function drawPowerups(){
+        for (const p of powerups){
+          ctx.save();
+          ctx.translate(p.x, p.y);
+
+          const scale = 0.70 + 0.30*Math.abs(Math.sin(p.spin));
+          const r = p.r;
+
+          // glow
+          ctx.globalAlpha = 0.28;
+          ctx.beginPath();
+          ctx.arc(0, 0, r + 10, 0, Math.PI*2);
+          ctx.fillStyle = "rgba(56,189,248,0.95)";
+          ctx.fill();
+          ctx.globalAlpha = 1;
+
+          const g = ctx.createRadialGradient(-4,-4,2,0,0,r+7);
+          g.addColorStop(0, "rgba(255,255,255,0.90)");
+          g.addColorStop(0.40, "rgba(56,189,248,0.95)");
+          g.addColorStop(1, "rgba(30,64,175,0.95)");
+
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(0,0,r*scale,0,Math.PI*2);
+          ctx.fill();
+
+          ctx.strokeStyle = "rgba(15,23,42,0.40)";
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.arc(0,0,r*scale,0,Math.PI*2);
+          ctx.stroke();
+
+          ctx.fillStyle = "rgba(255,255,255,0.95)";
+          ctx.font = "900 12px system-ui";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("⛨", 0, 1);
+
+          ctx.restore();
+        }
+      }
+
       function drawBlocks() {
         for (const b of blocks) {
           const g = ctx.createLinearGradient(b.x, b.y, b.x, b.y + b.h);
-          g.addColorStop(0, "#fb7185");
-          g.addColorStop(1, "#7f1d1d");
+          g.addColorStop(0, "rgba(251,113,133,0.98)");
+          g.addColorStop(1, "rgba(127,29,29,0.98)");
           ctx.fillStyle = g;
           ctx.fillRect(b.x, b.y, b.w, b.h);
 
-          // top cap shine
+          // top shine
           ctx.fillStyle = "rgba(254,242,242,0.55)";
           ctx.fillRect(b.x, b.y, b.w, 4);
 
-          // subtle side shade
+          // side shade
           ctx.fillStyle = "rgba(0,0,0,0.18)";
           ctx.fillRect(b.x + b.w - 5, b.y, 5, b.h);
+
+          // warning stripe (competitivo)
+          if (b.kind === "tall"){
+            ctx.globalAlpha = 0.35;
+            ctx.fillStyle = "rgba(250,204,21,0.95)";
+            for (let y = b.y + 6; y < b.y + b.h; y += 14){
+              ctx.fillRect(b.x + 3, y, b.w - 6, 6);
+            }
+            ctx.globalAlpha = 1;
+          }
 
           ctx.strokeStyle = "rgba(0,0,0,0.32)";
           ctx.lineWidth = 1;
@@ -1464,29 +1989,27 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         if (state.banner <= 0) return;
 
         const alpha = Math.min(1, state.banner / 40);
-        const w = 270, h = 64;
+        const w = 300, h = 64;
         const x = (W - w) / 2;
-        const y = 52;
+        const y = 48;
 
         ctx.save();
         ctx.globalAlpha = alpha;
 
-        // panel
         ctx.fillStyle = "rgba(15,23,42,0.88)";
-        roundedRectPath(ctx, x, y, w, h, 12);
+        roundedRectPath(ctx, x, y, w, h, 14);
         ctx.fill();
 
-        // border glow
         ctx.shadowColor = "rgba(56,189,248,0.55)";
-        ctx.shadowBlur = 12;
-        ctx.strokeStyle = "#38bdf8";
+        ctx.shadowBlur = 14;
+        ctx.strokeStyle = "rgba(56,189,248,0.92)";
         ctx.lineWidth = 2;
-        roundedRectPath(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 12);
+        roundedRectPath(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 14);
         ctx.stroke();
 
         ctx.shadowBlur = 0;
         ctx.fillStyle = "#f9fafb";
-        ctx.font = "800 22px Lato";
+        ctx.font = "1000 22px system-ui";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText("Nivel " + state.level, W / 2, y + h / 2);
@@ -1494,42 +2017,38 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         ctx.restore();
       }
 
-      function drawGameOver() {
-        // overlay
-        ctx.fillStyle = "rgba(10, 15, 30, 0.74)";
-        ctx.fillRect(0, 0, W, H);
+      function drawComboToast(){
+        if (!state.playing) return;
+        if (state.combo < 3) return;
 
-        // neon box
-        const bw = 520, bh = 150;
-        const bx = (W - bw) / 2;
-        const by = (H - bh) / 2 - 8;
+        const t = state.comboT / COMBO_WINDOW_FRAMES;
+        const alpha = clamp(0.18 + (1 - t) * 0.65, 0, 0.9);
 
         ctx.save();
-        ctx.shadowColor = "rgba(56,189,248,0.35)";
-        ctx.shadowBlur = 22;
+        ctx.globalAlpha = alpha;
 
-        ctx.fillStyle = "rgba(15,23,42,0.90)";
-        roundedRectPath(ctx, bx, by, bw, bh, 16);
+        const txt = "COMBO x" + state.multiplier;
+        ctx.font = "1000 18px system-ui";
+        const m = ctx.measureText(txt);
+
+        const w = m.width + 26;
+        const h = 38;
+        const x = 18;
+        const y = 18;
+
+        ctx.fillStyle = "rgba(15,23,42,0.72)";
+        roundedRectPath(ctx, x, y, w, h, 12);
         ctx.fill();
 
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = "rgba(56,189,248,0.75)";
-        ctx.lineWidth = 2;
-        roundedRectPath(ctx, bx + 0.5, by + 0.5, bw - 1, bh - 1, 16);
+        ctx.strokeStyle = "rgba(250,204,21,0.65)";
+        ctx.lineWidth = 1.5;
+        roundedRectPath(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 12);
         ctx.stroke();
 
-        ctx.fillStyle = "#f9fafb";
-        ctx.font = "900 30px Lato";
-        ctx.textAlign = "center";
+        ctx.fillStyle = "rgba(250,204,21,0.95)";
+        ctx.textAlign = "left";
         ctx.textBaseline = "middle";
-        ctx.fillText("Juego terminado", W / 2, by + 48);
-
-        ctx.font = "700 16px Lato";
-        ctx.fillText(`Puntaje: ${state.score}  |  Nivel: ${state.level}  |  Monedas: ${state.coins}`, W / 2, by + 86);
-
-        ctx.font = "600 13px Lato";
-        ctx.fillStyle = "rgba(249,250,251,0.85)";
-        ctx.fillText(`Pulsa "Reintentar" (o Enter / R) para jugar de nuevo.`, W / 2, by + 116);
+        ctx.fillText(txt, x + 13, y + h / 2);
 
         ctx.restore();
       }
@@ -1552,12 +2071,18 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         drawGround();
 
         drawCoins();
+        drawPowerups();
         drawBlocks();
         drawParticles();
         drawPlayer();
         drawLevelBanner();
+        drawComboToast();
 
-        if (!state.playing) drawGameOver();
+        // si no está jugando, muestra “ghost” de pause sin tapar overlays (ya están en DOM)
+        if (!state.playing && !startOverlay.classList.contains("show") && !gameOverOverlay.classList.contains("show")){
+          ctx.fillStyle = "rgba(2,6,23,0.40)";
+          ctx.fillRect(0,0,W,H);
+        }
 
         ctx.restore();
       }
@@ -1571,8 +2096,20 @@ window.addEventListener("resize", () => setTimeout(applyFit, 60), { passive:true
         requestAnimationFrame(loop);
       }
 
-      resetGame();
+      // Init
+      resetGame(false);
       loop();
+
+      // Si el usuario toca el overlay, arranca (mejor UX)
+      startOverlay.addEventListener("click", (e) => {
+        const target = e.target;
+        // no cerrar si fue click en botón ya manejado
+        if (target && target.closest("button")) return;
+        startGame();
+      });
+
+      // Ajuste al cargar
+      setTimeout(applyFit, 60);
     })();
   </script>
 </body>
