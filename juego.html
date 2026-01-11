@@ -155,17 +155,30 @@
       display:flex;
       align-items:center;
       gap:8px;
-      padding:8px 10px;
-      border-radius:14px;
+      padding:6px 8px;
+      border-radius:12px;
       background: rgba(2,6,23,0.45);
       border:1px solid rgba(148,163,184,0.18);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-      font-size:12px;
+      font-size:11px;
+      white-space:nowrap;
+
       font-weight:800;
       color: rgba(248,250,252,0.95);
       white-space:nowrap;
     }
-    .chip b{ color: var(--gold); }
+    
+    .chip-coin{
+      background: linear-gradient(180deg, rgba(56,189,248,0.20), rgba(2,6,23,0.45));
+      border-color: rgba(56,189,248,0.30);
+    }
+    .chip-coin b{ color: var(--gold); }
+    .chip-best{
+      background: rgba(2,6,23,0.38);
+      border-color: rgba(167,139,250,0.30);
+    }
+
+.chip b{ color: var(--gold); }
 
     .btn{
       border:none;
@@ -207,18 +220,21 @@
     .hudrow{
       display:flex;
       align-items:center;
-      justify-content:space-between;
+      justify-content:flex-start;
       gap:10px;
-      flex-wrap:wrap;
+      flex-wrap:nowrap;
       position:relative;
       z-index:2;
       margin-top:2px;
+      overflow:hidden;
     }
+
 
     .hud-left, .hud-right{
       display:flex;
       gap:10px;
-      flex-wrap:wrap;
+      flex-wrap:nowrap;
+      align-items:center;
       align-items:center;
     }
 
@@ -338,6 +354,8 @@ canvas{
       -webkit-backdrop-filter: blur(10px);
     }
     .overlay.show{ display:flex; }
+    #rotateHint{ z-index: 70; }
+
 
     .card{
       width:min(560px, 94vw);
@@ -492,28 +510,19 @@ canvas{
 
         <div class="actions">
           <button class="btn btn-volver" id="btnBack" type="button">⬅ Volver</button>
-          <button class="btn" id="btnSound" type="button" aria-pressed="false" title="Activar/Desactivar sonido">🔊 Sonido</button>
+          <button class="btn" id="btnSound" type="button" aria-pressed="true" title="Activar/Desactivar sonido">🔊 Sonido</button>
           <button class="btn" id="btnVibrate" type="button" aria-pressed="true" title="Vibración (móvil)">📳 Vibración</button>
           <button class="btn btn-primary" id="btnStartTop" type="button">▶ Jugar</button>
         </div>
       </div>
 
-      <div class="hudrow">
+            <div class="hudrow">
         <div class="hud-left">
-          <div class="chip">Puntaje: <b id="hudScore">0</b></div>
-          <div class="chip">Mejor: <b id="hudBest">0</b></div>
-          <div class="chip">Nivel: <b id="hudLevel">1</b></div>
-          <div class="chip">Monedas: <b id="hudCoins">0</b></div>
-          <div class="chip">Combo: <b id="hudCombo">x1</b></div>
-        </div>
-
-        <div class="hud-right" aria-label="Medidores">
-          <div class="chip" title="Racha: recoge monedas seguidas para subir multiplicador">Racha</div>
-          <div class="meter" aria-hidden="true"><i id="comboBar"></i></div>
+          <div class="chip chip-coin">🪙 Monedas: <b id="hudCoins">0</b></div>
+          <div class="chip chip-best">Récord: <b id="hudBestCoins">0</b></div>
         </div>
       </div>
 
-      
       <canvas id="gameCanvas" width="840" height="320"></canvas>
 
         <div class="help">
@@ -607,7 +616,7 @@ canvas{
       function showIOSHint() {
         if (!iosHint) return;
         const vw = window.innerWidth;
-        const isMobile = vw <= 820;
+        const isMobile = Math.min(window.innerWidth, window.innerHeight) <= 900;
         if (isIOS() && isMobile && !isStandalone()) {
           iosHint.style.display = "block";
           iosHint.innerHTML = `
@@ -629,7 +638,7 @@ canvas{
         const containerRect = gameContainer.getBoundingClientRect();
         const helpEl = gameContainer.querySelector(".help");
         const isLandscape = window.innerWidth > window.innerHeight;
-        const isMobile = window.innerWidth <= 820;
+        const isMobile = Math.min(window.innerWidth, window.innerHeight) <= 900;
 
         const helpH = (isMobile && isLandscape) ? 0 : (helpEl ? helpEl.getBoundingClientRect().height : 0);
         const styles = getComputedStyle(gameContainer);
@@ -683,13 +692,9 @@ canvas{
        * --------------------------------------------------------- */
       const ctx = canvas.getContext("2d", { alpha: true });
 
-      const hudScore = document.getElementById("hudScore");
-      const hudBest = document.getElementById("hudBest");
-      const hudLevel = document.getElementById("hudLevel");
       const hudCoins = document.getElementById("hudCoins");
-      const hudCombo = document.getElementById("hudCombo");
-      const comboBar = document.getElementById("comboBar");
-
+      const hudBestCoins = document.getElementById("hudBestCoins");
+      // UI enfocada en monedas (puntaje/nivel siguen internos)
       const btnRestart = document.getElementById("btnRestart");
       const btnRestart2 = document.getElementById("btnRestart2");
 
@@ -717,14 +722,13 @@ canvas{
       /* ---------------------------------------------------------
        *  PERSISTENCIA (mejor puntaje local)
        * --------------------------------------------------------- */
-      const BEST_KEY = "mm_turbo_best";
-      const getBest = () => Math.floor(Number(localStorage.getItem(BEST_KEY) || "0")) || 0;
-      const setBest = (v) => localStorage.setItem(BEST_KEY, String(v|0));
+      const BEST_COINS_KEY = "mm_turbo_best_coins";
+      const getBestCoins = () => Math.floor(Number(localStorage.getItem(BEST_COINS_KEY) || "0")) || 0;
+      const setBestCoins = (v) => localStorage.setItem(BEST_COINS_KEY, String(v|0));
 
-      let bestScore = getBest();
-      hudBest.textContent = String(bestScore);
-
-      /* ---------------------------------------------------------
+      let bestCoins = getBestCoins();
+      if (hudBestCoins) hudBestCoins.textContent = String(bestCoins);
+/* ---------------------------------------------------------
        *  CONFIG (más competitivo)
        * --------------------------------------------------------- */
       const W = canvas.width;
@@ -1226,9 +1230,7 @@ canvas{
         state.speed = BASE_SPEED + SPEED_PER_LEVEL * (state.level - 1);
         state.banner = 140;
         state.shake = Math.max(state.shake, 10);
-        hudLevel.textContent = String(state.level);
-
-        // feedback visual/sonoro
+// feedback visual/sonoro
         playFx("levelup");
         emitParticles(player.x + player.w*0.6, player.y + player.h*0.35, 26, {
           minVx: -2.6, maxVx: 2.6,
@@ -1250,8 +1252,7 @@ canvas{
       function setCombo(n){
         state.combo = clamp(n, 0, COMBO_MAX);
         state.multiplier = COMBO_TIER[Math.max(0, state.combo-1)] || 1;
-        hudCombo.textContent = "x" + state.multiplier;
-      }
+}
 
       function bumpCombo(){
         // Si estás dentro de ventana, sube; si no, reinicia a 1
@@ -1265,10 +1266,8 @@ canvas{
       function decayCombo(){
         if (state.comboT > 0){
           state.comboT--;
-          comboBar.style.width = Math.floor((state.comboT / COMBO_WINDOW_FRAMES) * 100) + "%";
-        } else {
-          comboBar.style.width = "0%";
-          if (state.combo > 0){
+} else {
+if (state.combo > 0){
             // “corta” la racha a x1, pero no borra monedas ni puntaje
             setCombo(1);
           }
@@ -1303,11 +1302,8 @@ canvas{
         player.jumps = 0;
         player.bob = 0;
 
-        hudScore.textContent = "0";
-        hudLevel.textContent = "1";
-        hudCoins.textContent = "0";
-        hudCombo.textContent = "x1";
-        comboBar.style.width = "0%";
+        if (hudCoins) hudCoins.textContent = "0";
+        if (hudBestCoins) hudBestCoins.textContent = String(bestCoins|0);
         btnRestart.style.display = "none";
 
         seedWorld();
@@ -1437,7 +1433,7 @@ canvas{
 
       // Share: usa Web Share API si existe, si no, copia al portapapeles
       btnShare.addEventListener("click", async () => {
-        const text = `Mi puntaje en Mundo de Monedas · Turbo: ${Math.floor(state.score)} (Nivel ${state.level}, Monedas ${state.coins}, Mejor ${bestScore})`;
+        const text = `Mi puntaje en Mundo de Monedas · Turbo: ${Math.floor(state.score)} (Nivel ${state.level}, Monedas ${state.coins}, Récord ${bestCoins})`;
         try{
           if (navigator.share){
             await navigator.share({ title: "Mundo de Monedas · Turbo", text });
@@ -1482,7 +1478,7 @@ canvas{
       let fsAttempted = false;
       async function maybeAutoFullscreen() {
         const vw = window.innerWidth, vh = window.innerHeight;
-        const isMobile = vw <= 820;
+        const isMobile = Math.min(window.innerWidth, window.innerHeight) <= 900;
         const isLandscape = vw > vh;
         if (!isMobile || !isLandscape) return;
         if (isIOS()) return; // iOS limita fullscreen
@@ -1617,10 +1613,15 @@ canvas{
           bumpCombo();
           state.score += Math.floor(SCORE_PER_COIN * state.multiplier);
 
-          hudCoins.textContent = String(state.coins);
-          hudScore.textContent = String(Math.floor(state.score));
+          if (hudCoins) hudCoins.textContent = String(state.coins);
 
-          emitParticles(c.x, c.y, 18, {
+          // récord por monedas (competencia centrada en monedas)
+          if (state.coins > bestCoins){
+            bestCoins = state.coins;
+            setBestCoins(bestCoins);
+            if (hudBestCoins) hudBestCoins.textContent = String(bestCoins);
+          }
+emitParticles(c.x, c.y, 18, {
             minVx: -2.6, maxVx: 2.6,
             minVy: -3.2, maxVy: -1.0,
             minR: 1.0, maxR: 3.2,
@@ -1674,17 +1675,17 @@ canvas{
         musicStop();
         vibrate(80);
 
-        // best
-        if (sInt > bestScore){
-          bestScore = sInt;
-          setBest(bestScore);
-          hudBest.textContent = String(bestScore);
+        // récord por monedas
+        if (state.coins > bestCoins){
+          bestCoins = state.coins;
+          setBestCoins(bestCoins);
+          if (hudBestCoins) hudBestCoins.textContent = String(bestCoins);
         }
 
-        // overlay stats
-        goTitle.textContent = (sInt >= bestScore) ? "Nuevo récord" : "Fin de partida";
-        goStats.innerHTML = `Puntaje: <b>${sInt}</b> · Nivel: <b>${state.level}</b> · Monedas: <b>${state.coins}</b> · Mejor: <b>${bestScore}</b>`;
-        gameOverOverlay.classList.add("show");
+        // overlay stats (enfocado en monedas)
+        goTitle.textContent = (state.coins >= bestCoins) ? "Nuevo récord" : "Fin de partida";
+        goStats.innerHTML = `Monedas: <b>${state.coins}</b> · Récord: <b>${bestCoins}</b>`;
+gameOverOverlay.classList.add("show");
         gameOverOverlay.setAttribute("aria-hidden", "false");
       }
 
@@ -1740,10 +1741,8 @@ canvas{
         const add = (BASE_DISTANCE_RATE * state.speed) * state.multiplier;
         state.distance += state.speed;
         state.score += add;
-        // normaliza a entero para HUD
-        const s = Math.floor(state.score);
-        hudScore.textContent = String(s);
-      }
+        // puntaje interno (UI enfocada en monedas)
+}
 
       function updateTimers(){
         if (state.shield > 0) state.shield--;
