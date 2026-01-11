@@ -716,8 +716,8 @@
 
       // Progresión: más rápida, pero controlada
       // Progresión: más emocionante (sube más lento y exige más a medida que avanzas)
-      const BASE_LEVEL_POINTS = 520;      // puntos para pasar de nivel 1→2 (antes 320)
-      const LEVEL_POINTS_STEP = 90;       // cada nivel requiere +step puntos extra
+      const BASE_LEVEL_POINTS = 900;      // puntos para pasar de nivel 1→2 (antes 320)
+      const LEVEL_POINTS_STEP = 140;       // cada nivel requiere +step puntos extra
       const BASE_SPEED = 4.8;
       const SPEED_PER_LEVEL = 0.42;
 
@@ -1445,7 +1445,7 @@
         }
       };
 
-      window.addEventListener("pointerdown", markInteraction, { passive:true });, markInteraction, { passive:true });
+      window.addEventListener("pointerdown", markInteraction, { passive:true });
       window.addEventListener("touchstart", markInteraction, { passive:true });
       window.addEventListener("keydown", markInteraction, { passive:true });
 
@@ -1975,6 +1975,27 @@
         ctx.lineWidth = 1.2;
         roundedRectPath(ctx, x + 0.6, y + 6.6, w - 1.2, h - 7.2, 11);
         ctx.stroke();
+
+        
+        // Neon outline pulse
+        ctx.globalAlpha = 0.85;
+        ctx.strokeStyle = `rgba(56,189,248,${0.45 + 0.25*Math.sin(t*0.9)})`;
+        ctx.lineWidth = 1.6;
+        roundedRectPath(ctx, x + 0.6, y + 6.6, w - 1.2, (h - 6) - 1.2, 11);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // Visor glow pulse
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        const vg = ctx.createRadialGradient(x + w*0.72, y + 18, 2, x + w*0.62, y + 18, 18);
+        vg.addColorStop(0, `rgba(56,189,248,${0.55 + 0.25*Math.sin(t)})`);
+        vg.addColorStop(1, "rgba(56,189,248,0)");
+        ctx.fillStyle = vg;
+        ctx.beginPath();
+        ctx.arc(x + w*0.65, y + 18, 18, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
 
         ctx.restore();
 
