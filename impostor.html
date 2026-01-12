@@ -142,6 +142,23 @@
     }
     .chip b{ font-weight: 1200; }
 
+    .iconbtn{
+      width:38px; height:38px;
+      border-radius: 14px;
+      border:1px solid rgba(148,163,184,0.22);
+      background: rgba(2,6,23,0.44);
+      color: rgba(248,250,252,0.98);
+      graphical: none;
+      font-size: 16px;
+      font-weight: 1100;
+      cursor:pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .08s ease, filter .08s ease;
+    }
+    .iconbtn:active{ transform: translateY(1px); filter: brightness(1.04); }
+
+
     main{
       position:relative;
       flex:1 1 auto;
@@ -318,12 +335,21 @@
       letter-spacing:.4px;
     }
     .secretCard .word{
+
       text-align:center;
       font-size: 34px;
       font-weight: 1300;
       letter-spacing: .6px;
       margin-top: 10px;
       text-transform: uppercase;
+    }
+    .wordHint{
+      margin-top: 6px;
+      text-align:center;
+      font-size: 12px;
+      font-weight: 950;
+      color: rgba(203,213,245,0.92);
+      line-height: 1.35;
     }
 
     .secretCard .mask{
@@ -456,7 +482,12 @@
             <p>Vertical · tarjetas privadas · votaciones</p>
           </div>
         </div>
-        <div class="hud" aria-label="Indicadores">
+        <div class="hud" aria-label="Acciones">
+  <button class="iconbtn" id="navHome" type="button" title="Inicio">🏠</button>
+  <button class="iconbtn" id="navPanel" type="button" title="Panel">📋</button>
+  <button class="iconbtn" id="navPanelHtml" type="button" title="Ir a panel.html">🧭</button>
+</div>
+<div class="hud" aria-label="Indicadores">
           <div class="chip">🪙 <b id="hudCoins">0</b></div>
           <div class="chip">🎲 Ronda <b id="hudRound">0</b></div>
           <div class="chip">🗳 Votos <b id="hudVotesLeft">0</b></div>
@@ -635,7 +666,78 @@ function toast(msg, bad=false){
   toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1700);
 }
 
+
+/* =========================================================
+ *  Top navigation buttons
+ * ========================================================= */
+const navHome = document.getElementById("navHome");
+const navPanel = document.getElementById("navPanel");
+const navPanelHtml = document.getElementById("navPanelHtml");
+
+navHome?.addEventListener("click", () => {
+  if(confirm("¿Volver al inicio? (La partida actual seguirá en memoria, pero puedes reiniciar desde el panel si deseas.)")){
+    setStep("home");
+  }
+});
+
+navPanelHtml?.addEventListener("click", () => {
+  window.location.href = "panel.html";
+});
+
+navPanel?.addEventListener("click", () => {
+  // Panel: si ya hay ronda, muestra el panel de discusión/resumen; si no, vuelve a configuración
+  if(state.round > 0){
+    setStep("briefing");
+  }else{
+    setStep("setup_count");
+  }
+});
+
+
 function clearStage(){ stage.innerHTML = ""; }
+
+
+/* =========================================================
+ *  Word hints (to avoid ambiguity)
+ *  - For ambiguous words we provide a short clarification.
+ *  - If a word has no hint, we return a safe generic cue.
+ * ========================================================= */
+const WORD_HINTS = {
+  "tarta": "Piensa en un postre tipo torta (no en salsa tártara).",
+  "banco": "Piensa en un asiento (no en entidad bancaria).",
+  "copa": "Piensa en un vaso/copa para beber (no en trofeo).",
+  "vela": "Piensa en una vela de cera (no en velero).",
+  "radio": "Piensa en el aparato de música/noticias (no en radio de rueda).",
+  "mango": "Piensa en la fruta (no en mango de herramienta).",
+  "pila": "Piensa en una batería (no en una pila de objetos).",
+  "pluma": "Piensa en pluma de ave (no en lapicero).",
+  "gato": "Piensa en el animal (no en gato hidráulico).",
+  "sierra": "Piensa en herramienta para cortar (no en montaña).",
+  "llave": "Piensa en llave para abrir (no en llave de agua).",
+  "taco": "Piensa en comida (no en taco de billar).",
+  "pato": "Piensa en el animal (no en patos de freno).",
+  "carta": "Piensa en una carta/mensaje (no en carta de restaurante).",
+  "cielo": "Piensa en el cielo del clima/espacio (no en techo).",
+  "rosa": "Piensa en el color o la flor 'rosa'.",
+  "mora": "Piensa en la fruta (mora).",
+  "cura": "Piensa en recuperación/sanación (no en sacerdote).",
+  "cura": "Piensa en recuperación/sanación (no en sacerdote).",
+  "mando": "Piensa en control remoto (no en 'mandato').",
+  "control": "Piensa en control remoto/dispositivo.",
+  "plaza": "Piensa en una plaza/parque (no en cargo).",
+  "mesa": "Piensa en el mueble (no en mesa de juego).",
+  "sello": "Piensa en sello/estampilla (no en sello marino).",
+  "te": "Piensa en la bebida té.",
+  "sal": "Piensa en sal de cocina.",
+  "bota": "Piensa en calzado (no en 'bota' de lanzar)."
+};
+
+function getWordHint(word){
+  const key = norm(word);
+  if(WORD_HINTS[key]) return WORD_HINTS[key];
+  // Fallback (short, consistent)
+  return "Usa el significado más común y concreto de esta palabra.";
+}
 
 function norm(s){
   return (s||"")
@@ -651,65 +753,1135 @@ function norm(s){
  *  - Expand base nouns with plural + diminutive + augmentative.
  * ========================================================= */
 const BASE_WORDS = [
-  "gelatina","silla","medias","helado","perro","mantequilla","barco","carro","cielo","amarillo",
-  "gato","conejo","tortuga","caballo","vaca","oveja","zorro","lobo","oso","tigre","leon","delfin","tiburon","pulpo",
-  "manzana","pera","mango","piña","papaya","fresa","sandia","naranja","limon","uva","banano","cereza","durazno","guayaba",
-  "tomate","cebolla","ajo","papa","yuca","zanahoria","pepino","lechuga","brocoli","espinaca","maiz","arroz","pasta","lenteja","frijol",
-  "pan","queso","huevo","pollo","carne","pescado","atun","sopa","ensalada","pizza","taco","arepa","empanada","tamal",
-  "cafe","te","jugo","agua","leche","yogur","miel","azucar","sal","pimienta",
-  "mesa","ventana","puerta","llave","candado","cortina","espejo","alfombra","lampara","reloj","cama","almohada","cobija","armario","cajon",
-  "libro","cuaderno","lapiz","boligrafo","borrador","mochila","maleta","cargador","audifonos","celular","tablet","computador","teclado","mouse",
-  "camara","bateria","parlante","microfono","cable","enchufe","bombillo","ventilador","nevera","estufa","horno","licuadora","cafetera",
-  "plato","vaso","taza","cuchara","tenedor","cuchillo","olla","sarten","espatula","colador","termo","servilleta","bolsa","caja","frasco",
-  "calle","puente","tunel","estacion","aeropuerto","playa","montaña","bosque","selva","rio","cascada","lago","isla","volcan","cueva",
-  "sol","luna","estrella","nube","viento","lluvia","trueno","relampago","nieve","hielo","fuego","arena","roca","madera","flor","semilla",
-  "camisa","pantalon","zapato","media","gorra","sombrero","chaqueta","reloj","anillo","collar","bolso",
-  "balon","futbol","tenis","voleibol","natacion","ciclismo","ajedrez","dardos","bolos",
-  "rojo","azul","verde","negro","blanco","morado","naranja","rosa","gris","cafe","dorado","plateado",
-  "dinero","moneda","billete","tarjeta","banco","ahorro",
-  "doctor","policia","bombero","cocinero","panadero","barbero","mecanico","piloto","arquitecto","musico","cantante","actor",
-  "robot","dron","sensor","gps","internet","correo","mensaje","chat","perfil"
+  "perro",
+  "gato",
+  "conejo",
+  "tortuga",
+  "caballo",
+  "vaca",
+  "oveja",
+  "cerdo",
+  "pollo",
+  "pato",
+  "ganso",
+  "burro",
+  "mula",
+  "raton",
+  "hamster",
+  "loro",
+  "canario",
+  "aguila",
+  "halcon",
+  "paloma",
+  "cuervo",
+  "cisne",
+  "pavo",
+  "gallina",
+  "gallo",
+  "abeja",
+  "avispa",
+  "mariposa",
+  "hormiga",
+  "grillo",
+  "saltamontes",
+  "escarabajo",
+  "mosquito",
+  "arania",
+  "pulga",
+  "garrapata",
+  "caracol",
+  "lombriz",
+  "cangrejo",
+  "camaron",
+  "langosta",
+  "pulpo",
+  "calamar",
+  "delfin",
+  "ballena",
+  "tiburon",
+  "sardina",
+  "atun",
+  "trucha",
+  "salmon",
+  "bacalao",
+  "pez",
+  "rana",
+  "sapo",
+  "lagarto",
+  "iguana",
+  "serpiente",
+  "cobra",
+  "piton",
+  "camaleon",
+  "mono",
+  "gorila",
+  "chimpance",
+  "orangutan",
+  "panda",
+  "oso",
+  "tigre",
+  "leon",
+  "leopardo",
+  "guepardo",
+  "lince",
+  "zorro",
+  "lobo",
+  "ciervo",
+  "venado",
+  "alce",
+  "jirafa",
+  "cebra",
+  "elefante",
+  "rinoceronte",
+  "hipopotamo",
+  "canguro",
+  "koala",
+  "perezoso",
+  "nutria",
+  "castor",
+  "ardilla",
+  "zorrillo",
+  "mapache",
+  "erizo",
+  "murcielago",
+  "foca",
+  "morsa",
+  "pinguino",
+  "sopa",
+  "arroz",
+  "pasta",
+  "lenteja",
+  "frijol",
+  "garbanzo",
+  "pan",
+  "arepa",
+  "empanada",
+  "tamal",
+  "pizza",
+  "taco",
+  "burrito",
+  "ensalada",
+  "hamburguesa",
+  "salchicha",
+  "chorizo",
+  "jamon",
+  "queso",
+  "mantequilla",
+  "yogur",
+  "leche",
+  "cafe",
+  "jugo",
+  "agua",
+  "limonada",
+  "chocolate",
+  "cacao",
+  "azucar",
+  "sal",
+  "pimienta",
+  "oregano",
+  "canela",
+  "vainilla",
+  "miel",
+  "mermelada",
+  "gelatina",
+  "helado",
+  "brownie",
+  "galleta",
+  "torta",
+  "pastel",
+  "flan",
+  "natilla",
+  "bunuelo",
+  "manzana",
+  "pera",
+  "mango",
+  "pina",
+  "papaya",
+  "fresa",
+  "sandia",
+  "naranja",
+  "limon",
+  "uva",
+  "banano",
+  "cereza",
+  "durazno",
+  "guayaba",
+  "maracuya",
+  "kiwi",
+  "ciruela",
+  "granada",
+  "coco",
+  "melocoton",
+  "mandarina",
+  "toronja",
+  "higo",
+  "mora",
+  "arandano",
+  "frambuesa",
+  "lulo",
+  "tamarindo",
+  "tomate",
+  "cebolla",
+  "ajo",
+  "papa",
+  "yuca",
+  "zanahoria",
+  "pepino",
+  "lechuga",
+  "brocoli",
+  "espinaca",
+  "maiz",
+  "platano",
+  "calabaza",
+  "berenjena",
+  "pimenton",
+  "repollo",
+  "coliflor",
+  "apio",
+  "remolacha",
+  "rabano",
+  "habichuela",
+  "arveja",
+  "champinon",
+  "silla",
+  "mesa",
+  "cama",
+  "almohada",
+  "cobija",
+  "sabana",
+  "toalla",
+  "cortina",
+  "espejo",
+  "alfombra",
+  "lampara",
+  "bombillo",
+  "reloj",
+  "calendario",
+  "cuadro",
+  "jarron",
+  "florero",
+  "marco",
+  "puerta",
+  "ventana",
+  "llave",
+  "candado",
+  "cajon",
+  "armario",
+  "ropero",
+  "estante",
+  "repisa",
+  "sofa",
+  "sillon",
+  "cojin",
+  "piso",
+  "techo",
+  "pared",
+  "pintura",
+  "cemento",
+  "ladrillo",
+  "madera",
+  "clavo",
+  "tornillo",
+  "martillo",
+  "destornillador",
+  "taladro",
+  "serrucho",
+  "cinta",
+  "pegante",
+  "tijera",
+  "cuchillo",
+  "cuchara",
+  "tenedor",
+  "plato",
+  "vaso",
+  "taza",
+  "olla",
+  "sarten",
+  "colador",
+  "espatula",
+  "termo",
+  "botella",
+  "frasco",
+  "caja",
+  "bolsa",
+  "maleta",
+  "mochila",
+  "cartera",
+  "billetera",
+  "moneda",
+  "billete",
+  "tarjeta",
+  "cargador",
+  "cable",
+  "enchufe",
+  "bateria",
+  "linterna",
+  "audifonos",
+  "microfono",
+  "camara",
+  "celular",
+  "tablet",
+  "computador",
+  "teclado",
+  "mouse",
+  "pantalla",
+  "televisor",
+  "radio",
+  "parlante",
+  "router",
+  "modem",
+  "impresora",
+  "control",
+  "mando",
+  "ventilador",
+  "nevera",
+  "estufa",
+  "horno",
+  "licuadora",
+  "cafetera",
+  "plancha",
+  "lavadora",
+  "secadora",
+  "escoba",
+  "trapero",
+  "balde",
+  "jabon",
+  "carro",
+  "moto",
+  "bicicleta",
+  "bus",
+  "taxi",
+  "camion",
+  "tractomula",
+  "tren",
+  "metro",
+  "tranvia",
+  "avion",
+  "helicoptero",
+  "barco",
+  "lancha",
+  "velero",
+  "submarino",
+  "patineta",
+  "scooter",
+  "ambulancia",
+  "camioneta",
+  "carreta",
+  "casa",
+  "apartamento",
+  "edificio",
+  "barrio",
+  "calle",
+  "avenida",
+  "puente",
+  "tunel",
+  "estacion",
+  "aeropuerto",
+  "puerto",
+  "playa",
+  "montana",
+  "bosque",
+  "selva",
+  "rio",
+  "cascada",
+  "lago",
+  "isla",
+  "volcan",
+  "cueva",
+  "desierto",
+  "parque",
+  "plaza",
+  "iglesia",
+  "colegio",
+  "universidad",
+  "hospital",
+  "biblioteca",
+  "museo",
+  "teatro",
+  "cine",
+  "estadio",
+  "gimnasio",
+  "mercado",
+  "tienda",
+  "panaderia",
+  "farmacia",
+  "restaurante",
+  "cafeteria",
+  "hotel",
+  "terminal",
+  "rojo",
+  "azul",
+  "verde",
+  "negro",
+  "blanco",
+  "morado",
+  "rosa",
+  "gris",
+  "amarillo",
+  "dorado",
+  "plateado",
+  "turquesa",
+  "violeta",
+  "fucsia",
+  "beige",
+  "ocre",
+  "lila",
+  "indigo",
+  "sol",
+  "luna",
+  "estrella",
+  "nube",
+  "viento",
+  "lluvia",
+  "trueno",
+  "relampago",
+  "nieve",
+  "hielo",
+  "fuego",
+  "arena",
+  "roca",
+  "piedra",
+  "tierra",
+  "marea",
+  "ola",
+  "hoja",
+  "flor",
+  "semilla",
+  "raiz",
+  "tronco",
+  "rama",
+  "pasto",
+  "musgo",
+  "hongo",
+  "coral",
+  "concha",
+  "perla",
+  "cristal",
+  "camisa",
+  "pantalon",
+  "zapato",
+  "media",
+  "gorra",
+  "sombrero",
+  "chaqueta",
+  "vestido",
+  "falda",
+  "cinturon",
+  "bufanda",
+  "guante",
+  "calcetin",
+  "tenis",
+  "sandalia",
+  "bota",
+  "collar",
+  "anillo",
+  "pulsera",
+  "arete",
+  "gafas",
+  "bolso",
+  "morral",
+  "futbol",
+  "baloncesto",
+  "voleibol",
+  "natacion",
+  "ciclismo",
+  "atletismo",
+  "boxeo",
+  "golf",
+  "beisbol",
+  "hockey",
+  "rugby",
+  "ajedrez",
+  "bolos",
+  "dardos",
+  "karate",
+  "judo",
+  "taekwondo",
+  "esgrima",
+  "patinaje",
+  "surf",
+  "esqui",
+  "doctor",
+  "enfermero",
+  "policia",
+  "bombero",
+  "cocinero",
+  "panadero",
+  "barbero",
+  "mecanico",
+  "piloto",
+  "arquitecto",
+  "ingeniero",
+  "maestro",
+  "profesor",
+  "estudiante",
+  "abogado",
+  "juez",
+  "contador",
+  "vendedor",
+  "cajero",
+  "mesero",
+  "chef",
+  "cantante",
+  "musico",
+  "actor",
+  "pintor",
+  "fotografo",
+  "periodista",
+  "carpintero",
+  "electricista",
+  "plomero",
+  "agricultor",
+  "granjero",
+  "jardinero",
+  "taxista",
+  "conductor",
+  "cartero",
+  "astronauta",
+  "soldado",
+  "marinero",
+  "amistad",
+  "familia",
+  "fiesta",
+  "cumpleanos",
+  "regalo",
+  "sorpresa",
+  "secreto",
+  "misterio",
+  "risa",
+  "sonrisa",
+  "abrazo",
+  "beso",
+  "carta",
+  "mensaje",
+  "sonido",
+  "musica",
+  "ritmo",
+  "melodia",
+  "guitarra",
+  "piano",
+  "trompeta",
+  "violin",
+  "flauta",
+  "tambor",
+  "maraca",
+  "numero",
+  "letra",
+  "palabra",
+  "frase",
+  "historia",
+  "cuento",
+  "poema",
+  "pagina",
+  "libro",
+  "capitulo",
+  "titulo",
+  "portada",
+  "energia",
+  "fuerza",
+  "velocidad",
+  "tiempo",
+  "espacio",
+  "altura",
+  "peso",
+  "medida",
+  "angulo",
+  "circulo",
+  "cuadrado",
+  "triangulo",
+  "rectangulo",
+  "dinero",
+  "ahorro",
+  "credito",
+  "deuda",
+  "precio",
+  "oferta",
+  "compra",
+  "venta",
+  "banco",
+  "juego",
+  "nivel",
+  "ronda",
+  "punto",
+  "meta",
+  "reto",
+  "premio",
+  "trofeo",
+  "medalla",
+  "victoria",
+  "derrota",
+  "salud",
+  "fiebre",
+  "tos",
+  "gripa",
+  "dolor",
+  "cura",
+  "vacuna",
+  "vitamina",
+  "medicina",
+  "receta",
+  "escuela",
+  "tarea",
+  "examen",
+  "clase",
+  "recreo",
+  "uniforme",
+  "pizarron",
+  "borrador",
+  "lapicero",
+  "marcador",
+  "regla",
+  "compas",
+  "oficina",
+  "reunion",
+  "agenda",
+  "archivo",
+  "carpeta",
+  "documento",
+  "firma",
+  "sello",
+  "internet",
+  "correo",
+  "chat",
+  "perfil",
+  "usuario",
+  "contrasena",
+  "semana",
+  "mes",
+  "anio",
+  "hoy",
+  "ayer",
+  "manana",
+  "alto",
+  "bajo",
+  "grande",
+  "pequeno",
+  "largo",
+  "corto",
+  "ancho",
+  "delgado",
+  "gordo",
+  "rapido",
+  "lento",
+  "fuerte",
+  "suave",
+  "duro",
+  "frio",
+  "caliente",
+  "tibio",
+  "feliz",
+  "triste",
+  "serio",
+  "gracioso",
+  "amable",
+  "rudo",
+  "nuevo",
+  "viejo",
+  "joven",
+  "claro",
+  "oscuro",
+  "brillante",
+  "opaco",
+  "dulce",
+  "salado",
+  "amargo",
+  "acido",
+  "limpio",
+  "sucio",
+  "seco",
+  "mojado",
+  "ruidoso",
+  "silencioso",
+  "caro",
+  "barato",
+  "simple",
+  "doble",
+  "rico",
+  "pobre",
+  "ligero",
+  "pesado",
+  "fresco",
+  "maduro",
+  "tierno",
+  "firme",
+  "fragil",
+  "seguro",
+  "peligroso",
+  "facil",
+  "dificil",
+  "correcto",
+  "incorrecto",
+  "vivo",
+  "muerto",
+  "abierto",
+  "cerrado",
+  "lleno",
+  "vacio",
+  "cercano",
+  "lejano",
+  "recto",
+  "curvo",
+  "fino",
+  "grueso",
+  "aspero",
+  "liso",
+  "rugoso",
+  "alarma",
+  "alfiler",
+  "algodon",
+  "almendra",
+  "ancla",
+  "antena",
+  "aplauso",
+  "arbol",
+  "armonia",
+  "aroma",
+  "arte",
+  "asiento",
+  "atlas",
+  "baldosa",
+  "balon",
+  "banqueta",
+  "baraja",
+  "barniz",
+  "baston",
+  "biberon",
+  "bocina",
+  "boton",
+  "brujula",
+  "cadena",
+  "caldera",
+  "camino",
+  "campana",
+  "canasta",
+  "candela",
+  "caramelo",
+  "carbon",
+  "carton",
+  "cascara",
+  "cascabel",
+  "caspete",
+  "casco",
+  "castillo",
+  "catalogo",
+  "caucho",
+  "caviar",
+  "cebada",
+  "centro",
+  "cicatriz",
+  "cielo",
+  "claridad",
+  "clavija",
+  "cliente",
+  "cobre",
+  "cocina",
+  "codigo",
+  "cofre",
+  "colchon",
+  "columna",
+  "cometa",
+  "consejo",
+  "contacto",
+  "copa",
+  "corona",
+  "corriente",
+  "cosecha",
+  "costura",
+  "crema",
+  "criterio",
+  "cuerda",
+  "cuerpo",
+  "cultura",
+  "danza",
+  "dardo",
+  "dedo",
+  "defensa",
+  "delantal",
+  "deseo",
+  "destino",
+  "diamante",
+  "dibujo",
+  "diente",
+  "distrito",
+  "docena",
+  "domingo",
+  "duracion",
+  "eco",
+  "edicion",
+  "efecto",
+  "ejemplo",
+  "elote",
+  "embudo",
+  "emocion",
+  "empaque",
+  "encargo",
+  "enlace",
+  "ensayo",
+  "entrada",
+  "envase",
+  "equipo",
+  "error",
+  "escala",
+  "escudo",
+  "esfera",
+  "esquina",
+  "espalda",
+  "esponja",
+  "espuma",
+  "estado",
+  "estatua",
+  "estudio",
+  "evento",
+  "evidencia",
+  "exito",
+  "factor",
+  "faro",
+  "fase",
+  "filtro",
+  "fogon",
+  "fondo",
+  "forma",
+  "formula",
+  "fortuna",
+  "fragancia",
+  "frontera",
+  "fruto",
+  "funcion",
+  "ganancia",
+  "gancho",
+  "garganta",
+  "girasol",
+  "globo",
+  "golpe",
+  "gracia",
+  "grano",
+  "grafico",
+  "grito",
+  "grupo",
+  "habito",
+  "hamaca",
+  "harina",
+  "herencia",
+  "heroe",
+  "huella",
+  "imagen",
+  "iman",
+  "impulso",
+  "incendio",
+  "indice",
+  "infancia",
+  "informe",
+  "ingenio",
+  "insecto",
+  "instante",
+  "intento",
+  "inversion",
+  "jardin",
+  "jazmin",
+  "juicio",
+  "jugada",
+  "kilo",
+  "laberinto",
+  "lamina",
+  "lapida",
+  "latido",
+  "lectura",
+  "lengua",
+  "libertad",
+  "limpieza",
+  "linea",
+  "lista",
+  "luz",
+  "lujo",
+  "maceta",
+  "maizal",
+  "mapa",
+  "marca",
+  "mascara",
+  "materia",
+  "mecanismo",
+  "memoria",
+  "metodo",
+  "minuto",
+  "modelo",
+  "monitor",
+  "motivo",
+  "motor",
+  "musculo",
+  "nacion",
+  "nariz",
+  "naturaleza",
+  "negocio",
+  "nido",
+  "nota",
+  "noticia",
+  "objetivo",
+  "opcion",
+  "origen",
+  "orilla",
+  "paisaje",
+  "panal",
+  "panuelo",
+  "papel",
+  "parche",
+  "paso",
+  "patio",
+  "perfume",
+  "persona",
+  "pestillo",
+  "pizca",
+  "placa",
+  "planeta",
+  "pluma",
+  "polvo",
+  "prueba",
+  "pulso",
+  "quimica",
+  "razon",
+  "remolque",
+  "reporte",
+  "resorte",
+  "retorno",
+  "revista",
+  "ruta",
+  "sabor",
+  "salida",
+  "saludo",
+  "sangre",
+  "senal",
+  "servicio",
+  "sombra",
+  "suerte",
+  "tabla",
+  "talento",
+  "telefono",
+  "tesoro",
+  "textura",
+  "tinta",
+  "tobillo",
+  "tornado",
+  "trabajo",
+  "triunfo",
+  "tuberia",
+  "turno",
+  "universo",
+  "vehiculo",
+  "ventaja",
+  "viaje",
+  "video",
+  "vista",
+  "volador",
+  "vuelo",
+  "zumbido",
+  "abismo",
+  "abrigo",
+  "acento",
+  "acuario",
+  "adn",
+  "adobe",
+  "adulto",
+  "afiche",
+  "aforo",
+  "afrecho",
+  "agencia",
+  "agosto",
+  "agrado",
+  "aguacate",
+  "ahumado",
+  "ajuste",
+  "alambre",
+  "alboroto",
+  "aldea",
+  "alegria",
+  "alergia",
+  "algoritmo",
+  "aliento",
+  "almacen",
+  "almidon",
+  "alquiler",
+  "amuleto",
+  "anatomia",
+  "anchoa",
+  "animo",
+  "aniversario",
+  "ansiedad",
+  "antifaz",
+  "anzuelo",
+  "apetito",
+  "apicultura",
+  "apodo",
+  "apuesta",
+  "arreglo",
+  "arteria",
+  "asado",
+  "asfalto",
+  "asombro",
+  "astucia",
+  "atajo",
+  "atomo",
+  "audacia",
+  "aula",
+  "aumento",
+  "autobus",
+  "autoria",
+  "auxilio",
+  "avena",
+  "aviso",
+  "azotea",
+  "babero",
+  "bacteria",
+  "baile",
+  "balcon",
+  "bambu",
+  "banquete",
+  "baranda",
+  "barro",
+  "basura",
+  "bata",
+  "baya",
+  "bebida",
+  "bendicion",
+  "bicho",
+  "bilis",
+  "bingo",
+  "biombo",
+  "biografia",
+  "bizcocho",
+  "bloqueo",
+  "bodega",
+  "boina",
+  "boleto",
+  "bondad",
+  "bono",
+  "bravo",
+  "brisa",
+  "broche",
+  "bronce",
+  "buhardilla",
+  "buitre",
+  "bulbo",
+  "bulto",
+  "burbujas",
+  "burla",
+  "busqueda",
+  "cadencia",
+  "cafeina",
+  "calidad",
+  "callejon",
+  "calma",
+  "calor",
+  "camello",
+  "campamento",
+  "canal",
+  "cancha",
+  "cantaleta",
+  "capilla",
+  "capricho",
+  "caravana",
+  "carcel",
+  "carnaval",
+  "carroza",
+  "cartel",
+  "caseta",
+  "casualidad",
+  "catedral",
+  "cautela",
+  "cazuela",
+  "ceguera",
+  "celda",
+  "censo",
+  "centella",
+  "cero",
+  "certamen",
+  "chaleco",
+  "chamana",
+  "charco",
+  "chicle",
+  "chispas",
+  "chispa",
+  "chofer",
+  "choque",
+  "chorro",
+  "chubasco",
+  "ciclo",
+  "cifra",
+  "cigarra",
+  "cimentacion",
+  "clarinete",
+  "clausula",
+  "clima",
+  "cloro",
+  "cocada",
+  "cohete",
+  "colibri",
+  "colina",
+  "colmena",
+  "colorante",
+  "columpio",
+  "comadreja",
+  "comision",
+  "concierto",
+  "confianza",
+  "conga",
+  "congreso",
+  "consumo",
+  "contrato",
+  "convite",
+  "corazon",
+  "corcho",
+  "cortesia",
+  "cosmos",
+  "costal",
+  "costumbre",
+  "coyote",
+  "craneo",
+  "creador",
+  "crucero",
+  "cruz",
+  "cuenta",
+  "cumbre",
+  "cupula",
+  "curva",
+  "dalia",
+  "debate",
+  "decada",
+  "deduccion",
+  "deficit",
+  "delicia",
+  "demora",
+  "dengue",
+  "dentro",
+  "deporte",
+  "desayuno",
+  "descuento",
+  "destello",
+  "detalle",
+  "detonante",
+  "diametro",
+  "dieta",
+  "dilema",
+  "dinamo",
+  "diploma",
+  "disco",
+  "diseno",
+  "distancia",
+  "divisa",
+  "documental",
+  "dolar",
+  "dominio",
+  "donacion",
+  "dosis",
+  "drama",
+  "dron",
+  "ducha",
+  "duelo",
+  "dulzura"
 ];
 
-function pluralize(w){
-  if(w.endsWith("s")) return w;          // already plural-ish
-  if(w.endsWith("z")) return w.slice(0,-1) + "ces";
-  if(/[aeiou]$/.test(w)) return w + "s";
-  return w + "es";
-}
-function diminutive(w){
-  // simple Spanish diminutive; best-effort
-  if(w.length < 3) return w;
-  if(w.endsWith("a")) return w.slice(0,-1) + "ita";
-  if(w.endsWith("o")) return w.slice(0,-1) + "ito";
-  if(w.endsWith("e")) return w.slice(0,-1) + "ecito";
-  return w + "cito";
-}
-function augmentative(w){
-  if(w.length < 3) return w;
-  if(w.endsWith("a")) return w.slice(0,-1) + "ona";
-  if(w.endsWith("o")) return w.slice(0,-1) + "on";
-  return w + "on";
-}
 function buildWordBank(){
-  const set = new Set();
-  for(const w of BASE_WORDS){
-    const clean = norm(w).replace(/\s+/g,"");
-    if(!clean) continue;
-    set.add(clean);
-    set.add(pluralize(clean));
-    set.add(diminutive(clean));
-    set.add(augmentative(clean));
-  }
-  // If still under 1100, expand with additional safe variants
-  const arr = Array.from(set);
-  if(arr.length < 1100){
-    for(const w of arr.slice(0, 400)){
-      set.add(w + "s"); // extra plural safety
-      set.add(w + "ito");
-      set.add(w + "azo");
-    }
-  }
+  // Banco interno: palabras simples (sin compuestas) tal cual.
+  // Se deduplican y se mezclan para evitar repeticiones.
+  const set = new Set(BASE_WORDS);
   return Array.from(set);
 }
 
@@ -740,6 +1912,8 @@ const state = {
 
   // round
   round: 0,
+  starterId: "",
+
   votesAllowed: 0,
   votesUsed: 0,
 
@@ -817,6 +1991,10 @@ function startNewGame(){
   state.secretWord = pickSecretWord();
   assignRoles();
 
+  // Elegir aleatoriamente quién inicia la ronda (para discusión/votación)
+  const aliveIds = state.players.filter(p=>p.alive).map(p=>p.id);
+  state.starterId = aliveIds[Math.floor(Math.random()*aliveIds.length)] || state.players[0]?.id || "";
+
   state.turnIndex = 0;
   state.votes = new Map();
   state.impostorGuesses = new Map();
@@ -892,6 +2070,59 @@ function eliminatePlayer(id){
   if(p) p.alive = false;
 }
 
+
+function advanceToNextAlive(){
+  // Move turnIndex to next alive player
+  const n = state.players.length || 0;
+  if(n === 0) return;
+  let guard = 0;
+  do{
+    state.turnIndex = (state.turnIndex + 1) % n;
+    guard++;
+  }while(guard <= n && (!state.players[state.turnIndex] || !state.players[state.turnIndex].alive));
+}
+
+function nextTurn(){
+  // Always go back to the privacy lock screen for the next player's action
+  advanceToNextAlive();
+  setStep("turn_lock");
+}
+
+function completePrivateAction(){
+  // Called after a player (civil vote or impostor guess) confirms.
+  // Increments turn counter for the current vote and routes either to next private turn or to vote result.
+  const key = "turnsDone_" + state.votesUsed;
+  if(state[key] === undefined) state[key] = 0;
+  state[key] += 1;
+
+  const aliveCount = getAlivePlayers().length;
+
+  // If everyone alive already took their private action for this vote, go to result screen
+  if(state[key] >= aliveCount){
+    return setStep("vote_result");
+  }
+
+  // Otherwise, lock again for the next player
+  nextTurn();
+}
+
+
+
+
+function softResetToSetup(){
+  // Regresa a la configuración sin borrar monedas ni historial.
+  state.finished = false;
+  state.winner = "";
+  state.votes = new Map();
+  state.impostorGuesses = new Map();
+  state.votesUsed = 0;
+  state.votesAllowed = 0;
+  state.revealIndex = 0;
+  state.turnIndex = 0;
+  // Mantener: state.players[].coins, state.usedWords, state.round
+  setStep("setup_count");
+}
+
 /* =========================================================
  *  Renderers
  * ========================================================= */
@@ -904,6 +2135,8 @@ function render(){
     case "setup_impostors": return renderSetupImpostors();
     case "reveal": return renderReveal();
     case "briefing": return renderBriefing();
+    case "starter": return renderStarter();
+    case "turn_lock": return renderTurnLock();
     case "turn": return renderTurn();            // combined: civilians vote, impostors guess
     case "vote_result": return renderVoteResult();
     case "end": return renderEnd();
@@ -1097,6 +2330,7 @@ function renderReveal(){
     ]),
     el("div",{class:"role",style:`color:${roleColor}`},[roleTxt]),
     el("div",{class:"word"},[wordTxt]),
+    el("div",{class:"wordHint",id:"wordHint"},[ (p.role==="impostor") ? "Eres impostor: intenta adivinar la palabra al final." : getWordHint(state.secretWord) ]),
     el("div",{class:"mask",id:"mask",role:"button",tabindex:"0"},[
       el("div",{class:"maskInner"},[
         el("h3",{},["Tarjeta privada"]),
@@ -1113,7 +2347,7 @@ function renderReveal(){
     onclick:() => {
       state.revealIndex++;
       if(state.revealIndex >= total){
-        setStep("briefing");
+        setStep("starter");
       }else{
         setStep("reveal");
       }
@@ -1174,6 +2408,38 @@ function renderReveal(){
   });
 }
 
+
+function renderStarter(){
+  clearStage();
+
+  const starterName = state.players.find(p=>p.id===state.starterId)?.name || "Jugador";
+  const panel = el("div",{class:"panel"},[
+    el("h2",{},["¿Quién inicia?"]),
+    el("p",{},["Muestra esta pantalla a todos. Luego pasa el teléfono al jugador inicial para comenzar la votación (privada por turnos)."]),
+    el("div",{class:"revealWrap"},[
+      el("div",{class:"secretCard"},[
+        el("div",{class:"secretHeader"},[
+          el("div",{class:"avatarIcon","aria-hidden":"true"},["👑"]),
+          el("div",{class:"playerName"},[starterName])
+        ]),
+        el("div",{class:"role",style:"color: var(--amber)"},["INICIA LA RONDA"]),
+        el("div",{class:"word",style:"font-size:22px;margin-top:12px"},["PASA EL TELÉFONO"]),
+        el("div",{class:"wordHint"},["Cuando el jugador inicial esté listo, presiona “Iniciar votación”."])
+      ]),
+      el("button",{class:"btn btn-primary bottomNext",type:"button",onclick:() => {
+        state.votesUsed = 0;
+        state.votesAllowed = state.impostorCount;
+        state.votes = new Map();
+        state.impostorGuesses = new Map();
+        const starterIdx = Math.max(0, state.players.findIndex(p=>p.id===state.starterId));
+        state.turnIndex = starterIdx;
+        setStep("turn_lock");
+      }},["▶ Iniciar votación"])
+    ])
+  ]);
+  stage.appendChild(panel);
+}
+
 function renderBriefing(){
   clearStage();
 
@@ -1200,7 +2466,8 @@ function renderBriefing(){
     el("div",{class:"resultCard"},[
       el("div",{class:"ttl"},["Resumen (anfitrión)"]),
       el("div",{class:"mut"},[
-        `Civiles: ${civ}. Impostores: ${imp}. Votaciones disponibles: ${state.votesAllowed}.`
+        `Civiles: ${civ}. Impostores: ${imp}. Votaciones disponibles: ${state.votesAllowed}.
+Inicia la ronda: ${state.players.find(p=>p.id===state.starterId)?.name || "Jugador"}.`
       ])
     ]),
     el("div",{class:"row"},[
@@ -1208,17 +2475,74 @@ function renderBriefing(){
         // new word, new roles, keep coins and betting settings
         state.secretWord = pickSecretWord();
         assignRoles();
+        const aliveIds = state.players.filter(p=>p.alive).map(p=>p.id);
+        state.starterId = aliveIds[Math.floor(Math.random()*aliveIds.length)] || state.players[0]?.id || "";
         state.revealIndex = 0;
+        // Reinicia el ciclo de votación de esta ronda (aún no ha empezado)
+        state.votesUsed = 0;
+        state.votesAllowed = state.impostorCount;
         setStep("reveal");
       }},["↻ Repartir otra palabra"]),
       el("button",{class:"btn btn-primary",type:"button",onclick:() => {
-        state.turnIndex = 0;
+        const starterIdx = Math.max(0, state.players.findIndex(p=>p.id===state.starterId));
+        state.turnIndex = starterIdx;
         state.votes = new Map();
         state.impostorGuesses = new Map();
-        setStep("turn");
+        setStep("turn_lock");
       }},["🗳 Empezar votación"])
     ]),
     el("div",{class:"help"},["En votación: civiles votan. Impostores no votan: solo escriben la palabra que creen correcta."])
+  ]);
+
+  stage.appendChild(panel);
+}
+
+
+function renderTurnLock(){
+  clearStage();
+
+  if(checkWinnerByRoles()){
+    awardRoundCoins();
+    setStep("end");
+    return;
+  }
+
+  const alive = getAlivePlayers();
+  if(alive.length === 0){
+    state.finished = true;
+    state.winner = "nadie";
+    setStep("end");
+    return;
+  }
+
+  // Ensure turnIndex points to an alive player (advance if needed)
+  let safety = 0;
+  while(safety < state.players.length && (!state.players[state.turnIndex] || !state.players[state.turnIndex].alive)){
+    state.turnIndex = (state.turnIndex + 1) % state.players.length;
+    safety++;
+  }
+  const current = state.players[state.turnIndex];
+
+  const panel = el("div",{class:"panel"},[
+    el("h2",{},["Turno privado"]),
+    el("p",{},["Nadie debe ver la pantalla. Pasa el teléfono solo al jugador indicado."]),
+    el("div",{class:"revealWrap"},[
+      el("div",{class:"secretCard"},[
+        el("div",{class:"secretHeader"},[
+          el("div",{class:"avatarIcon","aria-hidden":"true"},["👤"]),
+          el("div",{class:"playerName"},[current.name])
+        ]),
+        el("div",{class:"role",style:"color: var(--cyan)"},["ES TU TURNO"]),
+        el("div",{class:"word",style:"font-size:18px;margin-top:12px"},["SOLO TÚ DEBES VER"]),
+        el("div",{class:"wordHint"},[
+          (current.role === "impostor")
+            ? "Eres impostor: no votas. Solo escribe la palabra que crees correcta."
+            : "Eres civil: vota por quien creas que es el impostor."
+        ])
+      ]),
+      el("button",{class:"btn btn-primary bottomNext",type:"button",onclick:() => setStep("turn")},["🔒 Desbloquear mi turno"])
+    ]),
+    el("div",{class:"help"},["Después de confirmar, se bloqueará automáticamente para el siguiente jugador."])
   ]);
 
   stage.appendChild(panel);
@@ -1241,21 +2565,16 @@ function renderTurn(){
     return setStep("end");
   }
 
-  // find next alive player turn in order
-  let next = null;
-  let startIdx = state.turnIndex;
-  for(let k=0;k<state.players.length;k++){
-    const i = (startIdx + k) % state.players.length;
-    const p = state.players[i];
-    if(p.alive){
-      next = p;
-      state.turnIndex = (i + 1) % state.players.length;
-      break;
-    }
-  }
-  if(!next){
+  // current player (already selected in Turno privado)
+  if(!state.players || state.players.length===0){
     return setStep("vote_result");
   }
+  // Ensure current index is alive
+  if(!state.players[state.turnIndex] || !state.players[state.turnIndex].alive){
+    advanceToNextAlive();
+  }
+  const next = state.players[state.turnIndex];
+
 
   // Determine if we are still collecting turns; we need one turn per alive player.
   // We use a simple counter per vote: store in stage dataset.
@@ -1289,9 +2608,8 @@ function renderTurn(){
           }
           // store guess
           state.impostorGuesses.set(next.id, g);
-          state[key] += 1;
-          toast("Listo. Pasa el teléfono.", false);
-          setTimeout(() => setStep("turn"), 250);
+                    toast("Listo. Pasa el teléfono.", false);
+          setTimeout(() => completePrivateAction(), 250);
         }},["Confirmar"])
       ]),
       el("div",{class:"help"},["Nadie más debe ver lo que escribes."])
@@ -1335,9 +2653,8 @@ function renderTurn(){
     }
     const suspectId = selected.value;
     state.votes.set(suspectId, (state.votes.get(suspectId)||0) + 1);
-    state[key] += 1;
-    toast("Voto registrado. Pasa el teléfono.", false);
-    setTimeout(() => setStep("turn"), 250);
+        toast("Voto registrado. Pasa el teléfono.", false);
+    setTimeout(() => completePrivateAction(), 250);
   });
 
   panel.appendChild(list);
@@ -1399,10 +2716,7 @@ function renderVoteResult(){
     ]),
     el("div",{class:"row"},[
       el("button",{class:"btn",type:"button",onclick:() => setStep("briefing")},["Volver a pistas"]),
-      el("button",{class:"btn btn-primary",type:"button",onclick:() => {
-        state.turnIndex = 0;
-        setStep("turn");
-      }},["Siguiente votación"])
+      el("button",{class:"btn btn-primary",type:"button",onclick:() => { nextTurn(); }},["Siguiente votación"])
     ])
   ]);
 
@@ -1480,6 +2794,8 @@ function renderEnd(){
         // refresh word and roles
         state.secretWord = pickSecretWord();
         assignRoles();
+        const aliveIds = state.players.filter(p=>p.alive).map(p=>p.id);
+        state.starterId = aliveIds[Math.floor(Math.random()*aliveIds.length)] || state.players[0]?.id || "";
         state.revealIndex = 0;
         state.turnIndex = 0;
         state.votes = new Map();
