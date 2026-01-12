@@ -1,1142 +1,1757 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RinoZone · Impostor PLUS (MVP)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Impostor · Vertical Pro</title>
 
-<style>
-  :root{
-    --bg1:#4a90e2;
-    --bg2:#1a3c6e;
-    --panel:#0f172af5;
-    --muted:#cbd5f5;
-    --text:#f9fafb;
-    --accent:#38bdf8;
-    --gold:#facc15;
-    --violet:#a78bfa;
-    --green:#22c55e;
-    --red:#fb7185;
-  }
-  *{ box-sizing:border-box; margin:0; padding:0; font-family:"Lato", system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
-  body{
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:linear-gradient(var(--bg1), var(--bg2));
-    color:var(--text);
-    padding:16px;
-  }
-  .game-wrapper{
-    width:100%;
-    max-width:980px;
-    background:var(--panel);
-    border-radius:24px;
-    box-shadow:0 14px 28px rgba(0,0,0,.35);
-    padding:18px 18px 22px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-    position:relative;
-    overflow:hidden;
-  }
-  .game-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-  }
-  .game-header-left h1{
-    font-size:18px;
-    font-weight:900;
-    letter-spacing:.2px;
-  }
-  .game-header-left p{
-    font-size:13px;
-    color:var(--muted);
-    line-height:1.25;
-    max-width:640px;
-  }
-  .game-header-right{
-    display:flex;
-    flex-direction:column;
-    align-items:flex-end;
-    gap:8px;
-    min-width:330px;
-  }
-  .btn{
-    border:none;
-    border-radius:14px;
-    padding:7px 12px;
-    font-size:13px;
-    font-weight:900;
-    cursor:pointer;
-    color:var(--text);
-    transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
-    user-select:none;
-  }
-  .btn:hover{ transform:translateY(-1px); filter:brightness(1.03); }
-  .btn:active{ transform:translateY(2px); filter:brightness(0.98); }
-  .btn-light{
-    background:#e2e8f0;
-    color:#0f172a;
-    box-shadow:0 3px 0 #cbd5e1;
-    font-weight:800;
-  }
-  .btn-primary{
-    background:linear-gradient(135deg,#60a5fa,#2563eb);
-    box-shadow:0 3px 0 #1e40af;
-  }
-  .btn-green{
-    background:linear-gradient(135deg,#22c55e,#16a34a);
-    box-shadow:0 3px 0 #15803d;
-  }
-  .btn-red{
-    background:linear-gradient(135deg,#fb7185,#e11d48);
-    box-shadow:0 3px 0 #9f1239;
-  }
-  .btn-violet{
-    background:linear-gradient(135deg,#a78bfa,#7c3aed);
-    box-shadow:0 3px 0 #4c1d95;
-  }
+  <style>
+    :root{
+      --bg0:#05060d;
+      --bg1:#0b1020;
+      --bg2:#020617;
 
-  .hud{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    justify-content:flex-end;
-    align-items:center;
-    font-size:12px;
-    color:#e5e7eb;
-  }
-  .hud strong{ color:var(--gold); }
+      --panel: rgba(15, 23, 42, 0.84);
+      --panel2: rgba(2, 6, 23, 0.58);
+      --stroke: rgba(148, 163, 184, 0.20);
 
-  .chip{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding:6px 10px;
-    border-radius:999px;
-    background:rgba(2,6,23,0.35);
-    box-shadow:inset 0 0 0 1px rgba(148,163,184,0.18);
-    font-size:12px;
-    color:#e5e7eb;
-  }
-  .bar{
-    width:110px;
-    height:8px;
-    border-radius:999px;
-    background:rgba(148,163,184,0.18);
-    overflow:hidden;
-    box-shadow:inset 0 0 0 1px rgba(15,23,42,0.35);
-  }
-  .bar > i{
-    display:block;
-    height:100%;
-    width:0%;
-    background:linear-gradient(90deg, var(--accent), var(--violet));
-    border-radius:999px;
-    box-shadow:0 0 14px rgba(56,189,248,0.45);
-  }
+      --text:#f8fafc;
+      --muted:#cbd5f5;
 
-  .grid{
-    display:grid;
-    grid-template-columns: 1.2fr 0.8fr;
-    gap:12px;
-  }
+      --cyan:#22d3ee;
+      --violet:#a78bfa;
+      --pink:#fb7185;
+      --lime:#34d399;
+      --amber:#fbbf24;
 
-  .game-container{
-    background:linear-gradient(#1d4ed8, #1e293b);
-    border-radius:20px;
-    padding:10px 10px 12px;
-    box-shadow:inset 0 0 0 1px rgba(15,23,42,.4);
-  }
-  canvas{
-    display:block;
-    width:100%;
-    height:auto;
-    border-radius:16px;
-    background:#0b1224;
-    touch-action:none;
-  }
+      --good:#22c55e;
+      --bad:#fb7185;
 
-  .side{
-    background:rgba(2,6,23,0.35);
-    border-radius:20px;
-    padding:12px;
-    box-shadow:inset 0 0 0 1px rgba(148,163,184,0.18);
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
-  .side h2{
-    font-size:13px;
-    font-weight:900;
-    letter-spacing:.2px;
-    color:#e5e7eb;
-  }
-  .small{ font-size:12px; color:var(--muted); line-height:1.25; }
-  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  label{ font-size:12px; color:#e5e7eb; font-weight:800; }
-  input{
-    width:100%;
-    border:none;
-    border-radius:14px;
-    padding:10px 12px;
-    background:rgba(15,23,42,0.55);
-    color:#f9fafb;
-    outline:none;
-    box-shadow:inset 0 0 0 1px rgba(148,163,184,0.18);
-    font-weight:800;
-  }
-  input::placeholder{ color:rgba(203,213,245,0.65); font-weight:700; }
-  .list{
-    background:rgba(15,23,42,0.55);
-    border-radius:14px;
-    padding:10px 12px;
-    box-shadow:inset 0 0 0 1px rgba(148,163,184,0.18);
-    font-size:12px;
-    color:#e5e7eb;
-    max-height:170px;
-    overflow:auto;
-    line-height:1.35;
-  }
-  .tag{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    padding:5px 9px;
-    border-radius:999px;
-    font-size:11px;
-    font-weight:900;
-    background:rgba(15,23,42,0.55);
-    box-shadow:inset 0 0 0 1px rgba(148,163,184,0.18);
-    color:#e5e7eb;
-  }
+      --shadow: 0 28px 80px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
 
-  .help{
-    margin-top:8px;
-    font-size:12px;
-    color:var(--muted);
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:8px;
-    flex-wrap:wrap;
-  }
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    html, body{ height:100%; width:100%; }
 
-  /* Modal Meeting */
-  .modal{
-    position:absolute;
-    inset:0;
-    background:rgba(2,6,23,0.72);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    padding:14px;
-  }
-  .modal-card{
-    width:min(760px, 100%);
-    background:rgba(15,23,42,0.95);
-    border-radius:22px;
-    box-shadow:0 18px 40px rgba(0,0,0,.5);
-    padding:14px;
-    box-shadow:inset 0 0 0 1px rgba(148,163,184,0.18);
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
-  .modal-card h3{
-    font-size:14px;
-    font-weight:900;
-    color:#f9fafb;
-  }
-  .vote-grid{
-    display:grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap:10px;
-  }
-  .vote{
-    background:rgba(2,6,23,0.35);
-    border-radius:16px;
-    padding:10px;
-    box-shadow:inset 0 0 0 1px rgba(148,163,184,0.18);
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:8px;
-    font-size:12px;
-  }
-  .pill{
-    padding:4px 8px;
-    border-radius:999px;
-    font-weight:900;
-    font-size:11px;
-  }
-  .pill-alive{ background:rgba(34,197,94,0.18); color:#86efac; }
-  .pill-dead{ background:rgba(251,113,133,0.18); color:#fda4af; }
-  .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-</style>
+    body{
+      min-height:100vh;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+      color:var(--text);
+      padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+      overflow:hidden;
+      touch-action: manipulation;
+      -webkit-user-select:none;
+      user-select:none;
+
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(34,211,238,0.22), transparent 60%),
+        radial-gradient(900px 520px at 85% 18%, rgba(167,139,250,0.22), transparent 60%),
+        radial-gradient(1000px 700px at 50% 92%, rgba(251,191,36,0.12), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+    }
+
+    #app{ width:100%; display:flex; justify-content:center; }
+
+    .shell{
+      width: min(720px, 100%);
+      background: linear-gradient(180deg, var(--panel), rgba(15,23,42,0.68));
+      border:1px solid var(--stroke);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+
+      display:flex;
+      flex-direction:column;
+      min-height: calc(100dvh - 24px);
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid rgba(148,163,184,0.16);
+      position:sticky;
+      top:0;
+      z-index:10;
+      background: linear-gradient(180deg, rgba(2,6,23,0.35), rgba(2,6,23,0.08));
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .brand{ display:flex; align-items:center; gap:10px; min-width:0; }
+    .logo{
+      width:42px; height:42px; border-radius:16px;
+      display:grid; place-items:center;
+      background: radial-gradient(20px 20px at 30% 30%, rgba(255,255,255,0.14), transparent 60%),
+                  linear-gradient(135deg, rgba(34,211,238,0.92), rgba(167,139,250,0.92));
+      border:1px solid rgba(255,255,255,0.16);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+      font-size:22px;
+      flex: 0 0 auto;
+    }
+    .brand h1{
+      font-size: 14px;
+      font-weight: 1100;
+      letter-spacing:.2px;
+      line-height:1.1;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .brand p{
+      margin-top:2px;
+      font-size: 12px;
+      color: rgba(203,213,245,0.92);
+      font-weight: 800;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .hud{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+      gap:8px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(2,6,23,0.44);
+      border:1px solid rgba(148,163,184,0.18);
+      font-size: 12px;
+      font-weight: 950;
+      color: rgba(248,250,252,0.96);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .chip b{ font-weight: 1200; }
+
+    main{
+      position:relative;
+      flex:1 1 auto;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      padding: 14px;
+    }
+
+    .panel{
+      background: rgba(2,6,23,0.46);
+      border:1px solid rgba(148,163,184,0.18);
+      border-radius: 22px;
+      padding: 14px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    h2{
+      font-size: 18px;
+      font-weight: 1200;
+      letter-spacing:.2px;
+      margin-bottom: 8px;
+    }
+    p{ font-size: 13px; font-weight: 850; color: rgba(203,213,245,0.92); line-height:1.35; }
+    .help{ margin-top:8px; font-size:12px; color: rgba(203,213,245,0.88); font-weight:800; }
+    .warn{ margin-top:10px; font-size:12px; color: rgba(251,113,133,0.98); font-weight:950; }
+    .ok{ margin-top:10px; font-size:12px; color: rgba(34,197,94,0.98); font-weight:950; }
+
+    label{
+      display:block;
+      font-size:12px;
+      font-weight: 1100;
+      letter-spacing:.2px;
+      color: rgba(248,250,252,0.96);
+      margin: 10px 0 6px;
+    }
+    input, select{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 16px;
+      background: rgba(2,6,23,0.42);
+      border:1px solid rgba(148,163,184,0.22);
+      color: rgba(248,250,252,0.98);
+      outline:none;
+      font-size:14px;
+      font-weight: 950;
+    }
+    input::placeholder{ color: rgba(203,213,245,0.55); font-weight:800; }
+
+    .row{ display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-top:12px; }
+    .grid2{ display:grid; grid-template-columns:1fr; gap:10px; }
+    @media(min-width:520px){
+      .grid2{ grid-template-columns:1fr 1fr; }
+      .brand h1{ font-size:15px; }
+    }
+
+    .btn{
+      border:1px solid rgba(148,163,184,0.22);
+      background: rgba(2,6,23,0.44);
+      color: rgba(248,250,252,0.98);
+      padding: 12px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 1100;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .08s ease, filter .08s ease;
+    }
+    .btn:active{ transform: translateY(1px); filter: brightness(1.04); }
+    .btn[disabled]{ opacity:0.55; cursor:not-allowed; }
+
+    .btn-primary{
+      border:1px solid rgba(255,255,255,0.18);
+      background: linear-gradient(135deg, rgba(34,211,238,0.95), rgba(167,139,250,0.92));
+      box-shadow: 0 16px 44px rgba(0,0,0,0.35);
+    }
+    .btn-danger{
+      border:1px solid rgba(255,255,255,0.18);
+      background: linear-gradient(135deg, rgba(251,113,133,0.98), rgba(251,191,36,0.74));
+    }
+
+    /* Toast */
+    #toast{
+      position:fixed;
+      left:50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      background: rgba(2,6,23,0.86);
+      border:1px solid rgba(148,163,184,0.22);
+      color: rgba(248,250,252,0.98);
+      padding: 10px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 950;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .15s ease, transform .15s ease;
+      z-index: 999;
+      max-width: min(520px, 92vw);
+    }
+    #toast.show{ opacity:1; transform: translateX(-50%) translateY(-4px); }
+    #toast.bad{ border-color: rgba(251,113,133,0.45); }
+    #toast.good{ border-color: rgba(34,197,94,0.45); }
+
+    /* iOS Hint */
+    #iosHint{
+      margin-top:12px;
+      padding: 12px 12px;
+      border-radius: 18px;
+      background: rgba(2,6,23,0.46);
+      border:1px solid rgba(148,163,184,0.18);
+      display:none;
+    }
+    #iosHint .row{ margin-top:0; }
+    #iosHint .ttl{ font-weight:1200; font-size:13px; }
+    #iosHint .mut{ font-weight:850; font-size:12px; color: rgba(203,213,245,0.92); line-height:1.35; }
+    #iosHint .x{
+      border:1px solid rgba(148,163,184,0.22);
+      background: rgba(2,6,23,0.44);
+      color: rgba(248,250,252,0.98);
+      padding: 8px 10px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight:1100;
+    }
+
+    /* Secret Card (Vertical first) */
+    .revealWrap{ display:flex; flex-direction:column; gap:12px; align-items:stretch; margin-top:10px; }
+    .secretCard{
+      position:relative;
+      width:100%;
+      border-radius: 26px;
+      padding: 14px 14px 16px;
+      background:
+        radial-gradient(520px 240px at 25% 18%, rgba(34,211,238,0.22), transparent 60%),
+        radial-gradient(520px 240px at 80% 30%, rgba(167,139,250,0.20), transparent 60%),
+        rgba(2,6,23,0.54);
+      border:1px solid rgba(148,163,184,0.20);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 16px 50px rgba(0,0,0,0.45);
+      overflow:hidden;
+    }
+    .secretHeader{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding: 8px 0 6px;
+      text-align:center;
+    }
+    .avatarIcon{
+      width:58px; height:58px;
+      border-radius: 22px;
+      display:grid; place-items:center;
+      background: radial-gradient(22px 22px at 28% 28%, rgba(255,255,255,0.16), transparent 60%),
+                  linear-gradient(135deg, rgba(251,191,36,0.92), rgba(251,113,133,0.92));
+      border:1px solid rgba(255,255,255,0.18);
+      box-shadow: 0 16px 46px rgba(0,0,0,0.35);
+      font-size: 26px;
+    }
+    .playerName{
+      font-size: 18px;
+      font-weight: 1250;
+      letter-spacing:.2px;
+      color: rgba(248,250,252,0.98);
+    }
+
+    .secretCard .role{
+      margin-top:8px;
+      text-align:center;
+      font-size: 14px;
+      font-weight: 1200;
+      letter-spacing:.4px;
+    }
+    .secretCard .word{
+      text-align:center;
+      font-size: 34px;
+      font-weight: 1300;
+      letter-spacing: .6px;
+      margin-top: 10px;
+      text-transform: uppercase;
+    }
+
+    .secretCard .mask{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      padding: 14px;
+      background:
+        radial-gradient(520px 260px at 28% 22%, rgba(34,211,238,0.18), transparent 62%),
+        radial-gradient(520px 260px at 80% 34%, rgba(167,139,250,0.18), transparent 62%),
+        rgba(0,0,0,0.70);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: opacity .12s ease;
+    }
+    .secretCard.revealed .mask{ opacity:0; pointer-events:none; }
+    .maskInner{
+      width:100%;
+      border-radius: 22px;
+      padding: 12px 12px;
+      background: rgba(2,6,23,0.58);
+      border:1px solid rgba(148,163,184,0.20);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+      text-align:center;
+    }
+    .maskInner h3{ font-size: 14px; font-weight: 1250; margin-bottom:6px; }
+    .maskInner p{ margin:0; font-size: 12px; font-weight: 850; color: rgba(203,213,245,0.92); }
+    .holdBtn{
+      margin-top: 10px;
+      width:100%;
+      padding: 14px 12px;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,0.18);
+      background: linear-gradient(135deg, rgba(34,211,238,0.95), rgba(167,139,250,0.92));
+      color: rgba(248,250,252,0.98);
+      font-size: 14px;
+      font-weight: 1200;
+      cursor:pointer;
+      user-select:none;
+      touch-action:none;
+    }
+    .holdBtn:active{ filter: brightness(1.04); transform: translateY(1px); }
+
+    .bottomNext{
+      margin-top: 10px;
+      width:100%;
+      padding: 14px 12px;
+      border-radius: 18px;
+      font-size: 14px;
+      font-weight: 1200;
+    }
+
+    /* Voting list */
+    .playersList{ display:flex; flex-direction:column; gap:10px; margin-top: 10px; }
+    .voteItem{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 12px 12px;
+      border-radius: 18px;
+      background: rgba(2,6,23,0.38);
+      border:1px solid rgba(148,163,184,0.18);
+    }
+    .voteItem .nm{ font-weight: 1150; font-size: 14px; letter-spacing:.2px; }
+    .voteItem small{ color: rgba(203,213,245,0.88); font-weight: 850; font-size: 12px; }
+    .radio{ width:22px; height:22px; accent-color: #22d3ee; cursor:pointer; }
+
+    /* End summary cards */
+    .resultCard{
+      margin-top: 12px;
+      border-radius: 22px;
+      padding: 12px 12px;
+      background: rgba(2,6,23,0.46);
+      border:1px solid rgba(148,163,184,0.18);
+    }
+    .resultCard .ttl{ font-weight:1200; font-size: 14px; margin-bottom:6px; }
+    .resultCard .mut{ font-weight:850; font-size: 12px; color: rgba(203,213,245,0.92); }
+
+  </style>
 </head>
 
 <body>
-  <div class="game-wrapper">
-    <div class="game-header">
-      <div class="game-header-left">
-        <h1>RinoZone · Impostor PLUS (MVP)</h1>
-        <p>Loop tipo “impostor”: Crew hace tareas, Impostor sabotea y elimina. Monedas ficticias con <b>stake</b> por partida (pozo), sin dinero real.</p>
-      </div>
-
-      <div class="game-header-right">
-        <button class="btn btn-light" onclick="window.location.href='panel.html'">⬅ Volver al panel</button>
-        <div class="hud">
-          <span>Estado: <strong id="hudState">Lobby</strong></span>
-          <span>| Rol: <strong id="hudRole">?</strong></span>
-          <span>| Balance: <strong id="hudBal">500</strong></span>
-          <span>| Escrow: <strong id="hudEsc">0</strong></span>
-          <span class="chip" title="Progreso de tareas del Crew (solo avanza con E en estaciones)">
-            Tareas
-            <span class="bar"><i id="hudTasksBar" style="width:0%"></i></span>
-          </span>
-          <span class="chip" title="Pozo total: stake x jugadores">
-            Pot: <strong id="hudPot">0</strong>
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid">
-      <div class="game-container">
-        <canvas id="gameCanvas" width="840" height="520"></canvas>
-        <div class="help">
-          <span><b>WASD</b> mover · <b>E</b> tarea · <b>K</b> kill (si eres impostor) · <b>R</b> report · <b>P</b> pausa</span>
-          <div class="row">
-            <button id="btnStart" class="btn btn-green">▶ Iniciar partida</button>
-            <button id="btnMeeting" class="btn btn-primary">📣 Meeting (debug)</button>
-            <button id="btnRestart" class="btn btn-violet">🔄 Reiniciar</button>
+  <div id="app">
+    <div class="shell">
+      <header>
+        <div class="brand" aria-label="Encabezado del juego">
+          <div class="logo" aria-hidden="true">🕵️</div>
+          <div style="min-width:0">
+            <h1>Impostor</h1>
+            <p>Vertical · tarjetas privadas · votaciones</p>
           </div>
         </div>
-      </div>
-
-      <aside class="side">
-        <h2>Lobby / Apuesta ficticia</h2>
-        <div class="small">Define stake por jugador. Al iniciar se bloquea en <span class="mono">escrow</span> y al final se reparte el pot al equipo ganador.</div>
-
-        <div class="row" style="align-items:flex-end;">
-          <div style="flex:1;">
-            <label>Stake (monedas)</label>
-            <input id="stake" type="number" min="0" step="1" placeholder="Ej: 25" value="25"/>
-          </div>
-          <div style="width:120px;">
-            <label>Jugadores</label>
-            <input id="players" type="number" min="4" max="10" step="1" value="6"/>
-          </div>
+        <div class="hud" aria-label="Indicadores">
+          <div class="chip">🪙 <b id="hudCoins">0</b></div>
+          <div class="chip">🎲 Ronda <b id="hudRound">0</b></div>
+          <div class="chip">🗳 Votos <b id="hudVotesLeft">0</b></div>
         </div>
+      </header>
 
-        <div class="row">
-          <span class="tag">Ficticio</span>
-          <span class="tag">Servidor: pendiente</span>
-          <span class="tag">MVP local</span>
-        </div>
-
-        <h2>Registro de eventos</h2>
-        <div id="log" class="list"></div>
-
-        <div class="small">
-          Siguiente paso (cuando lo pidas): llevar esto a <b>multijugador online</b> (Socket.IO) y mover el escrow al servidor para evitar trampas.
-        </div>
-      </aside>
-    </div>
-
-    <!-- Meeting Modal -->
-    <div id="modal" class="modal">
-      <div class="modal-card">
-        <h3>Meeting · Votación</h3>
-        <div class="small" id="meetingInfo"></div>
-        <div class="vote-grid" id="voteGrid"></div>
-        <div class="row" style="justify-content:flex-end;">
-          <button id="btnSkip" class="btn btn-primary">⏭ Skip</button>
-          <button id="btnClose" class="btn btn-light">Cerrar</button>
-        </div>
-      </div>
+      <main id="stage" aria-live="polite"></main>
     </div>
   </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
 (() => {
 "use strict";
 
-/* ---------------- DOM ---------------- */
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d", { alpha:true });
+/* =========================================================
+ *  VISUAL/TOUCH BEST PRACTICES (mobile-first + iOS hint)
+ *  - Fullscreen requires user gesture (browsers enforce it)
+ *  - iOS Safari "true fullscreen" is limited; recommend A2HS
+ *  ========================================================= */
+const iosHint = document.createElement("div");
+iosHint.id = "iosHint";
 
-const hudState = document.getElementById("hudState");
-const hudRole  = document.getElementById("hudRole");
-const hudBal   = document.getElementById("hudBal");
-const hudEsc   = document.getElementById("hudEsc");
-const hudTasksBar = document.getElementById("hudTasksBar");
-const hudPot = document.getElementById("hudPot");
-
-const stakeEl = document.getElementById("stake");
-const playersEl = document.getElementById("players");
-const logEl = document.getElementById("log");
-
-const btnStart = document.getElementById("btnStart");
-const btnRestart = document.getElementById("btnRestart");
-const btnMeeting = document.getElementById("btnMeeting");
-
-const modal = document.getElementById("modal");
-const voteGrid = document.getElementById("voteGrid");
-const meetingInfo = document.getElementById("meetingInfo");
-const btnClose = document.getElementById("btnClose");
-const btnSkip = document.getElementById("btnSkip");
-
-const W = canvas.width, H = canvas.height;
-
-/* ---------------- Utils ---------------- */
-const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
-const rand = (a,b)=> a + Math.random()*(b-a);
-const randi = (a,b)=> Math.floor(rand(a,b+1));
-const dist2 = (x1,y1,x2,y2)=>{const dx=x1-x2,dy=y1-y2;return dx*dx+dy*dy;};
-function aabb(ax,ay,aw,ah,bx,by,bw,bh){
-  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+function isIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
-function log(msg){
-  const t = new Date().toLocaleTimeString("es-CO",{hour12:false});
-  logEl.innerHTML = `<div><span class="mono" style="color:rgba(203,213,245,.7)">[${t}]</span> ${msg}</div>` + logEl.innerHTML;
+function isStandalone(){
+  return (window.navigator.standalone === true) || window.matchMedia("(display-mode: standalone)").matches;
 }
-
-/* ---------------- Game Config ---------------- */
-const COLORS = {
-  me: "#38bdf8",
-  crew: "#a78bfa",
-  imp: "#fb7185",
-  dead: "rgba(148,163,184,0.55)",
-  task: "#facc15",
-  wall: "rgba(148,163,184,0.16)"
-};
-
-const MAP = {
-  walls: [
-    {x:80,y:80,w:680,h:20},
-    {x:80,y:420,w:680,h:20},
-    {x:80,y:100,w:20,h:320},
-    {x:740,y:100,w:20,h:320},
-    {x:240,y:170,w:360,h:20},
-    {x:240,y:330,w:360,h:20},
-    {x:240,y:190,w:20,h:140},
-    {x:580,y:190,w:20,h:140},
-  ],
-  tasks: [
-    {id:"Reactor", x:150, y:140, r:18},
-    {id:"Comms",   x:690, y:140, r:18},
-    {id:"O2",      x:420, y:390, r:18},
-  ]
-};
-
-const KEYS = { w:false,a:false,s:false,d:false };
-let paused = false;
-
-/* ---------------- Economy (local MVP) ---------------- */
-const wallet = { balance: 500, escrow: 0 };
-function setHudEconomy(pot=0){
-  hudBal.textContent = String(wallet.balance);
-  hudEsc.textContent = String(wallet.escrow);
-  hudPot.textContent = String(pot);
+async function requestFullscreenSafe(){
+  const el = document.documentElement;
+  try{
+    if(el.requestFullscreen) await el.requestFullscreen();
+    else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+  }catch(_){}
 }
-function lockStake(stake){
-  if(wallet.balance - wallet.escrow < stake) return false;
-  wallet.escrow += stake;
-  return true;
-}
-function unlockStake(stake){
-  wallet.escrow = Math.max(0, wallet.escrow - stake);
-}
-function settle(stake, playersCount, winnerTeam /* "CREW"|"IMPOSTOR" */){
-  const pot = stake * playersCount;
-
-  // todos pagan stake desde balance, se libera escrow
-  wallet.balance -= stake;
-  unlockStake(stake);
-
-  // si gana tu equipo, recibes share fijo del pot
-  // MVP: reparto por equipo y no por azar.
-  const alive = state.players.filter(p=>p.alive);
-  const crewAlive = alive.filter(p=>p.role==="CREW").length;
-  const impAlive  = alive.filter(p=>p.role==="IMPOSTOR").length;
-
-  let winners = 0;
-  if(winnerTeam==="CREW") winners = crewAlive;
-  else winners = impAlive;
-
-  // Si tú perteneces al equipo ganador, recibes share
-  const share = winners>0 ? Math.floor(pot / winners) : 0;
-  if(state.me.alive && state.me.role === winnerTeam){
-    wallet.balance += share;
-  }
-
-  setHudEconomy(pot);
-  log(`<b>FIN</b> · Gana <b>${winnerTeam}</b>. Pot=${pot}. Tu payout=${(state.me.alive && state.me.role===winnerTeam)?share:0}.`);
-}
-
-/* ---------------- State ---------------- */
-const state = {
-  phase: "LOBBY", // LOBBY | PLAY | MEETING | END
-  stake: 25,
-  pot: 0,
-  tasksDone: 0,
-  tasksTotal: MAP.tasks.length,
-  players: [], // includes me + bots
-  me: null,
-  bodies: [], // {x,y, byName}
-  meeting: { votes: new Map(), open:false, reportedBy:null },
-  lastKillAt: 0,
-  lastBotKillAt: 0,
-};
-
-/* ---------------- Entities ---------------- */
-function makePlayer(name, isMe=false){
-  return {
-    id: name,
-    name,
-    isMe,
-    role: "CREW",
-    alive: true,
-    x: rand(140,700),
-    y: rand(140,380),
-    r: 13,
-    speed: isMe ? 2.5 : 1.6,
-    target: null,
-    suspicion: 0,
-  };
-}
-
-function resetAll(){
-  state.phase="LOBBY";
-  paused=false;
-  state.tasksDone=0;
-  state.bodies=[];
-  state.meeting.votes = new Map();
-  state.meeting.open=false;
-  state.meeting.reportedBy=null;
-  state.lastKillAt=0;
-  state.lastBotKillAt=0;
-
-  state.players=[];
-  state.me = makePlayer("Tú", true);
-  state.players.push(state.me);
-
-  const n = clamp(parseInt(playersEl.value||"6",10), 4, 10);
-  for(let i=1;i<n;i++){
-    state.players.push(makePlayer("Player"+i,false));
-  }
-
-  // Roles: 1 impostor (MVP)
-  const impIndex = randi(0, state.players.length-1);
-  state.players.forEach((p,idx)=> p.role = (idx===impIndex ? "IMPOSTOR":"CREW"));
-
-  hudState.textContent = "Lobby";
-  hudRole.textContent = "?";
-  setHudEconomy(0);
-  hudTasksBar.style.width = "0%";
-  log(`Lobby listo · jugadores=${state.players.length} · impostor oculto asignado.`);
-}
-
-resetAll();
-
-/* ---------------- Input ---------------- */
-document.addEventListener("keydown",(e)=>{
-  if(e.code==="KeyW") KEYS.w=true;
-  if(e.code==="KeyA") KEYS.a=true;
-  if(e.code==="KeyS") KEYS.s=true;
-  if(e.code==="KeyD") KEYS.d=true;
-
-  if(e.code==="KeyP"){ e.preventDefault(); togglePause(); }
-  if(e.code==="KeyE"){ e.preventDefault(); tryDoTask(); }
-  if(e.code==="KeyK"){ e.preventDefault(); tryKill(); }
-  if(e.code==="KeyR"){ e.preventDefault(); tryReport(); }
-});
-document.addEventListener("keyup",(e)=>{
-  if(e.code==="KeyW") KEYS.w=false;
-  if(e.code==="KeyA") KEYS.a=false;
-  if(e.code==="KeyS") KEYS.s=false;
-  if(e.code==="KeyD") KEYS.d=false;
-});
-
-canvas.addEventListener("touchstart",(e)=>{
-  e.preventDefault();
-  // touch = mover hacia el dedo (simple)
-  const t = e.touches[0];
-  const rect = canvas.getBoundingClientRect();
-  const mx = (t.clientX-rect.left) * (W/rect.width);
-  const my = (t.clientY-rect.top)  * (H/rect.height);
-  state.me.target = {x:mx,y:my};
-},{passive:false});
-
-btnStart.addEventListener("click", startGame);
-btnRestart.addEventListener("click", resetAll);
-btnMeeting.addEventListener("click", ()=> openMeeting("Debug"));
-
-btnClose.addEventListener("click", closeMeeting);
-btnSkip.addEventListener("click", ()=> { state.meeting.votes.set(state.me.id,"SKIP"); finalizeVotes(); });
-
-function togglePause(){
-  if(state.phase!=="PLAY") return;
-  paused = !paused;
-  hudState.textContent = paused ? "Pausa" : "En juego";
-}
-
-/* ---------------- Collision with walls ---------------- */
-function collideWalls(p, nx, ny){
-  // simple: prevent entering walls AABB vs circle approximated as square
-  const s = p.r*2;
-  const box = {x:nx-p.r, y:ny-p.r, w:s, h:s};
-  for(const w of MAP.walls){
-    if(aabb(box.x,box.y,box.w,box.h, w.x,w.y,w.w,w.h)) return {x:p.x,y:p.y};
-  }
-  // bounds
-  nx = clamp(nx, 40, W-40);
-  ny = clamp(ny, 40, H-40);
-  return {x:nx,y:ny};
-}
-
-/* ---------------- Game flow ---------------- */
-function startGame(){
-  if(state.phase!=="LOBBY") return;
-
-  state.stake = clamp(parseInt(stakeEl.value||"0",10), 0, 999999);
-  const ok = lockStake(state.stake);
-  if(!ok){
-    log(`<span style="color:#fda4af"><b>Error:</b> saldo insuficiente para stake.</span>`);
-    return;
-  }
-
-  state.pot = state.stake * state.players.length;
-  setHudEconomy(state.pot);
-
-  state.phase="PLAY";
-  hudState.textContent = "En juego";
-
-  // Revela rol SOLO a ti (MVP)
-  hudRole.textContent = state.me.role === "IMPOSTOR" ? "IMPOSTOR" : "CREW";
-  log(`<b>Partida iniciada</b> · Stake=${state.stake} · Pot=${state.pot}. Tu rol: <b>${hudRole.textContent}</b>.`);
-}
-
-/* ---------------- Tasks ---------------- */
-function nearestTask(){
-  let best=null, bd=Infinity;
-  for(const t of MAP.tasks){
-    const d = dist2(state.me.x,state.me.y,t.x,t.y);
-    if(d<bd){ bd=d; best=t; }
-  }
-  return {task:best, d2:bd};
-}
-function tryDoTask(){
-  if(state.phase!=="PLAY" || paused) return;
-  if(state.me.role!=="CREW") { log(`<span style="color:#fda4af">E: los impostores no hacen tareas.</span>`); return; }
-  const {task, d2} = nearestTask();
-  if(!task) return;
-  if(d2 > (34*34)) { log(`<span style="color:#cbd5f5">Acércate a una estación para hacer tarea (E).</span>`); return; }
-
-  // MVP: cada estación se puede completar una vez por ti
-  if(task.done){ log(`<span style="color:#cbd5f5">Esta tarea ya fue completada.</span>`); return; }
-  task.done = true;
-  state.tasksDone++;
-
-  const pct = Math.round((state.tasksDone/state.tasksTotal)*100);
-  hudTasksBar.style.width = `${pct}%`;
-  log(`<b>Tarea</b> completada: <b>${task.id}</b> (${state.tasksDone}/${state.tasksTotal}).`);
-
-  if(state.tasksDone >= state.tasksTotal){
-    endGame("CREW", "Tareas completadas");
-  }
-}
-
-/* ---------------- Kill / Report / Meeting ---------------- */
-function nearestAliveOther(){
-  let best=null, bd=Infinity;
-  for(const p of state.players){
-    if(p.id===state.me.id) continue;
-    if(!p.alive) continue;
-    const d = dist2(state.me.x,state.me.y,p.x,p.y);
-    if(d<bd){ bd=d; best=p; }
-  }
-  return {p:best, d2:bd};
-}
-function tryKill(){
-  if(state.phase!=="PLAY" || paused) return;
-  if(state.me.role!=="IMPOSTOR"){ log(`<span style="color:#cbd5f5">K: solo impostor puede eliminar.</span>`); return; }
-  const now = performance.now();
-  if(now - state.lastKillAt < 2200){ log(`<span style="color:#cbd5f5">Kill en cooldown.</span>`); return; }
-
-  const {p, d2} = nearestAliveOther();
-  if(!p || d2 > (36*36)){ log(`<span style="color:#cbd5f5">Acércate a un jugador para eliminar (K).</span>`); return; }
-
-  p.alive=false;
-  state.bodies.push({x:p.x,y:p.y, byName:p.name});
-  state.lastKillAt=now;
-  log(`<span style="color:#fda4af"><b>ELIMINADO</b></span> · ${p.name} cayó.`);
-
-  checkImpostorWin();
-}
-function tryReport(){
-  if(state.phase!=="PLAY" || paused) return;
-  // report body if close
-  let found=-1;
-  for(let i=0;i<state.bodies.length;i++){
-    const b=state.bodies[i];
-    if(dist2(state.me.x,state.me.y,b.x,b.y) < (48*48)){ found=i; break; }
-  }
-  if(found<0){ log(`<span style="color:#cbd5f5">No hay cuerpo cerca para reportar (R).</span>`); return; }
-  openMeeting("Reporte de cuerpo");
-}
-
-function openMeeting(reason){
-  if(state.phase!=="PLAY") return;
-  state.phase="MEETING";
-  paused=false;
-  hudState.textContent="Meeting";
-  state.meeting.votes = new Map();
-  state.meeting.reportedBy = state.me.name;
-
-  meetingInfo.innerHTML = `
-    <span class="mono">Motivo:</span> <b>${reason}</b> ·
-    <span class="mono">Vota para expulsar.</span> (MVP: bots votan por heurística)
-  `;
-
-  // Render candidates
-  voteGrid.innerHTML = "";
-  for(const p of state.players){
-    const alive = p.alive;
-    const card = document.createElement("div");
-    card.className = "vote";
-    card.innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:2px">
-        <div><b>${p.name}</b> ${p.isMe?'<span class="mono" style="opacity:.75">[tú]</span>':''}</div>
-        <div class="small mono">id:${p.id}</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <span class="pill ${alive?'pill-alive':'pill-dead'}">${alive?'VIVO':'MUERTO'}</span>
-        <button class="btn btn-red" ${alive? "" : "disabled"} style="padding:7px 10px;font-size:12px;" data-vote="${p.id}">Votar</button>
+function showIOSHint(){
+  const isMobile = Math.min(window.innerWidth, window.innerHeight) <= 900;
+  if(isIOS() && isMobile && !isStandalone()){
+    iosHint.style.display = "block";
+    iosHint.innerHTML = `
+      <div class="row">
+        <div style="min-width:0">
+          <div class="ttl">iPhone (Safari)</div>
+          <div class="mut">Para verlo tipo app (sin barras): <b>Compartir → Añadir a pantalla de inicio</b> y ábrelo desde ahí.</div>
+        </div>
+        <button class="x" type="button" aria-label="Cerrar">✕</button>
       </div>
     `;
-    voteGrid.appendChild(card);
-  }
-
-  voteGrid.querySelectorAll("button[data-vote]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const target = btn.getAttribute("data-vote");
-      if(!target) return;
-      state.meeting.votes.set(state.me.id, target);
-      log(`<b>Voto</b> · Tú votaste por <b>${target}</b>.`);
-      finalizeVotes();
-    });
-  });
-
-  modal.style.display="flex";
-  // bots vote after small delay
-  setTimeout(botVotes, 550);
-}
-
-function closeMeeting(){
-  modal.style.display="none";
-  // si se cerró sin resolver, resolvemos por skip
-  if(state.phase==="MEETING"){
-    state.meeting.votes.set(state.me.id, state.meeting.votes.get(state.me.id) || "SKIP");
-    finalizeVotes();
-  }
-}
-
-function botVotes(){
-  if(state.phase!=="MEETING") return;
-
-  const alive = state.players.filter(p=>p.alive);
-  // heuristic: bots sospechan del más cercano al cuerpo si existe, o random
-  const candidates = alive.map(p=>p.id);
-
-  for(const p of alive){
-    if(p.isMe) continue;
-    let vote = "SKIP";
-
-    // bots: si ven "suspect" alto, votan
-    // MVP: impostor bot intenta votar a otro; crew bot vota random con sesgo
-    if(p.role==="IMPOSTOR"){
-      const others = candidates.filter(id=>id!==p.id);
-      vote = others.length ? others[randi(0, others.length-1)] : "SKIP";
-    } else {
-      if(Math.random() < 0.70){
-        const others = candidates.filter(id=>id!==p.id);
-        vote = others.length ? others[randi(0, others.length-1)] : "SKIP";
-      }
-    }
-    state.meeting.votes.set(p.id, vote);
-  }
-  finalizeVotes();
-}
-
-function finalizeVotes(){
-  if(state.phase!=="MEETING") return;
-
-  // if not all alive voted, wait a bit
-  const alive = state.players.filter(p=>p.alive);
-  if(state.meeting.votes.size < alive.length) return;
-
-  // Count votes
-  const counts = new Map();
-  for(const [voter, target] of state.meeting.votes.entries()){
-    if(target==="SKIP") continue;
-    counts.set(target, (counts.get(target)||0)+1);
-  }
-
-  // Find max
-  let max=0, pick=null, tie=false;
-  for(const [target,c] of counts.entries()){
-    if(c>max){ max=c; pick=target; tie=false; }
-    else if(c===max && c>0){ tie=true; }
-  }
-
-  if(!pick || tie){
-    log(`<b>Meeting</b> · Sin expulsión (empate o skip).`);
+    iosHint.querySelector(".x")?.addEventListener("click", () => (iosHint.style.display = "none"), { once:true });
   } else {
-    const expelled = state.players.find(p=>p.id===pick);
-    if(expelled && expelled.alive){
-      expelled.alive=false;
-      log(`<span style="color:#fda4af"><b>EXPULSADO</b></span> · ${expelled.name} fue expulsado.`);
-      // win check: if impostor expelled, crew wins
-      if(expelled.role==="IMPOSTOR"){
-        endGame("CREW", "Impostor expulsado");
-        modal.style.display="none";
+    iosHint.style.display = "none";
+  }
+}
+showIOSHint();
+window.addEventListener("resize", showIOSHint);
+window.visualViewport?.addEventListener("resize", showIOSHint);
+
+/* =========================================================
+ *  WORD BANK (>= 1000) - generated via combinations
+ *  We keep a base list of nouns (Spanish) and expand with
+ *  modifiers to easily exceed 1000 unique "palabras/phrases".
+ * ========================================================= */
+const BASE_NOUNS = [
+  "silla",
+  "mesa",
+  "ventana",
+  "puerta",
+  "llave",
+  "candado",
+  "cortina",
+  "espejo",
+  "alfombra",
+  "lampara",
+  "reloj",
+  "cama",
+  "almohada",
+  "sabana",
+  "cobija",
+  "armario",
+  "cajon",
+  "gaveta",
+  "estante",
+  "cuadro",
+  "libro",
+  "cuaderno",
+  "lapiz",
+  "boligrafo",
+  "borrador",
+  "sacapuntas",
+  "mochila",
+  "maleta",
+  "cargador",
+  "audifonos",
+  "celular",
+  "tablet",
+  "computador",
+  "teclado",
+  "mouse",
+  "pantalla",
+  "control",
+  "camara",
+  "tripode",
+  "bateria",
+  "parlante",
+  "microfono",
+  "router",
+  "cable",
+  "enchufe",
+  "bombillo",
+  "ventilador",
+  "nevera",
+  "estufa",
+  "horno",
+  "licuadora",
+  "cafetera",
+  "tetera",
+  "jarra",
+  "vaso",
+  "taza",
+  "plato",
+  "cuchara",
+  "tenedor",
+  "cuchillo",
+  "olla",
+  "sarten",
+  "espatula",
+  "colador",
+  "recipiente",
+  "termo",
+  "servilleta",
+  "bolsa",
+  "caja",
+  "frasco",
+  "pan",
+  "queso",
+  "huevo",
+  "arroz",
+  "pasta",
+  "sopa",
+  "ensalada",
+  "pollo",
+  "carne",
+  "pescado",
+  "atun",
+  "fruta",
+  "manzana",
+  "pera",
+  "banano",
+  "uvas",
+  "mango",
+  "piña",
+  "papaya",
+  "fresa",
+  "sandia",
+  "naranja",
+  "limon",
+  "tomate",
+  "cebolla",
+  "ajo",
+  "papa",
+  "yuca",
+  "platano",
+  "zanahoria",
+  "maiz",
+  "chocolate",
+  "cafe",
+  "te",
+  "jugo",
+  "agua",
+  "leche",
+  "yogur",
+  "miel",
+  "azucar",
+  "sal",
+  "pimienta",
+  "comino",
+  "canela",
+  "vainilla",
+  "helado",
+  "galleta",
+  "torta",
+  "brownie",
+  "churro",
+  "empanada",
+  "tamal",
+  "hamburguesa",
+  "pizza",
+  "sushi",
+  "taco",
+  "burrito",
+  "arequipe",
+  "chicharron",
+  "frijol",
+  "lenteja",
+  "garbanzo",
+  "aguacate",
+  "pepino",
+  "lechuga",
+  "espinaca",
+  "brocoli",
+  "coliflor",
+  "remolacha",
+  "calabaza",
+  "quesadilla",
+  "plaza",
+  "calle",
+  "avenida",
+  "puente",
+  "tunel",
+  "estacion",
+  "terminal",
+  "aeropuerto",
+  "puerto",
+  "playa",
+  "montaña",
+  "bosque",
+  "selva",
+  "rio",
+  "cascada",
+  "lago",
+  "laguna",
+  "desierto",
+  "isla",
+  "volcan",
+  "cueva",
+  "ciudad",
+  "pueblo",
+  "barrio",
+  "casa",
+  "edificio",
+  "oficina",
+  "colegio",
+  "universidad",
+  "biblioteca",
+  "hospital",
+  "clinica",
+  "farmacia",
+  "mercado",
+  "tienda",
+  "supermercado",
+  "restaurante",
+  "cafeteria",
+  "panaderia",
+  "hotel",
+  "museo",
+  "teatro",
+  "estadio",
+  "gimnasio",
+  "iglesia",
+  "paradero",
+  "parqueadero",
+  "estacionamiento",
+  "cancha",
+  "gato",
+  "caballo",
+  "vaca",
+  "oveja",
+  "cabra",
+  "cerdo",
+  "pato",
+  "ganso",
+  "conejo",
+  "raton",
+  "hamster",
+  "tortuga",
+  "iguana",
+  "serpiente",
+  "tigre",
+  "leon",
+  "jaguar",
+  "oso",
+  "lobo",
+  "zorro",
+  "mono",
+  "perezoso",
+  "delfin",
+  "ballena",
+  "tiburon",
+  "pulpo",
+  "calamar",
+  "cangrejo",
+  "langosta",
+  "pinguino",
+  "aguila",
+  "halcon",
+  "paloma",
+  "colibri",
+  "loro",
+  "tucan",
+  "buho",
+  "murcielago",
+  "abeja",
+  "mariposa",
+  "hormiga",
+  "arana",
+  "escorpion",
+  "rana",
+  "sapo",
+  "tormenta",
+  "nieve",
+  "viento",
+  "sol",
+  "nube",
+  "arcoiris",
+  "trueno",
+  "relampago",
+  "neblina",
+  "hielo",
+  "fuego",
+  "ceniza",
+  "arena",
+  "roca",
+  "piedra",
+  "madera",
+  "hoja",
+  "flor",
+  "semilla",
+  "raiz",
+  "tronco",
+  "corteza",
+  "rama",
+  "jardin",
+  "huerta",
+  "mar",
+  "oceano",
+  "planeta",
+  "estrella",
+  "baloncesto",
+  "tenis",
+  "voleibol",
+  "natacion",
+  "ciclismo",
+  "atletismo",
+  "boxeo",
+  "ajedrez",
+  "dardos",
+  "bolos",
+  "patinaje",
+  "senderismo",
+  "campamento",
+  "pesca",
+  "cine",
+  "musica",
+  "concierto",
+  "karaoke",
+  "baile",
+  "videojuego",
+  "rompecabezas",
+  "cartas",
+  "enfermera",
+  "profesor",
+  "estudiante",
+  "ingeniero",
+  "abogado",
+  "policia",
+  "bombero",
+  "cocinero",
+  "panadero",
+  "barbero",
+  "mecanico",
+  "piloto",
+  "arquitecto",
+  "diseñador",
+  "musico",
+  "cantante",
+  "actor",
+  "pintor",
+  "fotografo",
+  "periodista",
+  "vendedor",
+  "cajero",
+  "constructor",
+  "agricultor",
+  "pescador",
+  "chef",
+  "navegador",
+  "aplicacion",
+  "codigo",
+  "algoritmo",
+  "robot",
+  "dron",
+  "sensor",
+  "gps",
+  "bluetooth",
+  "contrasena",
+  "correo",
+  "mensaje",
+  "notificacion",
+  "perfil",
+  "usuario",
+  "conexion",
+  "seguridad",
+  "cifrado",
+  "chat",
+  "streaming",
+  "red",
+  "amigo",
+  "fiesta",
+  "cumpleanos",
+  "regalo",
+  "sorpresa",
+  "viaje",
+  "aventura",
+  "misterio",
+  "secreto",
+  "historia",
+  "leyenda",
+  "tesoro",
+  "mapa",
+  "brujula",
+  "retrato",
+  "documento",
+  "contrato",
+  "dinero",
+  "moneda",
+  "billete",
+  "tarjeta",
+  "banco",
+  "deuda",
+  "ahorro",
+  "negocio",
+  "mercancia",
+  "envio",
+  "paquete",
+  "carta",
+  "sello",
+  "firma",
+  "reunion",
+  "decicion",
+  "meta"
+];
+
+const MODIFIERS = [
+  "gigante","mini","secreto","magico","antiguo","futurista","dorado","nocturno","de bolsillo","de emergencia","de lujo"
+];
+
+// build > 1000 unique entries
+function buildWordBank(){
+  const set = new Set();
+  for(const n of BASE_NOUNS){
+    set.add(n);
+    for(const m of MODIFIERS){
+      set.add(`${n} ${m}`);
+    }
+  }
+  // ensure enough: if still below 1100, add combos with "del" patterns
+  const extraMods = ["del norte","del sur","del bosque","de la ciudad","del mar","de la montaña","del tiempo","del espacio"];
+  for(const n of BASE_NOUNS){
+    for(const e of extraMods){
+      set.add(`${n} ${e}`);
+    }
+  }
+  return Array.from(set);
+}
+
+function shuffle(arr){
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* =========================================================
+ *  STATE
+ * ========================================================= */
+const stage = document.getElementById("stage");
+const toastEl = document.getElementById("toast");
+
+const hudCoins = document.getElementById("hudCoins");
+const hudRound = document.getElementById("hudRound");
+const hudVotesLeft = document.getElementById("hudVotesLeft");
+
+const state = {
+  step: "home",
+  playerCount: 4,
+  players: [], // {id,name,role,alive,coins}
+  impostorCount: 1,
+
+  // round
+  round: 0,
+  votesLeftThisGame: 0,   // = impostorCount initially
+  votesUsed: 0,
+
+  // reveal
+  revealIndex: 0,
+
+  // words
+  wordBank: shuffle(buildWordBank()),
+  usedWords: new Set(),
+  secretWord: "",
+
+  // voting flow
+  voteRoundIndex: 0,     // 0..votesLeftThisGame-1
+  voterIndex: 0,         // which player is voting now
+  votes: new Map(),      // suspectId -> count
+  votedBy: new Set(),    // voterId set
+
+  // impostor guess
+  aliveImpostorIds: [],
+  guessIndex: 0,
+  impostorGuesses: new Map(), // impostorId -> guess string
+
+  // winner
+  finished: false,
+  winner: ""
+};
+
+/* =========================================================
+ *  UTIL
+ * ========================================================= */
+function el(tag, attrs={}, children=[]){
+  const n = document.createElement(tag);
+  for(const [k,v] of Object.entries(attrs||{})){
+    if(k === "class") n.className = v;
+    else if(k === "style") n.setAttribute("style", v);
+    else if(k.startsWith("on") && typeof v === "function") n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v);
+  }
+  for(const c of (children||[])){
+    if(c === null || c === undefined) continue;
+    if(typeof c === "string") n.appendChild(document.createTextNode(c));
+    else n.appendChild(c);
+  }
+  return n;
+}
+
+let toastTimer = null;
+function toast(msg, bad=false){
+  toastEl.textContent = msg;
+  toastEl.className = "";
+  toastEl.classList.add("show");
+  toastEl.classList.add(bad ? "bad" : "good");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1600);
+}
+
+function clearStage(){
+  stage.innerHTML = "";
+}
+
+function norm(s){
+  return (s||"")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function getAlivePlayers(){
+  return state.players.filter(p => p.alive);
+}
+function getAliveImpostors(){
+  return state.players.filter(p => p.alive && p.role === "impostor");
+}
+function getAliveCivilians(){
+  return state.players.filter(p => p.alive && p.role === "civil");
+}
+
+function updateHUD(){
+  const totalCoins = state.players.reduce((a,p) => a + (p.coins||0), 0);
+  hudCoins.textContent = String(totalCoins);
+  hudRound.textContent = String(state.round);
+  const left = Math.max(0, state.votesLeftThisGame - state.votesUsed);
+  hudVotesLeft.textContent = String(left);
+}
+
+function setStep(step){
+  state.step = step;
+  render();
+}
+
+/* =========================================================
+ *  GAME CORE
+ * ========================================================= */
+function pickSecretWord(){
+  // avoid repeats within session until bank cycles
+  for(let tries=0; tries < state.wordBank.length; tries++){
+    const w = state.wordBank.shift();
+    state.wordBank.push(w); // rotate
+    const key = norm(w);
+    if(!state.usedWords.has(key)){
+      state.usedWords.add(key);
+      return w;
+    }
+  }
+  // fallback: allow repeat
+  return state.wordBank[Math.floor(Math.random()*state.wordBank.length)];
+}
+
+function assignRoles(){
+  // reset player states
+  for(const p of state.players){
+    p.role = "civil";
+    p.alive = true;
+  }
+  // choose impostors randomly
+  const ids = state.players.map(p => p.id);
+  shuffle(ids);
+  const chosen = new Set(ids.slice(0, state.impostorCount));
+  for(const p of state.players){
+    if(chosen.has(p.id)) p.role = "impostor";
+  }
+}
+
+function startNewGame(){
+  state.finished = false;
+  state.winner = "";
+
+  state.round = 1;
+  state.votesUsed = 0;
+  state.votesLeftThisGame = state.impostorCount;
+
+  state.revealIndex = 0;
+
+  state.secretWord = pickSecretWord();
+
+  assignRoles();
+
+  // prepare guess list each cycle
+  state.aliveImpostorIds = getAliveImpostors().map(p => p.id);
+  state.guessIndex = 0;
+  state.impostorGuesses = new Map();
+
+  updateHUD();
+  setStep("reveal");
+}
+
+function awardRoundCoins(){
+  // each player +2 coins per round (as requested)
+  for(const p of state.players){
+    p.coins = (p.coins||0) + 2;
+  }
+  updateHUD();
+}
+
+function beginVotingCycle(){
+  state.votes = new Map();
+  state.votedBy = new Set();
+  state.voterIndex = 0;
+  state.voteRoundIndex = state.votesUsed + 1;
+  setStep("vote_turn");
+}
+
+function tallyVotes(){
+  // Determine top-voted among alive players (excluding self-votes allowed? allow, but usually not)
+  const alive = getAlivePlayers();
+  if(alive.length <= 1) return null;
+
+  let max = 0;
+  let top = [];
+  for(const p of alive){
+    const c = state.votes.get(p.id) || 0;
+    if(c > max){
+      max = c;
+      top = [p.id];
+    } else if(c === max && c > 0){
+      top.push(p.id);
+    }
+  }
+  // If nobody voted (shouldn't happen), pick random alive
+  if(max === 0){
+    return alive[Math.floor(Math.random()*alive.length)].id;
+  }
+  // Tie-break: random among top
+  return top[Math.floor(Math.random()*top.length)];
+}
+
+function eliminatePlayer(id){
+  const p = state.players.find(x => x.id === id);
+  if(p) p.alive = false;
+}
+
+function checkWinAfterVote(){
+  const imps = getAliveImpostors().length;
+  const civs = getAliveCivilians().length;
+  if(imps === 0){
+    state.finished = true;
+    state.winner = "civiles";
+    return true;
+  }
+  if(civs === 0){
+    state.finished = true;
+    state.winner = "impostores";
+    return true;
+  }
+  if(state.votesUsed >= state.votesLeftThisGame){
+    // no more votes; impostors survived without guessing => impostors win? or civs? depends.
+    // We'll decide: if impostors survive all allowed votes, they win.
+    state.finished = true;
+    state.winner = "impostores";
+    return true;
+  }
+  return false;
+}
+
+function beginImpostorGuessing(){
+  state.aliveImpostorIds = getAliveImpostors().map(p => p.id);
+  state.guessIndex = 0;
+  state.impostorGuesses = new Map();
+  setStep("guess_turn");
+}
+
+function checkImpostorGuessWin(){
+  // If any alive impostor guessed correctly, impostors win.
+  const secret = norm(state.secretWord);
+  for(const [impId, guess] of state.impostorGuesses.entries()){
+    if(norm(guess) === secret){
+      state.finished = true;
+      state.winner = "impostores";
+      return true;
+    }
+  }
+  return false;
+}
+
+/* =========================================================
+ *  RENDERERS
+ * ========================================================= */
+function render(){
+  updateHUD();
+
+  switch(state.step){
+    case "home": return renderHome();
+    case "setup_count": return renderSetupCount();
+    case "setup_names": return renderSetupNames();
+    case "setup_impostors": return renderSetupImpostors();
+    case "reveal": return renderReveal();
+    case "briefing": return renderBriefing();
+    case "vote_turn": return renderVoteTurn();
+    case "vote_result": return renderVoteResult();
+    case "guess_turn": return renderGuessTurn();
+    case "guess_result": return renderGuessResult();
+    case "end": return renderEnd();
+    default: return renderHome();
+  }
+}
+
+function renderHome(){
+  clearStage();
+
+  const panel = el("div",{class:"panel"},[
+    el("h2",{},["Configurar partida"]),
+    el("p",{},["Juego local para pasar el teléfono. Cada jugador ve su tarjeta en privado y luego hay votaciones para descubrir al impostor."]),
+    iosHint,
+    el("div",{class:"row"},[
+      el("button",{class:"btn btn-primary",type:"button",onclick:() => setStep("setup_count")},["▶ Empezar"])
+    ]),
+    el("div",{class:"help"},[
+      "Consejo rápido: en Android, toca una vez para intentar pantalla completa. En iPhone, usa “Añadir a pantalla de inicio”."
+    ])
+  ]);
+
+  stage.appendChild(panel);
+
+  // arm fullscreen on first gesture (non-iOS)
+  stage.addEventListener("pointerdown", () => {
+    if(!isIOS() && !document.fullscreenElement){
+      requestFullscreenSafe();
+    }
+  }, { once:true });
+}
+
+function renderSetupCount(){
+  clearStage();
+
+  const panel = el("div",{class:"panel"},[
+    el("h2",{},["¿Cuántos jugadores?"]),
+    el("p",{},["Define el número de personas que van a jugar en esta ronda."]),
+    el("label",{for:"pc"},["Cantidad de jugadores (3–20)"]),
+    el("input",{id:"pc",type:"number",min:"3",max:"20",inputmode:"numeric",value:String(state.playerCount)}),
+    el("div",{class:"row"},[
+      el("button",{class:"btn",type:"button",onclick:() => setStep("home")},["⬅ Volver"]),
+      el("button",{class:"btn btn-primary",type:"button",onclick:() => {
+        const v = Math.floor(Number(document.getElementById("pc").value||0));
+        if(!Number.isFinite(v) || v < 3 || v > 20){
+          toast("Ingresa un número entre 3 y 20.", true);
+          return;
+        }
+        state.playerCount = v;
+        state.players = Array.from({length:v}).map((_,i)=>({
+          id: "p"+(i+1),
+          name: "Jugador "+(i+1),
+          role:"civil",
+          alive:true,
+          coins: state.players[i]?.coins || 0
+        }));
+        setStep("setup_names");
+      }},["Siguiente"])
+    ])
+  ]);
+
+  stage.appendChild(panel);
+}
+
+function renderSetupNames(){
+  clearStage();
+
+  const list = el("div",{class:"panel"},[
+    el("h2",{},["Nombres de jugadores"]),
+    el("p",{},["Escribe el nombre de cada jugador. Esto se mostrará en la tarjeta privada y en la votación."])
+  ]);
+
+  const wrap = el("div",{class:"grid2"});
+  for(let i=0;i<state.playerCount;i++){
+    const id = "nm_"+i;
+    wrap.appendChild(el("div",{},[
+      el("label",{for:id},[`Jugador ${i+1}`]),
+      el("input",{id, type:"text", maxlength:"18", value: state.players[i]?.name || "", placeholder:"Nombre"})
+    ]));
+  }
+
+  list.appendChild(wrap);
+  list.appendChild(el("div",{class:"row"},[
+    el("button",{class:"btn",type:"button",onclick:() => setStep("setup_count")},["⬅ Atrás"]),
+    el("button",{class:"btn btn-primary",type:"button",onclick:() => {
+      const names = [];
+      for(let i=0;i<state.playerCount;i++){
+        const v = (document.getElementById("nm_"+i).value||"").trim();
+        if(!v){ toast("Completa todos los nombres.", true); return; }
+        names.push(v);
+      }
+      // unique-ish check
+      const normed = names.map(norm);
+      const set = new Set(normed);
+      if(set.size !== normed.length){
+        toast("Evita nombres repetidos para votar mejor.", true);
         return;
       }
+      for(let i=0;i<state.playerCount;i++){
+        state.players[i].name = names[i];
+        state.players[i].alive = true;
+      }
+      setStep("setup_impostors");
+    }},["Siguiente"])
+  ]));
+
+  stage.appendChild(list);
+}
+
+function renderSetupImpostors(){
+  clearStage();
+
+  const maxImp = Math.max(1, Math.floor(state.playerCount/3));
+  const defaultImp = Math.min(state.impostorCount || 1, maxImp);
+
+  const panel = el("div",{class:"panel"},[
+    el("h2",{},["Impostores y reglas"]),
+    el("p",{},["Selecciona cuántos impostores habrá. Todos los civiles verán la misma palabra. Los impostores verán “—” y deberán deducirla."]),
+    el("div",{class:"grid2"},[
+      el("div",{},[
+        el("label",{for:"imp"},["Cantidad de impostores"]),
+        el("input",{id:"imp",type:"number",min:"1",max:String(maxImp),inputmode:"numeric",value:String(defaultImp)}),
+        el("div",{class:"help"},[`Máximo sugerido para ${state.playerCount} jugadores: ${maxImp}.`])
+      ]),
+      el("div",{},[
+        el("label",{for:"bankInfo"},["Banco de palabras"]),
+        el("input",{id:"bankInfo",type:"text",readonly:"readonly",value:`${buildWordBank().length}+ palabras/phrases`} ),
+        el("div",{class:"help"},["Se evitan repeticiones hasta agotar el banco de la sesión."])
+      ])
+    ]),
+    el("div",{class:"row"},[
+      el("button",{class:"btn",type:"button",onclick:() => setStep("setup_names")},["⬅ Atrás"]),
+      el("button",{class:"btn btn-primary",type:"button",onclick:() => {
+        const v = Math.floor(Number(document.getElementById("imp").value||0));
+        if(!Number.isFinite(v) || v < 1 || v > maxImp){
+          toast(`El número de impostores debe estar entre 1 y ${maxImp}.`, true);
+          return;
+        }
+        state.impostorCount = v;
+        startNewGame();
+      }},["🎴 Repartir tarjetas"])
+    ]),
+    el("div",{class:"help"},["Seguridad: cada jugador debe mantener presionado para revelar, y soltar para ocultar antes de pasar el teléfono."]),
+  ]);
+
+  stage.appendChild(panel);
+}
+
+function renderReveal(){
+  clearStage();
+
+  const total = state.players.length;
+  const idx = state.revealIndex;
+  const p = state.players[idx];
+
+  const roleTxt = (p.role === "impostor") ? "IMPOSTOR" : "CIVIL";
+  const roleColor = (p.role === "impostor") ? "var(--bad)" : "var(--good)";
+  const wordTxt = (p.role === "impostor") ? "—" : state.secretWord;
+
+  const card = el("div",{class:"secretCard",id:"secretCard"},[
+    el("div",{class:"secretHeader"},[
+      el("div",{class:"avatarIcon", "aria-hidden":"true"},["👤"]),
+      el("div",{class:"playerName"},[p.name])
+    ]),
+    el("div",{class:"role",style:`color:${roleColor}`},[roleTxt]),
+    el("div",{class:"word"},[wordTxt]),
+    el("div",{class:"mask",id:"mask",role:"button",tabindex:"0"},[
+      el("div",{class:"maskInner"},[
+        el("h3",{},["Tarjeta privada"]),
+        el("p",{},["Asegúrate de que nadie esté mirando."]),
+        el("button",{class:"holdBtn",type:"button",id:"holdBtn"},["Mantén presionado para ver"])
+      ])
+    ])
+  ]);
+
+  const nextBtn = el("button",{
+    class:"btn btn-primary bottomNext",
+    type:"button",
+    disabled:"disabled",
+    "data-next-primary":"1",
+    onclick:() => {
+      state.revealIndex++;
+      if(state.revealIndex >= total){
+        setStep("briefing");
+      }else{
+        setStep("reveal");
+      }
     }
+  },[idx === total-1 ? "▶ Continuar" : "Siguiente jugador"]);
+
+  const panel = el("div",{class:"panel"},[
+    el("h2",{},["Reparto de tarjetas"]),
+    el("p",{},[
+      `Jugador ${idx+1} de ${total}. Pasa el teléfono a `,
+      el("b",{},[p.name]),
+      "."
+    ]),
+    el("div",{class:"revealWrap"},[
+      card,
+      nextBtn
+    ]),
+    el("div",{class:"help"},["Para avanzar: suelta para ocultar la palabra y luego pulsa “Siguiente jugador”."])
+  ]);
+
+  stage.appendChild(panel);
+
+  // Hold-to-reveal behavior (pointer-based)
+  const secretCard = document.getElementById("secretCard");
+  const holdBtn = document.getElementById("holdBtn");
+  let holding = false;
+  let holdTimer = null;
+  const HOLD_MS = 220;
+
+  function revealOn(){ secretCard.classList.add("revealed"); }
+  function revealOff(){
+    secretCard.classList.remove("revealed");
+    nextBtn.disabled = false;
+    nextBtn.removeAttribute("disabled");
+  }
+  function startHold(e){
+    e.preventDefault();
+    holding = true;
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => { if(holding) revealOn(); }, HOLD_MS);
+  }
+  function endHold(e){
+    if(e) e.preventDefault();
+    holding = false;
+    clearTimeout(holdTimer);
+    revealOff();
   }
 
-  modal.style.display="none";
-  state.phase="PLAY";
-  hudState.textContent="En juego";
-}
+  holdBtn.addEventListener("pointerdown", startHold);
+  holdBtn.addEventListener("pointerup", endHold);
+  holdBtn.addEventListener("pointercancel", endHold);
+  holdBtn.addEventListener("pointerleave", endHold);
 
-/* ---------------- Win conditions ---------------- */
-function checkImpostorWin(){
-  const alive = state.players.filter(p=>p.alive);
-  const crew = alive.filter(p=>p.role==="CREW").length;
-  const imp  = alive.filter(p=>p.role==="IMPOSTOR").length;
-  if(imp>=crew && state.phase==="PLAY"){
-    endGame("IMPOSTOR", "Impostor domina la nave");
-  }
-}
-function endGame(winner, reason){
-  if(state.phase==="END") return;
-  state.phase="END";
-  hudState.textContent="Final";
-  log(`<b>Resultado</b> · ${reason} · Gana <b>${winner}</b>.`);
+  holdBtn.addEventListener("keydown", (e) => {
+    if(e.code === "Space" || e.code === "Enter"){ startHold(e); }
+  });
+  holdBtn.addEventListener("keyup", (e) => {
+    if(e.code === "Space" || e.code === "Enter"){ endHold(e); }
+  });
 
-  // settle economy (solo tu wallet en MVP)
-  // si no habías empezado (stake no bloqueado), no liquida
-  if(wallet.escrow >= state.stake){
-    settle(state.stake, state.players.length, winner);
-  } else {
-    log(`<span style="color:#cbd5f5">No hubo liquidación (stake no bloqueado).</span>`);
-  }
-
-  // reset tasks done flags
-  MAP.tasks.forEach(t=> delete t.done);
-}
-
-/* ---------------- Bots movement & bot impostor kills ---------------- */
-function botAI(dt){
-  if(state.phase!=="PLAY" || paused) return;
-
-  const now = performance.now();
-  for(const p of state.players){
-    if(p.isMe || !p.alive) continue;
-
-    // random wandering target
-    if(!p.target || dist2(p.x,p.y,p.target.x,p.target.y) < (18*18)){
-      p.target = {x:rand(120,720), y:rand(120,400)};
+  // try fullscreen on first meaningful touch (Android)
+  stage.addEventListener("pointerdown", () => {
+    if(!isIOS() && !document.fullscreenElement){
+      requestFullscreenSafe();
     }
-
-    const dx = p.target.x - p.x;
-    const dy = p.target.y - p.y;
-    const d = Math.max(1, Math.hypot(dx,dy));
-    const nx = p.x + (dx/d)*p.speed*dt;
-    const ny = p.y + (dy/d)*p.speed*dt;
-    const fixed = collideWalls(p, nx, ny);
-    p.x = fixed.x; p.y = fixed.y;
-  }
-
-  // impostor bot kill occasionally (if you are not impostor)
-  const botImp = state.players.find(p=>p.role==="IMPOSTOR" && !p.isMe && p.alive);
-  if(botImp && now - state.lastBotKillAt > 2400){
-    // find nearest crew
-    let victim=null, bd=Infinity;
-    for(const p of state.players){
-      if(!p.alive) continue;
-      if(p.id===botImp.id) continue;
-      if(p.role!=="CREW") continue;
-      const d2 = dist2(botImp.x,botImp.y,p.x,p.y);
-      if(d2<bd){ bd=d2; victim=p; }
-    }
-    if(victim && bd < (34*34) && Math.random()<0.55){
-      victim.alive=false;
-      state.bodies.push({x:victim.x,y:victim.y, byName:victim.name});
-      state.lastBotKillAt = now;
-      log(`<span style="color:#fda4af"><b>ELIMINADO</b></span> · ${victim.name} cayó (bot).`);
-      checkImpostorWin();
-    } else {
-      state.lastBotKillAt = now - 700; // reintenta pronto
-    }
-  }
+  }, { once:true });
 }
 
-/* ---------------- Player movement ---------------- */
-function moveMe(dt){
-  if(state.phase!=="PLAY" || paused || !state.me.alive) return;
+function renderBriefing(){
+  clearStage();
 
-  let vx=0, vy=0;
-  if(KEYS.w) vy -= 1;
-  if(KEYS.s) vy += 1;
-  if(KEYS.a) vx -= 1;
-  if(KEYS.d) vx += 1;
+  const imp = getAliveImpostors().length;
+  const civ = getAliveCivilians().length;
 
-  // touch target move
-  if(state.me.target){
-    const dx = state.me.target.x - state.me.x;
-    const dy = state.me.target.y - state.me.y;
-    const d2 = dx*dx+dy*dy;
-    if(d2 < (12*12)) state.me.target=null;
-    else{
-      const d = Math.max(1, Math.hypot(dx,dy));
-      vx = dx/d;
-      vy = dy/d;
-    }
-  }
+  const panel = el("div",{class:"panel"},[
+    el("h2",{},["Listos para jugar"]),
+    el("p",{},[
+      "Ahora conversen por turnos. Cada jugador dice una pista relacionada con la palabra, sin decirla literalmente. "
+    ]),
+    el("div",{class:"help"},[
+      "Sugerencia: hagan 2–3 vueltas de pistas antes de votar para que sea más divertido."
+    ]),
+    el("div",{class:"resultCard"},[
+      el("div",{class:"ttl"},["Resumen (solo para el anfitrión)"]),
+      el("div",{class:"mut"},[
+        `Civiles: ${civ}. Impostores: ${imp}. Votaciones disponibles: ${state.votesLeftThisGame}.`
+      ])
+    ]),
+    el("div",{class:"row"},[
+      el("button",{class:"btn",type:"button",onclick:() => {
+        // restart same setup
+        state.revealIndex = 0;
+        state.secretWord = pickSecretWord();
+        assignRoles();
+        setStep("reveal");
+      }},["↻ Repartir otra palabra"]),
+      el("button",{class:"btn btn-primary",type:"button",onclick:() => beginVotingCycle()},["🗳 Empezar votación"])
+    ])
+  ]);
 
-  const sp = state.me.speed * dt;
-  const nx = state.me.x + vx*sp;
-  const ny = state.me.y + vy*sp;
-  const fixed = collideWalls(state.me, nx, ny);
-  state.me.x=fixed.x; state.me.y=fixed.y;
+  stage.appendChild(panel);
 }
 
-/* ---------------- Render ---------------- */
-const stars = Array.from({length:70}, ()=>({x:rand(0,W),y:rand(0,H),r:rand(0.8,1.8),s:rand(0.10,0.35)}));
-function drawBackground(){
-  const g = ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0, "#060b1a");
-  g.addColorStop(1, "#00030c");
-  ctx.fillStyle=g;
-  ctx.fillRect(0,0,W,H);
-  ctx.save();
-  ctx.globalAlpha=0.35;
-  ctx.fillStyle="#e5e7eb";
-  for(const s of stars){
-    s.y += s.s;
-    if(s.y>H+6){ s.y=-6; s.x=rand(0,W); }
-    ctx.beginPath();
-    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-function drawWalls(){
-  ctx.save();
-  ctx.fillStyle = COLORS.wall;
-  for(const w of MAP.walls){
-    ctx.fillRect(w.x,w.y,w.w,w.h);
-  }
-  ctx.restore();
-}
-function drawTasks(){
-  for(const t of MAP.tasks){
-    const done = !!t.done;
-    ctx.save();
-    ctx.shadowColor = COLORS.task;
-    ctx.shadowBlur = done ? 0 : 14;
-    ctx.globalAlpha = done ? 0.25 : 1;
-    ctx.fillStyle = COLORS.task;
-    ctx.beginPath();
-    ctx.arc(t.x,t.y,t.r,0,Math.PI*2);
-    ctx.fill();
-    ctx.shadowBlur=0;
-    ctx.globalAlpha=1;
-    ctx.fillStyle = "rgba(2,6,23,0.85)";
-    ctx.font = "900 12px Lato";
-    ctx.textAlign="center";
-    ctx.textBaseline="middle";
-    ctx.fillText(t.id[0], t.x, t.y+0.5);
-    ctx.restore();
-  }
-}
-function drawBodies(){
-  for(const b of state.bodies){
-    ctx.save();
-    ctx.globalAlpha=0.9;
-    ctx.fillStyle="rgba(251,113,133,0.85)";
-    ctx.beginPath();
-    ctx.arc(b.x,b.y,10,0,Math.PI*2);
-    ctx.fill();
-    ctx.fillStyle="rgba(2,6,23,0.85)";
-    ctx.font="900 10px Lato";
-    ctx.textAlign="center";
-    ctx.textBaseline="middle";
-    ctx.fillText("X", b.x, b.y+0.5);
-    ctx.restore();
-  }
-}
-function drawPlayer(p){
-  const isMe = p.isMe;
-  const alive = p.alive;
+function renderVoteTurn(){
+  clearStage();
 
-  ctx.save();
-  let col = isMe ? COLORS.me : (p.role==="IMPOSTOR" ? COLORS.imp : COLORS.crew);
-  if(!alive) col = COLORS.dead;
-
-  // body
-  ctx.shadowColor = col;
-  ctx.shadowBlur = isMe && alive ? 18 : 0;
-  ctx.fillStyle = col;
-  ctx.beginPath();
-  ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-  ctx.fill();
-
-  // visor
-  ctx.shadowBlur=0;
-  ctx.fillStyle = "rgba(15,23,42,0.75)";
-  ctx.beginPath();
-  ctx.ellipse(p.x+4,p.y-2, p.r*0.55, p.r*0.35, 0, 0, Math.PI*2);
-  ctx.fill();
-
-  // name
-  ctx.globalAlpha = alive ? 1 : 0.6;
-  ctx.fillStyle = "#e5e7eb";
-  ctx.font = "800 11px Lato";
-  ctx.textAlign="center";
-  ctx.textBaseline="top";
-  ctx.fillText(p.name, p.x, p.y + p.r + 6);
-
-  ctx.restore();
-}
-function drawPrompt(){
-  if(state.phase!=="PLAY" || paused || !state.me.alive) return;
-
-  // near task prompt
-  const {task, d2} = nearestTask();
-  if(task && d2 < (40*40) && state.me.role==="CREW" && !task.done){
-    ctx.save();
-    ctx.fillStyle="rgba(15,23,42,0.85)";
-    ctx.font="900 12px Lato";
-    ctx.textAlign="center";
-    ctx.textBaseline="middle";
-    ctx.fillText("E · Hacer tarea", task.x, task.y - 30);
-    ctx.restore();
+  const alive = getAlivePlayers();
+  if(alive.length < 2){
+    state.finished = true;
+    state.winner = "civiles";
+    return setStep("end");
   }
 
-  // near body prompt
-  for(const b of state.bodies){
-    if(dist2(state.me.x,state.me.y,b.x,b.y) < (52*52)){
-      ctx.save();
-      ctx.fillStyle="rgba(15,23,42,0.85)";
-      ctx.font="900 12px Lato";
-      ctx.textAlign="center";
-      ctx.textBaseline="middle";
-      ctx.fillText("R · Reportar", b.x, b.y - 30);
-      ctx.restore();
+  // Find next voter who is alive and hasn't voted
+  let voter = null;
+  for(let i=0; i<state.players.length; i++){
+    const p = state.players[(state.voterIndex + i) % state.players.length];
+    if(p.alive && !state.votedBy.has(p.id)){
+      voter = p;
+      state.voterIndex = (state.players.indexOf(p) + 1) % state.players.length;
       break;
     }
   }
+  if(!voter){
+    // all votes collected
+    return setStep("vote_result");
+  }
 
-  // impostor kill prompt
-  if(state.me.role==="IMPOSTOR"){
-    const {p, d2} = nearestAliveOther();
-    if(p && d2 < (40*40)){
-      ctx.save();
-      ctx.fillStyle="rgba(15,23,42,0.85)";
-      ctx.font="900 12px Lato";
-      ctx.textAlign="center";
-      ctx.textBaseline="middle";
-      ctx.fillText("K · Eliminar", p.x, p.y - 30);
-      ctx.restore();
+  const suspects = alive.filter(p => p.id !== voter.id);
+
+  const panel = el("div",{class:"panel"},[
+    el("h2",{},[`Votación ${state.votesUsed+1} de ${state.votesLeftThisGame}`]),
+    el("p",{},[
+      "Pasa el teléfono a ",
+      el("b",{},[voter.name]),
+      ". Solo esa persona debe votar."
+    ]),
+    el("div",{class:"help"},["Selecciona a quién consideras impostor y confirma."])
+  ]);
+
+  const list = el("div",{class:"playersList"});
+  const group = "vote_"+voter.id;
+
+  for(const s of suspects){
+    const rid = `${group}_${s.id}`;
+    list.appendChild(el("div",{class:"voteItem"},[
+      el("div",{},[
+        el("div",{class:"nm"},[s.name]),
+        el("small",{},["Toca para seleccionar"])
+      ]),
+      el("input",{class:"radio",type:"radio",name:group,id:rid,value:s.id})
+    ]));
+  }
+
+  const btn = el("button",{class:"btn btn-primary",type:"button","data-next-primary":"1"},["Confirmar voto"]);
+
+  btn.addEventListener("click", () => {
+    const selected = panel.querySelector(`input[name="${group}"]:checked`);
+    if(!selected){
+      toast("Selecciona un jugador para votar.", true);
+      return;
     }
-  }
-}
-function drawOverlay(){
-  if(state.phase==="LOBBY"){
-    ctx.save();
-    ctx.fillStyle="rgba(10,15,30,0.55)";
-    ctx.fillRect(0,0,W,H);
-    ctx.fillStyle="#f9fafb";
-    ctx.font="900 26px Lato";
-    ctx.textAlign="center";
-    ctx.textBaseline="middle";
-    ctx.fillText("Lobby · Configura stake y inicia", W/2, H/2 - 10);
-    ctx.font="700 14px Lato";
-    ctx.fillStyle="rgba(203,213,245,0.95)";
-    ctx.fillText("Monedas ficticias · Sin dinero real · MVP local", W/2, H/2 + 20);
-    ctx.restore();
-  }
-  if(state.phase==="END"){
-    ctx.save();
-    ctx.fillStyle="rgba(10,15,30,0.72)";
-    ctx.fillRect(0,0,W,H);
-    ctx.fillStyle="#f9fafb";
-    ctx.font="900 28px Lato";
-    ctx.textAlign="center";
-    ctx.textBaseline="middle";
-    ctx.fillText("Partida finalizada", W/2, H/2 - 20);
-    ctx.font="700 15px Lato";
-    ctx.fillStyle="rgba(203,213,245,0.95)";
-    ctx.fillText("Reinicia para jugar otra ronda", W/2, H/2 + 14);
-    ctx.restore();
-  }
-  if(paused && state.phase==="PLAY"){
-    ctx.save();
-    ctx.fillStyle="rgba(10,15,30,0.55)";
-    ctx.fillRect(0,0,W,H);
-    ctx.fillStyle="#f9fafb";
-    ctx.font="900 26px Lato";
-    ctx.textAlign="center";
-    ctx.textBaseline="middle";
-    ctx.fillText("Pausa", W/2, H/2);
-    ctx.restore();
-  }
+    const suspectId = selected.value;
+    state.votedBy.add(voter.id);
+    state.votes.set(suspectId, (state.votes.get(suspectId)||0) + 1);
+    toast("Voto registrado.", false);
+
+    // move to next voter
+    setTimeout(() => setStep("vote_turn"), 250);
+  });
+
+  panel.appendChild(list);
+  panel.appendChild(el("div",{class:"row"},[
+    el("button",{class:"btn",type:"button",onclick:() => { state.votesUsed = Math.max(0, state.votesUsed-1); setStep("briefing"); }},["⬅ Volver a pistas"]),
+    btn
+  ]));
+
+  stage.appendChild(panel);
+
+  stage.addEventListener("pointerdown", () => {
+    if(!isIOS() && !document.fullscreenElement){
+      requestFullscreenSafe();
+    }
+  }, { once:true });
 }
 
-/* ---------------- Loop ---------------- */
-let last = performance.now();
-function tick(now){
-  const dt = clamp((now-last)/16.67, 0.5, 1.6);
-  last = now;
+function renderVoteResult(){
+  clearStage();
 
-  if(state.phase==="PLAY" && !paused){
-    moveMe(dt);
-    botAI(dt);
+  const eliminatedId = tallyVotes();
+  if(!eliminatedId){
+    toast("No se pudo calcular la votación.", true);
+    return setStep("briefing");
+  }
+  eliminatePlayer(eliminatedId);
+
+  state.votesUsed += 1;
+
+  const eliminated = state.players.find(p => p.id === eliminatedId);
+  const wasImp = eliminated?.role === "impostor";
+
+  const panel = el("div",{class:"panel"},[
+    el("h2",{},["Resultado de votación"]),
+    el("p",{},[
+      "Eliminado: ",
+      el("b",{},[eliminated?.name || "—"]),
+      "."
+    ]),
+    el("div",{class: wasImp ? "ok" : "warn"},[
+      wasImp ? "Era IMPOSTOR." : "No era impostor."
+    ]),
+    el("div",{class:"resultCard"},[
+      el("div",{class:"ttl"},["Conteo de votos (anfitrión)"]),
+      el("div",{class:"mut"},[
+        ...getAlivePlayers().map(p => `${p.name}: ${state.votes.get(p.id)||0}  `)
+      ])
+    ])
+  ]);
+
+  // reset voting maps for next vote or next round
+  state.votes = new Map();
+  state.votedBy = new Set();
+
+  // award coins at the end of each vote round (treat as completing a round)
+  awardRoundCoins();
+
+  // Check immediate win
+  if(checkWinAfterVote()){
+    panel.appendChild(el("div",{class:"row"},[
+      el("button",{class:"btn btn-primary",type:"button",onclick:() => setStep("end")},["Ver resultado final"])
+    ]));
+    stage.appendChild(panel);
+    return;
   }
 
-  // render
-  ctx.clearRect(0,0,W,H);
-  drawBackground();
-  drawWalls();
-  drawTasks();
-  drawBodies();
+  // If still ongoing: allow impostors to guess now (as requested)
+  panel.appendChild(el("div",{class:"row"},[
+    el("button",{class:"btn",type:"button",onclick:() => setStep("briefing")},["Volver a pistas"]),
+    el("button",{class:"btn btn-primary",type:"button",onclick:() => beginImpostorGuessing()},["🧠 Impostores: adivinar palabra"])
+  ]));
 
-  // players
-  for(const p of state.players) drawPlayer(p);
-
-  drawPrompt();
-  drawOverlay();
-
-  requestAnimationFrame(tick);
+  stage.appendChild(panel);
 }
-requestAnimationFrame(tick);
 
-/* ---------------- Init HUD ---------------- */
-setHudEconomy(0);
-hudTasksBar.style.width = "0%";
+function renderGuessTurn(){
+  clearStage();
 
-/* ---------------- Meeting close button ---------------- */
-btnClose.addEventListener("click", closeMeeting);
+  const aliveImps = getAliveImpostors();
+  if(aliveImps.length === 0){
+    state.finished = true;
+    state.winner = "civiles";
+    return setStep("end");
+  }
+
+  const idList = aliveImps.map(p => p.id);
+  state.aliveImpostorIds = idList;
+
+  const impId = state.aliveImpostorIds[state.guessIndex];
+  const imp = state.players.find(p => p.id === impId);
+
+  if(!imp){
+    // no more impostors to ask
+    return setStep("guess_result");
+  }
+
+  const panel = el("div",{class:"panel"},[
+    el("h2",{},["Adivinar palabra (solo impostor)"]),
+    el("p",{},[
+      "Pasa el teléfono a ",
+      el("b",{},[imp.name]),
+      ". Escribe tu intento de palabra. Si aciertas, ganas."
+    ]),
+    el("label",{for:"guess"},["Tu palabra (exacta)"]),
+    el("input",{id:"guess",type:"text",placeholder:"Escribe aquí",autocomplete:"off",autocapitalize:"none"}),
+    el("div",{class:"help"},["Consejo: escribe tal cual crees que es la palabra. Se ignoran tildes y mayúsculas."])
+  ]);
+
+  const btn = el("button",{class:"btn btn-primary",type:"button"},["Confirmar intento"]);
+  btn.addEventListener("click", () => {
+    const g = (document.getElementById("guess").value||"").trim();
+    if(!g){
+      toast("Escribe una palabra.", true);
+      return;
+    }
+    state.impostorGuesses.set(imp.id, g);
+    toast("Intento guardado.", false);
+
+    state.guessIndex += 1;
+    if(state.guessIndex >= state.aliveImpostorIds.length){
+      setStep("guess_result");
+    }else{
+      setStep("guess_turn");
+    }
+  });
+
+  panel.appendChild(el("div",{class:"row"},[
+    el("button",{class:"btn",type:"button",onclick:() => setStep("briefing")},["⬅ Cancelar"]),
+    btn
+  ]));
+
+  stage.appendChild(panel);
+}
+
+function renderGuessResult(){
+  clearStage();
+
+  const panel = el("div",{class:"panel"},[
+    el("h2",{},["Resultado de intento"]),
+  ]);
+
+  if(checkImpostorGuessWin()){
+    panel.appendChild(el("div",{class:"ok"},["Un impostor acertó la palabra."]));
+    panel.appendChild(el("div",{class:"resultCard"},[
+      el("div",{class:"ttl"},["Palabra real"]),
+      el("div",{class:"mut"},[state.secretWord])
+    ]));
+    panel.appendChild(el("div",{class:"row"},[
+      el("button",{class:"btn btn-primary",type:"button",onclick:() => setStep("end")},["Ver resultado final"])
+    ]));
+    stage.appendChild(panel);
+    return;
+  }
+
+  panel.appendChild(el("div",{class:"warn"},["Ningún impostor acertó."]));
+  panel.appendChild(el("div",{class:"help"},[
+    `Votos restantes: ${Math.max(0, state.votesLeftThisGame - state.votesUsed)}.`
+  ]));
+
+  // If no more votes, civilians win (impostors couldn't guess) OR impostors win (survived)
+  if(checkWinAfterVote()){
+    panel.appendChild(el("div",{class:"row"},[
+      el("button",{class:"btn btn-primary",type:"button",onclick:() => setStep("end")},["Ver resultado final"])
+    ]));
+    stage.appendChild(panel);
+    return;
+  }
+
+  // Otherwise continue discussion then next vote when ready
+  panel.appendChild(el("div",{class:"row"},[
+    el("button",{class:"btn",type:"button",onclick:() => setStep("briefing")},["Volver a pistas"]),
+    el("button",{class:"btn btn-primary",type:"button",onclick:() => beginVotingCycle()},["🗳 Siguiente votación"])
+  ]));
+
+  stage.appendChild(panel);
+}
+
+function renderEnd(){
+  clearStage();
+
+  const title = state.winner === "impostores" ? "Ganaron los impostores" : "Ganaron los civiles";
+  const icon  = state.winner === "impostores" ? "🕵️‍♂️" : "🛡️";
+  const color = state.winner === "impostores" ? "var(--bad)" : "var(--good)";
+
+  const imps = state.players.filter(p => p.role === "impostor");
+  const civs = state.players.filter(p => p.role === "civil");
+
+  const panel = el("div",{class:"panel"},[
+    el("h2",{},[`${icon} ${title}`]),
+    el("p",{},[
+      "Palabra de la ronda: ",
+      el("b",{},[state.secretWord]),
+      "."
+    ]),
+    el("div",{class:"resultCard"},[
+      el("div",{class:"ttl",style:`color:${color}`},["Roles"]),
+      el("div",{class:"mut"},[
+        "Impostores: " + (imps.map(p=>p.name).join(", ") || "—"),
+        " · Civiles: " + (civs.map(p=>p.name).join(", ") || "—")
+      ])
+    ]),
+    el("div",{class:"resultCard"},[
+      el("div",{class:"ttl"},["Monedas acumuladas"]),
+      el("div",{class:"mut"},[
+        ...state.players.map(p => `${p.name}: ${(p.coins||0)}  `)
+      ])
+    ]),
+    el("div",{class:"row"},[
+      el("button",{class:"btn",type:"button",onclick:() => {
+        // new round with same players & impostor count, keep coins
+        state.round += 1;
+        state.votesUsed = 0;
+        state.votesLeftThisGame = state.impostorCount;
+        state.revealIndex = 0;
+        state.secretWord = pickSecretWord();
+        assignRoles();
+        state.finished = false;
+        state.winner = "";
+        setStep("reveal");
+      }},["▶ Siguiente ronda"]),
+      el("button",{class:"btn btn-danger",type:"button",onclick:() => {
+        // reset everything
+        state.playerCount = 4;
+        state.players = [];
+        state.impostorCount = 1;
+        state.round = 0;
+        state.votesLeftThisGame = 0;
+        state.votesUsed = 0;
+        state.revealIndex = 0;
+        state.secretWord = "";
+        state.usedWords = new Set();
+        state.wordBank = shuffle(buildWordBank());
+        updateHUD();
+        setStep("home");
+      }},["⟲ Reiniciar todo"])
+    ]),
+    el("div",{class:"help"},[
+      "Nota: si hay empate en la votación, el eliminado se decide aleatoriamente entre los empatados (para mantener la partida fluida)."
+    ])
+  ]);
+
+  stage.appendChild(panel);
+}
+
+/* boot */
+setStep("home");
 
 })();
 </script>
