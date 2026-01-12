@@ -178,6 +178,9 @@
       user-select:none;
     }
     .chip b{ color: var(--gold); }
+    .chip .sub{ font-weight:900; color: rgba(203,213,245,0.90); }
+    .chip .sub b{ color: rgba(248,250,252,0.95); }
+
 
     .btn{
       border:none;
@@ -502,17 +505,19 @@
           <button class="btn btn-volver" id="btnBack" type="button">⬅ Volver</button>
           <button class="btn btn-primary" id="btnStartTop" type="button">▶ Jugar</button>
           <button class="btn" id="btnPause" type="button" aria-pressed="false">⏸ Pausa</button>
-          <button class="btn btn-danger" id="btnRestartTop" type="button" style="display:none;">↻ Reintentar</button>
+                    <button class="btn" id="btnSound" type="button" aria-pressed="true" title="Activar o silenciar sonidos">🔊 Sonido</button>
+<button class="btn btn-danger" id="btnRestartTop" type="button" style="display:none;">↻ Reintentar</button>
         </div>
       </div>
 
       <div class="game-container" id="gameContainer">
         <div class="hud-overlay" aria-label="HUD">
           <div class="left">
-            <div class="chip">🪙 Monedas: <b id="hudCoins">0</b></div>
+            <div class="chip">🪙 Monedas: <b id="hudCoins">0</b> <span class="sub">(+<b id="hudCoinsRun">0</b>)</span></div>
             <div class="chip">🎯 Nivel: <b id="hudLevel">1</b></div>
             <div class="chip">📈 Progreso: <b id="hudProg">0/0</b></div>
-          </div>
+                      <div class="chip">⚡ Vel: <b id="hudSpeed">1%</b></div>
+</div>
           <div class="right">
             <div class="chip">⭐ Puntaje: <b id="hudScore">0</b></div>
             <div class="chip">🏆 Récord: <b id="hudBest">0</b></div>
@@ -573,6 +578,23 @@
                 <button class="btn btn-primary" id="btnRestart" type="button">↻ Reintentar</button>
               </div>
               <div class="mini">Tip: en niveles altos, piensa 2 movimientos adelante. El error típico es girar tarde.</div>
+            </div>
+          </div>
+        </div>
+
+        
+        <!-- Pause overlay -->
+        <div id="pauseOverlay" class="overlay" aria-hidden="true">
+          <div class="card">
+            <div class="icon" aria-hidden="true">⏸</div>
+            <div>
+              <h2>Pausado</h2>
+              <p>Respira. Cuando estés listo, reanuda la partida.</p>
+              <div class="row">
+                <button class="btn btn-primary" id="btnResume" type="button">▶ Reanudar</button>
+                <button class="btn btn-danger" id="btnRestart2" type="button">↻ Reiniciar</button>
+              </div>
+              <div class="mini">Tip: En móvil, usa únicamente el joystick para mover la culebra. Tocar el tablero no mueve al personaje.</div>
             </div>
           </div>
         </div>
@@ -706,17 +728,24 @@ showIOSHint();
 const hudScore = document.getElementById("hudScore");
 const hudLevel = document.getElementById("hudLevel");
 const hudCoins = document.getElementById("hudCoins");
+const hudCoinsRun = document.getElementById("hudCoinsRun");
 const hudProg  = document.getElementById("hudProg");
+const hudSpeed = document.getElementById("hudSpeed");
+
 const hudBest  = document.getElementById("hudBest");
 
 const btnBack = document.getElementById("btnBack");
 const btnStartTop = document.getElementById("btnStartTop");
 const btnPause = document.getElementById("btnPause");
+const btnSound = document.getElementById("btnSound");
 const btnRestartTop = document.getElementById("btnRestartTop");
 const btnStart = document.getElementById("btnStart");
 const btnHow = document.getElementById("btnHow");
 const howText = document.getElementById("howText");
 const btnRestart = document.getElementById("btnRestart");
+const pauseOverlay = document.getElementById("pauseOverlay");
+const btnResume = document.getElementById("btnResume");
+const btnRestart2 = document.getElementById("btnRestart2");
 
 const goTitle = document.getElementById("goTitle");
 const goStats = document.getElementById("goStats");
@@ -730,10 +759,16 @@ btnHow.addEventListener("click", () => {
  *  PERSISTENCIA
  * --------------------------------------------------------- */
 const BEST_KEY = "snake_best_score_v10";
+const TOTAL_COINS_KEY = "snake_total_coins_v1";
 const getBest = () => Math.floor(Number(localStorage.getItem(BEST_KEY) || "0")) || 0;
 const setBest = (v) => localStorage.setItem(BEST_KEY, String(v|0));
 let bestScore = getBest();
 hudBest.textContent = String(bestScore);
+
+const getTotalCoins = () => Math.floor(Number(localStorage.getItem(TOTAL_COINS_KEY) || "0")) || 0;
+const setTotalCoins = (v) => localStorage.setItem(TOTAL_COINS_KEY, String(v|0));
+let totalCoins = getTotalCoins();
+
 
 /* ---------------------------------------------------------
  *  GAME CONFIG (progresión suave 1..100)
@@ -759,6 +794,26 @@ function currentGrid(){
 
 const SCORE_PER_COIN = 10;
 
+
+/* ---------------------------------------------------------
+ *  WORLDS / THEMES (cambia cada 10 niveles)
+ * --------------------------------------------------------- */
+const WORLDS = [
+  { name:"Nebulosa",      bgTop:"#0b1224", bgBot:"#020617", glow1:"rgba(56,189,248,0.18)", glow2:"rgba(167,139,250,0.16)", grid:"#93c5fd" },
+  { name:"Amanecer",      bgTop:"#1f2937", bgBot:"#0b1020", glow1:"rgba(251,113,133,0.16)", glow2:"rgba(245,158,11,0.14)", grid:"rgba(252,211,77,0.30)" },
+  { name:"Bosque",        bgTop:"#052e16", bgBot:"#020617", glow1:"rgba(34,197,94,0.16)",  glow2:"rgba(56,189,248,0.10)", grid:"rgba(134,239,172,0.28)" },
+  { name:"Hielo",         bgTop:"#0f172a", bgBot:"#020617", glow1:"rgba(125,211,252,0.18)", glow2:"rgba(196,181,253,0.14)", grid:"rgba(186,230,253,0.30)" },
+  { name:"Volcán",        bgTop:"#2b0f12", bgBot:"#020617", glow1:"rgba(251,113,133,0.18)", glow2:"rgba(245,158,11,0.16)", grid:"rgba(254,202,202,0.22)" },
+];
+
+function worldIndexForLevel(level){
+  return Math.floor((Math.max(1, level) - 1) / 10) % WORLDS.length;
+}
+function currentWorld(){
+  return WORLDS[worldIndexForLevel(state.level)];
+}
+
+
 // coins required for level up (increases, capped)
 function coinsTarget(level){
   // 1:5, 2:6, ... cap at 18
@@ -773,6 +828,13 @@ function stepMsForLevel(level){
   return Math.round(start + (end - start) * t);
 }
 
+
+function speedPercent(level){
+  const t = (Math.max(1, Math.min(MAX_LEVEL, level)) - 1) / (MAX_LEVEL - 1);
+  return Math.round(1 + t * 99);
+}
+
+
 /* Obstáculos (suaves): crecen pero con límite */
 function obstCountForLevel(level){
   // empieza en 0, sube lento hasta 45
@@ -783,8 +845,85 @@ function obstCountForLevel(level){
 /* ---------------------------------------------------------
  *  AUDIO (habilitado por gesto)
  * --------------------------------------------------------- */
-let audioEnabled = false;
+const SOUND_KEY = "snake_sound_on_v1";
+let soundOn = (localStorage.getItem(SOUND_KEY) ?? "1") !== "0";
+let audioEnabled = false; // unlocked by gesture
 let fxCtx = null;
+let masterGain = null;
+let ambient = { running:false, nodes:[] };
+
+function ensureAudioGraph(){
+  const ac = getFxCtx(); if(!ac) return null;
+  if(!masterGain){
+    masterGain = ac.createGain();
+    masterGain.gain.value = soundOn ? 0.9 : 0.0;
+    masterGain.connect(ac.destination);
+  } else {
+    masterGain.gain.value = soundOn ? 0.9 : 0.0;
+  }
+  return ac;
+}
+
+function setSoundOn(v){
+  soundOn = !!v;
+  localStorage.setItem(SOUND_KEY, soundOn ? "1" : "0");
+  if(masterGain) masterGain.gain.value = soundOn ? 0.9 : 0.0;
+  // stop ambient if muted
+  if(!soundOn) stopAmbient();
+}
+
+function stopAmbient(){
+  if(!ambient.running) return;
+  ambient.running = false;
+  for(const n of ambient.nodes){
+    try{ n.disconnect(); }catch(_){}
+    try{ if(n.stop) n.stop(); }catch(_){}
+  }
+  ambient.nodes = [];
+}
+
+function startAmbient(){
+  if(!soundOn || !audioEnabled) return;
+  const ac = ensureAudioGraph(); if(!ac) return;
+  if(ambient.running) return;
+  ambient.running = true;
+
+  // Very light "space pad" made from 2 detuned oscillators + slow filter LFO.
+  const g = ac.createGain();
+  g.gain.value = 0.06; // subtle
+  g.connect(masterGain);
+
+  const filter = ac.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = 520;
+  filter.Q.value = 0.8;
+  filter.connect(g);
+
+  const lfo = ac.createOscillator();
+  lfo.type = "sine";
+  lfo.frequency.value = 0.08;
+  const lfoGain = ac.createGain();
+  lfoGain.gain.value = 280;
+  lfo.connect(lfoGain);
+  lfoGain.connect(filter.frequency);
+
+  const o1 = ac.createOscillator();
+  o1.type = "sine";
+  o1.frequency.value = 110;
+  const o2 = ac.createOscillator();
+  o2.type = "triangle";
+  o2.frequency.value = 110.6;
+
+  o1.connect(filter);
+  o2.connect(filter);
+
+  const now = ac.currentTime + 0.01;
+  lfo.start(now);
+  o1.start(now);
+  o2.start(now);
+
+  ambient.nodes.push(g, filter, lfo, lfoGain, o1, o2);
+}
 function getFxCtx(){
   if(!fxCtx){
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -800,12 +939,13 @@ function fxBeep(steps, dur = 0.20, vol = 0.16, type="triangle"){
   const osc = ac.createOscillator();
   const gain = ac.createGain();
   const filter = ac.createBiquadFilter();
+  ensureAudioGraph();
   osc.type = type;
   filter.type = "lowpass";
   filter.frequency.setValueAtTime(2200, now);
   gain.gain.setValueAtTime(vol, now);
   gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
-  osc.connect(filter); filter.connect(gain); gain.connect(ac.destination);
+  osc.connect(filter); filter.connect(gain); gain.connect(masterGain || ac.destination);
   for(const s of steps) osc.frequency.setValueAtTime(s.freq, now + s.time);
   osc.start(now); osc.stop(now + dur + 0.02);
 }
@@ -818,6 +958,26 @@ function playFx(kind){
     case "start": fxBeep([{time:0.00,freq:520},{time:0.07,freq:680},{time:0.14,freq:820}],0.20,0.15,"triangle"); break;
   }
 }
+// UI: sound button initial state
+if(btnSound){
+  btnSound.setAttribute("aria-pressed", soundOn ? "true" : "false");
+  btnSound.textContent = soundOn ? "🔊 Sonido" : "🔇 Silencio";
+}
+
+/* ---------------------------------------------------------
+ *  HAPTICS (mobile)
+ * --------------------------------------------------------- */
+function vibrate(kind){
+  if(!("vibrate" in navigator)) return;
+  // Respect reduced motion preference as a proxy for reduced sensory feedback
+  if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  switch(kind){
+    case "coin": navigator.vibrate(12); break;
+    case "levelup": navigator.vibrate([18, 30, 18]); break;
+    case "hit": navigator.vibrate([25, 40, 25, 40, 25]); break;
+  }
+}
+
 
 /* ---------------------------------------------------------
  *  STATE
@@ -829,6 +989,7 @@ const state = {
 
   score: 0,
   coins: 0,
+  totalCoins: 0,
 
   level: 1,
   coinsInLevel: 0,
@@ -871,6 +1032,27 @@ function recalcBoard(){
 }
 recalcBoard();
 
+/* ---------------------------------------------------------
+ *  Starfield (subtle, lightweight)
+ * --------------------------------------------------------- */
+let stars = [];
+let frameN = 0;
+function initStars(){
+  stars = [];
+  const count = isMobileDevice() ? 90 : 140;
+  for(let i=0;i<count;i++){
+    stars.push({
+      x: Math.random()*W,
+      y: Math.random()*H,
+      r: 0.6 + Math.random()*1.4,
+      a: 0.35 + Math.random()*0.55,
+      v: 0.12 + Math.random()*0.35
+    });
+  }
+}
+initStars();
+
+
 window.addEventListener("resize", () => {
   // grid may change between mobile/desktop
   const before = grid.cols + "x" + grid.rows;
@@ -885,6 +1067,63 @@ window.addEventListener("resize", () => {
 /* ---------------------------------------------------------
  *  Utils
  * --------------------------------------------------------- */
+
+/* ---------------------------------------------------------
+ *  Particles (coin sparkle)
+ * --------------------------------------------------------- */
+let particles = []; // {x,y,vx,vy,life,ttl,size,spin}
+function spawnCoinParticles(px, py){
+  const n = 14;
+  for(let i=0;i<n;i++){
+    const a = Math.random()*Math.PI*2;
+    const sp = 0.8 + Math.random()*2.0;
+    particles.push({
+      x:px, y:py,
+      vx: Math.cos(a)*sp,
+      vy: Math.sin(a)*sp - 0.6,
+      life: 0,
+      ttl: 32 + Math.random()*18,
+      size: 2 + Math.random()*3.2,
+      spin: Math.random()*Math.PI*2
+    });
+  }
+  // cap
+  if(particles.length > 260) particles = particles.slice(particles.length-260);
+}
+
+function stepParticles(){
+  if(!particles.length) return;
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.life += 1;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.06; // gravity
+    p.spin += 0.25;
+    if(p.life >= p.ttl) particles.splice(i,1);
+  }
+}
+
+function drawParticles(){
+  if(!particles.length) return;
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  for(const p of particles){
+    const t = 1 - (p.life / p.ttl);
+    ctx.globalAlpha = Math.max(0, t);
+    const r = p.size;
+    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r*2.2);
+    g.addColorStop(0, `rgba(255,255,255,${0.9*t})`);
+    g.addColorStop(0.35, `rgba(250,204,21,${0.85*t})`);
+    g.addColorStop(1, `rgba(245,158,11,0)`);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r*1.2, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 function key(x,y){ return x + ":" + y; }
 function randInt(a,b){ return Math.floor(a + Math.random()*(b-a+1)); }
@@ -965,24 +1204,141 @@ function placeFood(){
   walls = walls.slice(0, Math.floor(walls.length*0.8));
 }
 
+
+/* ---------------------------------------------------------
+ *  Reachability (BFS) to keep levels fair
+ *  - Ensures food is reachable from snake head
+ *  - Prevents obstacle layouts that create "no-win" states
+ * --------------------------------------------------------- */
+function bfsReachableFrom(head){
+  const q = [head];
+  const vis = new Set([key(head.x, head.y)]);
+  let qi = 0;
+
+  while(qi < q.length){
+    const n = q[qi++];
+    const dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+    for(const d of dirs){
+      const x = n.x + d.x, y = n.y + d.y;
+      if(!inBounds(x,y)) continue;
+      const k = key(x,y);
+      if(vis.has(k)) continue;
+      if(isWall(x,y)) continue;
+      // Treat snake body as blocked (except tail when not growing is handled separately in tickStep)
+      if(isSnakeCell(x,y)) continue;
+      vis.add(k);
+      q.push({x,y});
+    }
+  }
+  return vis;
+}
+
+function randomFromSet(set){
+  const arr = Array.from(set);
+  if(!arr.length) return null;
+  const pick = arr[randInt(0, arr.length-1)];
+  const [x,y] = pick.split(":").map(n => parseInt(n,10));
+  return {x,y};
+}
+
+function placeFoodSafe(){
+  // Prefer reachable cells from head to keep the level solvable
+  const head = snake[0];
+  const reach = bfsReachableFrom(head);
+
+  // Remove head cell and snake cells already excluded by bfs, but keep explicit in case of future changes
+  reach.delete(key(head.x, head.y));
+  for(const s of snake) reach.delete(key(s.x, s.y));
+
+  // If reachable is empty (very rare), fallback to classic placement
+  const cell = randomFromSet(reach);
+  if(cell){
+    food.x = cell.x; food.y = cell.y;
+    food.spin = Math.random()*Math.PI*2;
+    return;
+  }
+  placeFood();
+}
+
+function rebuildWallsSafe(){
+  // Try a few times to build a wall layout that still leaves enough reachable space
+  const attempts = 8;
+  const minReachRatio = 0.55; // keep at least 55% of free cells reachable
+  for(let i=0; i<attempts; i++){
+    rebuildWalls();
+    placeFoodSafe();
+    const head = snake[0];
+    const reach = bfsReachableFrom(head);
+    const freeCells = grid.cols*grid.rows - walls.length - snake.length;
+    const ratio = freeCells > 0 ? (reach.size / freeCells) : 1;
+    if(ratio >= minReachRatio) return;
+    // Too blocked: reduce wall count slightly and retry by lowering level momentarily
+    if(walls.length > 4) walls = walls.slice(0, Math.floor(walls.length*0.85));
+  }
+}
+
+
 /* ---------------------------------------------------------
  *  Game lifecycle
  * --------------------------------------------------------- */
 function updateHUD(){
   hudScore.textContent = String(state.score);
-  hudCoins.textContent = String(state.coins);
+  hudCoins.textContent = String(state.totalCoins);
+  if(hudCoinsRun) hudCoinsRun.textContent = String(state.coins);
   hudLevel.textContent = String(state.level);
   hudProg.textContent = `${state.coinsInLevel}/${state.target}`;
+  if(hudSpeed) hudSpeed.textContent = `${speedPercent(state.level)}%`;
   hudBest.textContent = String(bestScore);
 }
 
+
+let rafId = null;
+let lastTs = 0;
+let acc = 0;
+
+function ensureLoop(){
+  if(rafId) return;
+  const loop = (ts) => {
+    rafId = requestAnimationFrame(loop);
+
+    if(!lastTs) lastTs = ts;
+    const dt = ts - lastTs;
+    lastTs = ts;
+
+    // Render even when paused/over so overlays + background stay crisp
+    if(!state.playing || state.over){
+      draw();
+      return;
+    }
+    if(state.paused){
+      draw();
+      return;
+    }
+
+    acc += dt;
+    const step = state.stepMs;
+
+    // Avoid spiral-of-death on tab-switch
+    if(acc > 2000) acc = 0;
+
+    let safety = 0;
+    while(acc >= step && safety++ < 20){
+      tickStep();
+      acc -= step;
+    }
+
+    draw();
+  };
+  rafId = requestAnimationFrame(loop);
+}
+
 function startLoop(){
-  if(state.timer) clearInterval(state.timer);
-  state.timer = setInterval(tick, state.stepMs);
+  // kept for compatibility with existing calls
+  ensureLoop();
 }
 
 function stopLoop(){
-  if(state.timer){ clearInterval(state.timer); state.timer = null; }
+  // keep loop running; we just stop advancing when state.playing=false
 }
 
 function resetGame(keepOverlays=false){
@@ -994,6 +1350,7 @@ function resetGame(keepOverlays=false){
 
   state.score = 0;
   state.coins = 0;
+  state.totalCoins = totalCoins;
   state.level = 1;
   state.coinsInLevel = 0;
   state.target = coinsTarget(1);
@@ -1007,8 +1364,8 @@ function resetGame(keepOverlays=false){
   dir = {x:1,y:0};
   nextDir = {x:1,y:0};
 
-  rebuildWalls();
-  placeFood();
+  rebuildWallsSafe();
+  placeFoodSafe();
   updateHUD();
 
   if(!keepOverlays){
@@ -1025,9 +1382,12 @@ function gameOver(reason){
   stopLoop();
   btnRestartTop.style.display = "inline-flex";
   playFx("hit");
+  pauseOverlay?.classList.remove("show");
+  pauseOverlay?.setAttribute("aria-hidden","true");
+  vibrate("hit");
 
   // stats
-  const txt = `Puntaje: ${state.score} · Monedas: ${state.coins} · Nivel: ${state.level}`;
+  const txt = `Puntaje: ${state.score} · Monedas (partida): ${state.coins} · Total: ${state.totalCoins} · Nivel: ${state.level}`;
   goTitle.textContent = reason || "Fin de partida";
   goStats.textContent = txt;
 
@@ -1180,22 +1540,31 @@ function doStart(){
   state.paused = false;
   startOverlay.classList.remove("show");
   gameOverOverlay.classList.remove("show");
+  pauseOverlay?.classList.remove("show");
+  pauseOverlay?.setAttribute("aria-hidden","true");
   btnRestartTop.style.display = "none";
   playFx("start");
+  startAmbient();
   startLoop();
 }
 
-function togglePause(){
+function togglePause(force){
   if(!state.playing || state.over) return;
-  state.paused = !state.paused;
+  state.paused = (typeof force === "boolean") ? force : !state.paused;
   btnPause.setAttribute("aria-pressed", state.paused ? "true" : "false");
   btnPause.textContent = state.paused ? "▶ Reanudar" : "⏸ Pausa";
+  if(pauseOverlay){
+    pauseOverlay.classList.toggle("show", state.paused);
+    pauseOverlay.setAttribute("aria-hidden", state.paused ? "false" : "true");
+  }
 }
 
 function doRestart(){
   audioEnabled = true;
   resetGame(true);
   gameOverOverlay.classList.remove("show");
+  pauseOverlay?.classList.remove("show");
+  pauseOverlay?.setAttribute("aria-hidden","true");
   doStart();
 }
 
@@ -1207,15 +1576,41 @@ btnPause.addEventListener("click", () => {
   audioEnabled = true;
   togglePause();
 });
+
+btnSound?.addEventListener("click", () => {
+  audioEnabled = true;
+  // unlock audio context on first gesture
+  const ac = getFxCtx();
+  if(ac && ac.state === "suspended") ac.resume();
+  setSoundOn(!soundOn);
+  btnSound.setAttribute("aria-pressed", soundOn ? "true" : "false");
+  btnSound.textContent = soundOn ? "🔊 Sonido" : "🔇 Silencio";
+  if(soundOn) startAmbient();
+});
+
+btnResume?.addEventListener("click", () => {
+  audioEnabled = true;
+  togglePause(false);
+});
+btnRestart2?.addEventListener("click", () => {
+  audioEnabled = true;
+  doRestart();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if(document.hidden && state.playing && !state.over){
+    togglePause(true);
+  }
+});
+
 btnRestart.addEventListener("click", doRestart);
 btnRestartTop.addEventListener("click", doRestart);
 
 /* ---------------------------------------------------------
  *  Core tick
  * --------------------------------------------------------- */
-function tick(){
-  if(!state.playing || state.paused || state.over) return;
 
+function tickStep(){
   dir = nextDir;
 
   const head = snake[0];
@@ -1236,35 +1631,39 @@ function tick(){
 
   if(willEat){
     state.coins++;
+    state.totalCoins++;
+    totalCoins = state.totalCoins;
+    setTotalCoins(totalCoins);
     state.coinsInLevel++;
     state.score += SCORE_PER_COIN + Math.floor(state.level/5); // leve scaling
     playFx("coin");
-    placeFood();
+    vibrate("coin");
+    const _c = cellCenter(food.x, food.y);
+    spawnCoinParticles(_c.cx, _c.cy);
 
-    // level up
+    // Level progression
     if(state.level < MAX_LEVEL && state.coinsInLevel >= state.target){
       state.level++;
       state.coinsInLevel = 0;
       state.target = coinsTarget(state.level);
       state.stepMs = stepMsForLevel(state.level);
-      rebuildWalls();
-      // ensure food valid
-      placeFood();
 
+      // Rebuild obstacles and ensure food reachable
+      rebuildWallsSafe();
       state.banner = 70;
       playFx("levelup");
-
-      // restart loop with new speed
-      startLoop();
+      vibrate("levelup");
     }
+
+    placeFoodSafe();
   } else {
     // move: pop tail
     snake.pop();
   }
 
   updateHUD();
-  draw();
 }
+
 
 /* ---------------------------------------------------------
  *  Draw
@@ -1279,28 +1678,46 @@ function applyShake(){
 }
 
 function drawBackground(){
+  const wld = currentWorld();
   // subtle animated gradient
   const g = ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0, "#0b1224");
-  g.addColorStop(1, "#020617");
+  g.addColorStop(0, wld.bgTop);
+  g.addColorStop(1, wld.bgBot);
   ctx.fillStyle = g;
   ctx.fillRect(0,0,W,H);
 
   // glow
   const r = ctx.createRadialGradient(W*0.2, H*0.15, 40, W*0.2, H*0.15, 520);
-  r.addColorStop(0, "rgba(56,189,248,0.18)");
+  r.addColorStop(0, wld.glow1);
   r.addColorStop(1, "rgba(56,189,248,0.00)");
   ctx.fillStyle = r;
   ctx.fillRect(0,0,W,H);
 
   const r2 = ctx.createRadialGradient(W*0.82, H*0.18, 40, W*0.82, H*0.18, 520);
-  r2.addColorStop(0, "rgba(167,139,250,0.16)");
+  r2.addColorStop(0, wld.glow2);
   r2.addColorStop(1, "rgba(167,139,250,0.00)");
   ctx.fillStyle = r2;
   ctx.fillRect(0,0,W,H);
+
+  // stars (very lightweight)
+  frameN++;
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  ctx.fillStyle = "rgba(255,255,255,1)";
+  for(const s of stars){
+    s.y += s.v;
+    if(s.y > H + 10){ s.y = -10; s.x = Math.random()*W; }
+    const tw = 0.5 + 0.5*Math.sin(frameN*0.02 + s.x*0.01);
+    ctx.globalAlpha = s.a * (0.65 + 0.35*tw);
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
 }
 
 function drawBoard(){
+  const wld = currentWorld();
   // board plate
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.45)";
@@ -1322,7 +1739,7 @@ function drawBoard(){
   // subtle grid
   ctx.save();
   ctx.globalAlpha = 0.10;
-  ctx.strokeStyle = "#93c5fd";
+  ctx.strokeStyle = wld.grid;
   ctx.lineWidth = 1;
   for(let i=1;i<grid.cols;i++){
     const x = boardX + i*TILE;
@@ -1380,37 +1797,75 @@ function drawWalls(){
   ctx.restore();
 }
 
+
 function drawFood(){
   const {cx,cy} = cellCenter(food.x, food.y);
-  const r = Math.min(12, Math.floor(TILE*0.28));
-  food.spin += 0.11;
+  const baseR = Math.min(14, Math.floor(TILE*0.30));
+  food.spin += 0.12;
 
-  // glow
+  // fake 3D spin: squash in X as it "turns"
+  const squash = 0.55 + 0.45*Math.abs(Math.cos(food.spin));
+  const r = baseR;
+
   ctx.save();
-  ctx.shadowColor = "rgba(250,204,21,0.65)";
+  ctx.translate(cx, cy);
+  ctx.scale(squash, 1);
+
+  // outer glow
+  ctx.shadowColor = "rgba(250,204,21,0.70)";
   ctx.shadowBlur = 18;
 
-  const g = ctx.createRadialGradient(cx-r*0.25, cy-r*0.25, 2, cx, cy, r*2);
-  g.addColorStop(0, "rgba(255,255,255,0.85)");
-  g.addColorStop(0.35, "rgba(250,204,21,0.95)");
-  g.addColorStop(1, "rgba(245,158,11,0.45)");
-  ctx.fillStyle = g;
-
+  // rim
+  const rim = ctx.createRadialGradient(-r*0.25, -r*0.25, 2, 0, 0, r*1.65);
+  rim.addColorStop(0, "rgba(255,255,255,0.95)");
+  rim.addColorStop(0.25, "rgba(250,204,21,0.98)");
+  rim.addColorStop(0.70, "rgba(245,158,11,0.70)");
+  rim.addColorStop(1, "rgba(146,64,14,0.55)");
+  ctx.fillStyle = rim;
   ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.arc(0, 0, r, 0, Math.PI*2);
   ctx.fill();
 
-  // shine
+  // inner face
   ctx.shadowBlur = 0;
-  ctx.globalAlpha = 0.55;
+  const face = ctx.createRadialGradient(-r*0.18, -r*0.18, 1, 0, 0, r*1.05);
+  face.addColorStop(0, "rgba(255,255,255,0.85)");
+  face.addColorStop(0.35, "rgba(253,224,71,0.95)");
+  face.addColorStop(1, "rgba(245,158,11,0.55)");
+  ctx.fillStyle = face;
   ctx.beginPath();
-  ctx.arc(cx - r*0.25, cy - r*0.25, r*0.35, 0, Math.PI*2);
+  ctx.arc(0, 0, r*0.78, 0, Math.PI*2);
+  ctx.fill();
+
+  // emboss lines
+  ctx.globalAlpha = 0.18;
+  ctx.strokeStyle = "rgba(2,6,23,0.8)";
+  ctx.lineWidth = Math.max(1, r*0.10);
+  ctx.beginPath(); ctx.arc(0, 0, r*0.55, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, r*0.36, 0, Math.PI*2); ctx.stroke();
+
+  // shine
+  ctx.globalAlpha = 0.65;
   ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.beginPath();
+  ctx.arc(-r*0.22, -r*0.22, r*0.26, 0, Math.PI*2);
+  ctx.fill();
+
+  // small sparkle
+  ctx.globalAlpha = 0.45;
+  const s = r*0.20;
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.beginPath();
+  ctx.moveTo(r*0.25, -r*0.35);
+  ctx.lineTo(r*0.25 + s, -r*0.35);
+  ctx.lineTo(r*0.25, -r*0.35 + s);
+  ctx.closePath();
   ctx.fill();
 
   ctx.restore();
   ctx.globalAlpha = 1;
 }
+
 
 function drawSnake(){
   // head -> tail gradient
@@ -1463,7 +1918,8 @@ function drawBanner(){
   ctx.fillRect(0,0,W,H);
 
   // text chip
-  const msg = `Nivel ${state.level} · Velocidad +`;
+  const wld = currentWorld();
+  const msg = `Mundo: ${wld.name} · Nivel ${state.level} · Vel ${speedPercent(state.level)}%`;
   ctx.font = "1000 20px system-ui";
   const tw = ctx.measureText(msg).width;
   const bw = Math.min(W-40, tw + 40);
@@ -1487,11 +1943,14 @@ function draw(){
   ctx.save();
   ctx.setTransform(1,0,0,1,sh.x,sh.y);
 
+  stepParticles();
+
   drawBackground();
   drawBoard();
   drawWalls();
   drawFood();
   drawSnake();
+  drawParticles();
   drawBanner();
 
   ctx.restore();
