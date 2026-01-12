@@ -274,19 +274,20 @@
     }
 
     /* Virtual joystick (móvil) */
-    .joystick{
-      position:absolute;
-      left: max(14px, env(safe-area-inset-left));
-      bottom: max(18px, env(safe-area-inset-bottom));
-      width: 150px;
-      height: 150px;
-      display:none;
-      z-index:35;
-      pointer-events:auto; /* only this area should capture movement input */
-      touch-action:none;
-      -webkit-user-select:none;
-      user-select:none;
-    }
+.joystick{
+  position:absolute;
+  /* Más a la izquierda y más pequeño para no tapar el tablero */
+  left: max(6px, env(safe-area-inset-left));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  width: 112px;
+  height: 112px;
+  display:none;
+  z-index:35;
+  pointer-events:auto; /* only this area should capture movement input */
+  touch-action:none;
+  -webkit-user-select:none;
+  user-select:none;
+}
     .joy-base{
       position:absolute;
       inset:0;
@@ -299,8 +300,8 @@
     }
     .joy-knob{
       position:absolute;
-      width: 68px;
-      height: 68px;
+      width: 52px;
+      height: 52px;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
@@ -1716,6 +1717,55 @@ function drawBackground(){
   ctx.restore();
 }
 
+
+/* ---------------------------------------------------------
+ *  Board pattern (sin cuadrícula): textura dinámica ligera
+ * --------------------------------------------------------- */
+let boardPattern = null;
+let boardPatternKey = "";
+function rebuildBoardPattern(){
+  const wld = currentWorld();
+  const key = `${wld.name}_${TILE}_${grid.cols}x${grid.rows}`;
+  if(boardPattern && boardPatternKey === key) return;
+
+  const oc = document.createElement("canvas");
+  oc.width = 220; oc.height = 220;
+  const octx = oc.getContext("2d");
+
+  // fondo sutil
+  const bg = octx.createLinearGradient(0,0,oc.width,oc.height);
+  bg.addColorStop(0, "rgba(255,255,255,0.06)");
+  bg.addColorStop(1, "rgba(255,255,255,0.00)");
+  octx.fillStyle = bg;
+  octx.fillRect(0,0,oc.width,oc.height);
+
+  // puntos tipo "polvo estelar" (no líneas)
+  octx.fillStyle = "rgba(226,232,240,0.12)";
+  for(let i=0;i<120;i++){
+    const x = Math.random()*oc.width;
+    const y = Math.random()*oc.height;
+    const r = 0.6 + Math.random()*1.6;
+    octx.globalAlpha = 0.10 + Math.random()*0.18;
+    octx.beginPath();
+    octx.arc(x,y,r,0,Math.PI*2);
+    octx.fill();
+  }
+
+  // micro diagonales suaves para sensación "dinámica"
+  octx.globalAlpha = 0.10;
+  octx.strokeStyle = "rgba(56,189,248,0.16)";
+  octx.lineWidth = 1;
+  for(let i=-oc.height;i<oc.width+oc.height;i+=26){
+    octx.beginPath();
+    octx.moveTo(i, 0);
+    octx.lineTo(i-oc.height, oc.height);
+    octx.stroke();
+  }
+
+  boardPattern = ctx.createPattern(oc, "repeat");
+  boardPatternKey = key;
+}
+
 function drawBoard(){
   const wld = currentWorld();
   // board plate
@@ -1736,20 +1786,28 @@ function drawBoard(){
   roundRect(boardX, boardY, BOARD_W, BOARD_H, 14);
   ctx.fill();
 
-  // subtle grid
-  ctx.save();
-  ctx.globalAlpha = 0.10;
-  ctx.strokeStyle = wld.grid;
-  ctx.lineWidth = 1;
-  for(let i=1;i<grid.cols;i++){
-    const x = boardX + i*TILE;
-    ctx.beginPath(); ctx.moveTo(x, boardY); ctx.lineTo(x, boardY+BOARD_H); ctx.stroke();
-  }
-  for(let i=1;i<grid.rows;i++){
-    const y = boardY + i*TILE;
-    ctx.beginPath(); ctx.moveTo(boardX, y); ctx.lineTo(boardX+BOARD_W, y); ctx.stroke();
-  }
-  ctx.restore();
+  // textura dinámica (sin cuadrícula)
+rebuildBoardPattern();
+ctx.save();
+ctx.globalAlpha = 0.22;
+ctx.fillStyle = boardPattern;
+roundRect(boardX, boardY, BOARD_W, BOARD_H, 14);
+ctx.clip();
+// leve desplazamiento para sensación de movimiento (sin afectar gameplay)
+ctx.translate((frameN*0.12)%40, (frameN*0.08)%40);
+ctx.fillRect(boardX-80, boardY-80, BOARD_W+160, BOARD_H+160);
+ctx.restore();
+
+// viñeta para profundidad
+ctx.save();
+const vg = ctx.createRadialGradient(boardX+BOARD_W/2, boardY+BOARD_H/2, BOARD_W*0.10, boardX+BOARD_W/2, boardY+BOARD_H/2, BOARD_W*0.78);
+vg.addColorStop(0, "rgba(2,6,23,0)");
+vg.addColorStop(1, "rgba(2,6,23,0.48)");
+ctx.fillStyle = vg;
+roundRect(boardX, boardY, BOARD_W, BOARD_H, 14);
+ctx.fill();
+ctx.restore();
+
 }
 
 function roundRect(x,y,w,h,r){
