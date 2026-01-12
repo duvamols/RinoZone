@@ -405,6 +405,43 @@
     .resultCard .ttl{ font-weight:1200; font-size: 14px; margin-bottom:6px; }
     .resultCard .mut{ font-weight:850; font-size: 12px; color: rgba(203,213,245,0.92); }
 
+    .row-center{ display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:12px; }
+
+    /* Fullscreen gate (for browsers that require a user gesture) */
+    #fsGate{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 9999;
+    }
+    #fsGate .box{
+      width: min(520px, 92vw);
+      border-radius: 26px;
+      padding: 16px 16px;
+      background: rgba(2,6,23,0.82);
+      border:1px solid rgba(148,163,184,0.22);
+      box-shadow: 0 28px 90px rgba(0,0,0,0.58);
+      text-align:center;
+    }
+    #fsGate .box h3{
+      font-size: 16px;
+      font-weight: 1250;
+      margin-bottom: 8px;
+      letter-spacing:.2px;
+    }
+    #fsGate .box p{
+      font-size: 12px;
+      font-weight: 900;
+      color: rgba(203,213,245,0.92);
+      line-height:1.35;
+    }
+
   </style>
 </head>
 
@@ -430,6 +467,18 @@
     </div>
   </div>
 
+  <!-- Fullscreen Gate -->
+  <div id="fsGate" aria-hidden="true">
+    <div class="box">
+      <h3>Pantalla completa</h3>
+      <p>Tu navegador requiere un toque para activar pantalla completa.</p>
+      <div class="row-center" style="margin-top:12px">
+        <button id="fsBtn" class="btn btn-primary" type="button">Entrar a pantalla completa</button>
+      </div>
+      <div class="help" style="margin-top:10px">Si estás en iPhone, usa “Compartir → Añadir a pantalla de inicio”.</div>
+    </div>
+  </div>
+
   <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -437,13 +486,47 @@
 "use strict";
 
 /* =========================================================
- *  VISUAL/TOUCH BEST PRACTICES (mobile-first + iOS hint)
- *  - Fullscreen requires user gesture (browsers enforce it)
- *  - iOS Safari "true fullscreen" is limited; recommend A2HS
- *  ========================================================= */
-const iosHint = document.createElement("div");
-iosHint.id = "iosHint";
+ *  Safety: show any runtime error on screen (so it never looks "blank")
+ * ========================================================= */
+window.addEventListener("error", (e) => {
+  try{
+    const msg = (e && (e.message || e.error?.message)) ? (e.message || e.error.message) : "Error desconocido";
+    const where = e?.filename ? `\n${e.filename}:${e.lineno||""}:${e.colno||""}` : "";
+    const box = document.createElement("div");
+    box.className = "panel";
+    box.innerHTML = `
+      <h2 style="color:rgba(251,113,133,0.98)">Error detectado</h2>
+      <p style="color:rgba(248,250,252,0.95);font-weight:950;margin-top:8px">El juego se detuvo por un error de JavaScript.</p>
+      <div class="warn" style="white-space:pre-wrap;margin-top:10px">${msg}${where}</div>
+      <div class="help" style="margin-top:10px">Solución rápida: recarga la página. Si persiste, envíame esta captura.</div>
+    `;
+    const st = document.getElementById("stage");
+    if(st){ st.innerHTML=""; st.appendChild(box); }
+  }catch(_){}
+});
+window.addEventListener("unhandledrejection", (e) => {
+  try{
+    const msg = (e && e.reason) ? (e.reason.message || String(e.reason)) : "Promesa rechazada";
+    const st = document.getElementById("stage");
+    if(st){
+      const box = document.createElement("div");
+      box.className = "panel";
+      box.innerHTML = `
+        <h2 style="color:rgba(251,113,133,0.98)">Error detectado</h2>
+        <div class="warn" style="white-space:pre-wrap;margin-top:10px">${msg}</div>
+      `;
+      st.innerHTML=""; st.appendChild(box);
+    }
+  }catch(_){}
+});
 
+
+
+/* =========================================================
+ *  Fullscreen & iOS app-like mode
+ *  - Most browsers require a user gesture to enter fullscreen.
+ *  - We try on load; if blocked, we show a single-tap gate.
+ * ========================================================= */
 function isIOS(){
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
@@ -453,15 +536,24 @@ function isStandalone(){
 async function requestFullscreenSafe(){
   const el = document.documentElement;
   try{
-    if(el.requestFullscreen) await el.requestFullscreen();
-    else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
-  }catch(_){}
+    if(document.fullscreenElement) return true;
+    if(el.requestFullscreen) { await el.requestFullscreen(); }
+    else if(el.webkitRequestFullscreen) { await el.webkitRequestFullscreen(); }
+    return !!document.fullscreenElement;
+  }catch(_){
+    return false;
+  }
 }
+const iosHint = document.getElementById("iosHint") || document.createElement("div");
+iosHint.id = "iosHint";
+
 function showIOSHint(){
+  const hint = document.getElementById("iosHint");
+  if(!hint) return;
   const isMobile = Math.min(window.innerWidth, window.innerHeight) <= 900;
   if(isIOS() && isMobile && !isStandalone()){
-    iosHint.style.display = "block";
-    iosHint.innerHTML = `
+    hint.style.display = "block";
+    hint.innerHTML = `
       <div class="row">
         <div style="min-width:0">
           <div class="ttl">iPhone (Safari)</div>
@@ -470,469 +562,53 @@ function showIOSHint(){
         <button class="x" type="button" aria-label="Cerrar">✕</button>
       </div>
     `;
-    iosHint.querySelector(".x")?.addEventListener("click", () => (iosHint.style.display = "none"), { once:true });
+    hint.querySelector(".x")?.addEventListener("click", () => (hint.style.display = "none"), { once:true });
   } else {
-    iosHint.style.display = "none";
+    hint.style.display = "none";
   }
 }
 showIOSHint();
 window.addEventListener("resize", showIOSHint);
 window.visualViewport?.addEventListener("resize", showIOSHint);
 
-/* =========================================================
- *  WORD BANK (>= 1000) - generated via combinations
- *  We keep a base list of nouns (Spanish) and expand with
- *  modifiers to easily exceed 1000 unique "palabras/phrases".
- * ========================================================= */
-const BASE_NOUNS = [
-  "silla",
-  "mesa",
-  "ventana",
-  "puerta",
-  "llave",
-  "candado",
-  "cortina",
-  "espejo",
-  "alfombra",
-  "lampara",
-  "reloj",
-  "cama",
-  "almohada",
-  "sabana",
-  "cobija",
-  "armario",
-  "cajon",
-  "gaveta",
-  "estante",
-  "cuadro",
-  "libro",
-  "cuaderno",
-  "lapiz",
-  "boligrafo",
-  "borrador",
-  "sacapuntas",
-  "mochila",
-  "maleta",
-  "cargador",
-  "audifonos",
-  "celular",
-  "tablet",
-  "computador",
-  "teclado",
-  "mouse",
-  "pantalla",
-  "control",
-  "camara",
-  "tripode",
-  "bateria",
-  "parlante",
-  "microfono",
-  "router",
-  "cable",
-  "enchufe",
-  "bombillo",
-  "ventilador",
-  "nevera",
-  "estufa",
-  "horno",
-  "licuadora",
-  "cafetera",
-  "tetera",
-  "jarra",
-  "vaso",
-  "taza",
-  "plato",
-  "cuchara",
-  "tenedor",
-  "cuchillo",
-  "olla",
-  "sarten",
-  "espatula",
-  "colador",
-  "recipiente",
-  "termo",
-  "servilleta",
-  "bolsa",
-  "caja",
-  "frasco",
-  "pan",
-  "queso",
-  "huevo",
-  "arroz",
-  "pasta",
-  "sopa",
-  "ensalada",
-  "pollo",
-  "carne",
-  "pescado",
-  "atun",
-  "fruta",
-  "manzana",
-  "pera",
-  "banano",
-  "uvas",
-  "mango",
-  "piña",
-  "papaya",
-  "fresa",
-  "sandia",
-  "naranja",
-  "limon",
-  "tomate",
-  "cebolla",
-  "ajo",
-  "papa",
-  "yuca",
-  "platano",
-  "zanahoria",
-  "maiz",
-  "chocolate",
-  "cafe",
-  "te",
-  "jugo",
-  "agua",
-  "leche",
-  "yogur",
-  "miel",
-  "azucar",
-  "sal",
-  "pimienta",
-  "comino",
-  "canela",
-  "vainilla",
-  "helado",
-  "galleta",
-  "torta",
-  "brownie",
-  "churro",
-  "empanada",
-  "tamal",
-  "hamburguesa",
-  "pizza",
-  "sushi",
-  "taco",
-  "burrito",
-  "arequipe",
-  "chicharron",
-  "frijol",
-  "lenteja",
-  "garbanzo",
-  "aguacate",
-  "pepino",
-  "lechuga",
-  "espinaca",
-  "brocoli",
-  "coliflor",
-  "remolacha",
-  "calabaza",
-  "quesadilla",
-  "plaza",
-  "calle",
-  "avenida",
-  "puente",
-  "tunel",
-  "estacion",
-  "terminal",
-  "aeropuerto",
-  "puerto",
-  "playa",
-  "montaña",
-  "bosque",
-  "selva",
-  "rio",
-  "cascada",
-  "lago",
-  "laguna",
-  "desierto",
-  "isla",
-  "volcan",
-  "cueva",
-  "ciudad",
-  "pueblo",
-  "barrio",
-  "casa",
-  "edificio",
-  "oficina",
-  "colegio",
-  "universidad",
-  "biblioteca",
-  "hospital",
-  "clinica",
-  "farmacia",
-  "mercado",
-  "tienda",
-  "supermercado",
-  "restaurante",
-  "cafeteria",
-  "panaderia",
-  "hotel",
-  "museo",
-  "teatro",
-  "estadio",
-  "gimnasio",
-  "iglesia",
-  "paradero",
-  "parqueadero",
-  "estacionamiento",
-  "cancha",
-  "gato",
-  "caballo",
-  "vaca",
-  "oveja",
-  "cabra",
-  "cerdo",
-  "pato",
-  "ganso",
-  "conejo",
-  "raton",
-  "hamster",
-  "tortuga",
-  "iguana",
-  "serpiente",
-  "tigre",
-  "leon",
-  "jaguar",
-  "oso",
-  "lobo",
-  "zorro",
-  "mono",
-  "perezoso",
-  "delfin",
-  "ballena",
-  "tiburon",
-  "pulpo",
-  "calamar",
-  "cangrejo",
-  "langosta",
-  "pinguino",
-  "aguila",
-  "halcon",
-  "paloma",
-  "colibri",
-  "loro",
-  "tucan",
-  "buho",
-  "murcielago",
-  "abeja",
-  "mariposa",
-  "hormiga",
-  "arana",
-  "escorpion",
-  "rana",
-  "sapo",
-  "tormenta",
-  "nieve",
-  "viento",
-  "sol",
-  "nube",
-  "arcoiris",
-  "trueno",
-  "relampago",
-  "neblina",
-  "hielo",
-  "fuego",
-  "ceniza",
-  "arena",
-  "roca",
-  "piedra",
-  "madera",
-  "hoja",
-  "flor",
-  "semilla",
-  "raiz",
-  "tronco",
-  "corteza",
-  "rama",
-  "jardin",
-  "huerta",
-  "mar",
-  "oceano",
-  "planeta",
-  "estrella",
-  "baloncesto",
-  "tenis",
-  "voleibol",
-  "natacion",
-  "ciclismo",
-  "atletismo",
-  "boxeo",
-  "ajedrez",
-  "dardos",
-  "bolos",
-  "patinaje",
-  "senderismo",
-  "campamento",
-  "pesca",
-  "cine",
-  "musica",
-  "concierto",
-  "karaoke",
-  "baile",
-  "videojuego",
-  "rompecabezas",
-  "cartas",
-  "enfermera",
-  "profesor",
-  "estudiante",
-  "ingeniero",
-  "abogado",
-  "policia",
-  "bombero",
-  "cocinero",
-  "panadero",
-  "barbero",
-  "mecanico",
-  "piloto",
-  "arquitecto",
-  "diseñador",
-  "musico",
-  "cantante",
-  "actor",
-  "pintor",
-  "fotografo",
-  "periodista",
-  "vendedor",
-  "cajero",
-  "constructor",
-  "agricultor",
-  "pescador",
-  "chef",
-  "navegador",
-  "aplicacion",
-  "codigo",
-  "algoritmo",
-  "robot",
-  "dron",
-  "sensor",
-  "gps",
-  "bluetooth",
-  "contrasena",
-  "correo",
-  "mensaje",
-  "notificacion",
-  "perfil",
-  "usuario",
-  "conexion",
-  "seguridad",
-  "cifrado",
-  "chat",
-  "streaming",
-  "red",
-  "amigo",
-  "fiesta",
-  "cumpleanos",
-  "regalo",
-  "sorpresa",
-  "viaje",
-  "aventura",
-  "misterio",
-  "secreto",
-  "historia",
-  "leyenda",
-  "tesoro",
-  "mapa",
-  "brujula",
-  "retrato",
-  "documento",
-  "contrato",
-  "dinero",
-  "moneda",
-  "billete",
-  "tarjeta",
-  "banco",
-  "deuda",
-  "ahorro",
-  "negocio",
-  "mercancia",
-  "envio",
-  "paquete",
-  "carta",
-  "sello",
-  "firma",
-  "reunion",
-  "decicion",
-  "meta"
-];
+const fsGate = document.getElementById("fsGate");
+const fsBtn  = document.getElementById("fsBtn");
 
-const MODIFIERS = [
-  "gigante","mini","secreto","magico","antiguo","futurista","dorado","nocturno","de bolsillo","de emergencia","de lujo"
-];
+function hideFSGate(){ if(!fsGate) return; fsGate.style.display = "none"; fsGate.setAttribute("aria-hidden","true"); }
+function showFSGate(){ if(!fsGate) return; fsGate.style.display = "flex"; fsGate.setAttribute("aria-hidden","false"); }
 
-// build > 1000 unique entries
-function buildWordBank(){
-  const set = new Set();
-  for(const n of BASE_NOUNS){
-    set.add(n);
-    for(const m of MODIFIERS){
-      set.add(`${n} ${m}`);
+fsBtn?.addEventListener("click", async () => {
+  const ok = await requestFullscreenSafe();
+  if(ok) hideFSGate();
+});
+
+/* Try to enter fullscreen immediately (may be blocked). */
+(async () => {
+  if(isIOS()) { hideFSGate(); return; }
+  await requestFullscreenSafe();
+  setTimeout(() => {
+    if(!document.fullscreenElement){
+      showFSGate();
+    } else {
+      hideFSGate();
     }
-  }
-  // ensure enough: if still below 1100, add combos with "del" patterns
-  const extraMods = ["del norte","del sur","del bosque","de la ciudad","del mar","de la montaña","del tiempo","del espacio"];
-  for(const n of BASE_NOUNS){
-    for(const e of extraMods){
-      set.add(`${n} ${e}`);
-    }
-  }
-  return Array.from(set);
-}
+  }, 200);
+})();
 
-function shuffle(arr){
-  for(let i = arr.length - 1; i > 0; i--){
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
+/* Also attempt fullscreen on the first user interaction anywhere */
+window.addEventListener("pointerdown", async () => {
+  if(isIOS()) return;
+  if(document.fullscreenElement) { hideFSGate(); return; }
+  const ok = await requestFullscreenSafe();
+  if(ok) hideFSGate();
+}, { once:true });
 
 /* =========================================================
- *  STATE
+ *  Toast + DOM helpers
  * ========================================================= */
 const stage = document.getElementById("stage");
 const toastEl = document.getElementById("toast");
 
-const hudCoins = document.getElementById("hudCoins");
-const hudRound = document.getElementById("hudRound");
-const hudVotesLeft = document.getElementById("hudVotesLeft");
-
-const state = {
-  step: "home",
-  playerCount: 4,
-  players: [], // {id,name,role,alive,coins}
-  impostorCount: 1,
-
-  // round
-  round: 0,
-  votesLeftThisGame: 0,   // = impostorCount initially
-  votesUsed: 0,
-
-  // reveal
-  revealIndex: 0,
-
-  // words
-  wordBank: shuffle(buildWordBank()),
-  usedWords: new Set(),
-  secretWord: "",
-
-  // voting flow
-  voteRoundIndex: 0,     // 0..votesLeftThisGame-1
-  voterIndex: 0,         // which player is voting now
-  votes: new Map(),      // suspectId -> count
-  votedBy: new Set(),    // voterId set
-
-  // impostor guess
-  aliveImpostorIds: [],
-  guessIndex: 0,
-  impostorGuesses: new Map(), // impostorId -> guess string
-
-  // winner
-  finished: false,
-  winner: ""
-};
-
-/* =========================================================
- *  UTIL
- * ========================================================= */
 function el(tag, attrs={}, children=[]){
   const n = document.createElement(tag);
   for(const [k,v] of Object.entries(attrs||{})){
@@ -956,12 +632,10 @@ function toast(msg, bad=false){
   toastEl.classList.add("show");
   toastEl.classList.add(bad ? "bad" : "good");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1600);
+  toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1700);
 }
 
-function clearStage(){
-  stage.innerHTML = "";
-}
+function clearStage(){ stage.innerHTML = ""; }
 
 function norm(s){
   return (s||"")
@@ -971,21 +645,130 @@ function norm(s){
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function getAlivePlayers(){
-  return state.players.filter(p => p.alive);
+/* =========================================================
+ *  Word bank (SINGLE WORDS ONLY, >1000)
+ *  - No phrases, no spaces.
+ *  - Expand base nouns with plural + diminutive + augmentative.
+ * ========================================================= */
+const BASE_WORDS = [
+  "gelatina","silla","medias","helado","perro","mantequilla","barco","carro","cielo","amarillo",
+  "gato","conejo","tortuga","caballo","vaca","oveja","zorro","lobo","oso","tigre","leon","delfin","tiburon","pulpo",
+  "manzana","pera","mango","piña","papaya","fresa","sandia","naranja","limon","uva","banano","cereza","durazno","guayaba",
+  "tomate","cebolla","ajo","papa","yuca","zanahoria","pepino","lechuga","brocoli","espinaca","maiz","arroz","pasta","lenteja","frijol",
+  "pan","queso","huevo","pollo","carne","pescado","atun","sopa","ensalada","pizza","taco","arepa","empanada","tamal",
+  "cafe","te","jugo","agua","leche","yogur","miel","azucar","sal","pimienta",
+  "mesa","ventana","puerta","llave","candado","cortina","espejo","alfombra","lampara","reloj","cama","almohada","cobija","armario","cajon",
+  "libro","cuaderno","lapiz","boligrafo","borrador","mochila","maleta","cargador","audifonos","celular","tablet","computador","teclado","mouse",
+  "camara","bateria","parlante","microfono","cable","enchufe","bombillo","ventilador","nevera","estufa","horno","licuadora","cafetera",
+  "plato","vaso","taza","cuchara","tenedor","cuchillo","olla","sarten","espatula","colador","termo","servilleta","bolsa","caja","frasco",
+  "calle","puente","tunel","estacion","aeropuerto","playa","montaña","bosque","selva","rio","cascada","lago","isla","volcan","cueva",
+  "sol","luna","estrella","nube","viento","lluvia","trueno","relampago","nieve","hielo","fuego","arena","roca","madera","flor","semilla",
+  "camisa","pantalon","zapato","media","gorra","sombrero","chaqueta","reloj","anillo","collar","bolso",
+  "balon","futbol","tenis","voleibol","natacion","ciclismo","ajedrez","dardos","bolos",
+  "rojo","azul","verde","negro","blanco","morado","naranja","rosa","gris","cafe","dorado","plateado",
+  "dinero","moneda","billete","tarjeta","banco","ahorro",
+  "doctor","policia","bombero","cocinero","panadero","barbero","mecanico","piloto","arquitecto","musico","cantante","actor",
+  "robot","dron","sensor","gps","internet","correo","mensaje","chat","perfil"
+];
+
+function pluralize(w){
+  if(w.endsWith("s")) return w;          // already plural-ish
+  if(w.endsWith("z")) return w.slice(0,-1) + "ces";
+  if(/[aeiou]$/.test(w)) return w + "s";
+  return w + "es";
 }
-function getAliveImpostors(){
-  return state.players.filter(p => p.alive && p.role === "impostor");
+function diminutive(w){
+  // simple Spanish diminutive; best-effort
+  if(w.length < 3) return w;
+  if(w.endsWith("a")) return w.slice(0,-1) + "ita";
+  if(w.endsWith("o")) return w.slice(0,-1) + "ito";
+  if(w.endsWith("e")) return w.slice(0,-1) + "ecito";
+  return w + "cito";
 }
-function getAliveCivilians(){
-  return state.players.filter(p => p.alive && p.role === "civil");
+function augmentative(w){
+  if(w.length < 3) return w;
+  if(w.endsWith("a")) return w.slice(0,-1) + "ona";
+  if(w.endsWith("o")) return w.slice(0,-1) + "on";
+  return w + "on";
 }
+function buildWordBank(){
+  const set = new Set();
+  for(const w of BASE_WORDS){
+    const clean = norm(w).replace(/\s+/g,"");
+    if(!clean) continue;
+    set.add(clean);
+    set.add(pluralize(clean));
+    set.add(diminutive(clean));
+    set.add(augmentative(clean));
+  }
+  // If still under 1100, expand with additional safe variants
+  const arr = Array.from(set);
+  if(arr.length < 1100){
+    for(const w of arr.slice(0, 400)){
+      set.add(w + "s"); // extra plural safety
+      set.add(w + "ito");
+      set.add(w + "azo");
+    }
+  }
+  return Array.from(set);
+}
+
+function shuffle(arr){
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* =========================================================
+ *  State
+ * ========================================================= */
+const hudCoins = document.getElementById("hudCoins");
+const hudRound = document.getElementById("hudRound");
+const hudVotesLeft = document.getElementById("hudVotesLeft");
+
+const state = {
+  step: "home",
+  playerCount: 4,
+  players: [], // {id,name,role,alive,coins}
+  impostorCount: 1,
+
+  // betting
+  betEnabled: false,
+  betAmount: 0,
+
+  // round
+  round: 0,
+  votesAllowed: 0,
+  votesUsed: 0,
+
+  // reveal
+  revealIndex: 0,
+
+  // words
+  wordBank: shuffle(buildWordBank()),
+  usedWords: new Set(),
+  secretWord: "",
+
+  // voting flow (combined: civilians vote, impostors guess)
+  turnIndex: 0,
+  votes: new Map(),          // suspectId -> count
+  impostorGuesses: new Map(),// impostorId -> guess
+
+  finished: false,
+  winner: ""
+};
+
+function getAlivePlayers(){ return state.players.filter(p => p.alive); }
+function getAliveImpostors(){ return state.players.filter(p => p.alive && p.role === "impostor"); }
+function getAliveCivilians(){ return state.players.filter(p => p.alive && p.role === "civil"); }
 
 function updateHUD(){
   const totalCoins = state.players.reduce((a,p) => a + (p.coins||0), 0);
   hudCoins.textContent = String(totalCoins);
   hudRound.textContent = String(state.round);
-  const left = Math.max(0, state.votesLeftThisGame - state.votesUsed);
+  const left = Math.max(0, state.votesAllowed - state.votesUsed);
   hudVotesLeft.textContent = String(left);
 }
 
@@ -994,31 +777,25 @@ function setStep(step){
   render();
 }
 
-/* =========================================================
- *  GAME CORE
- * ========================================================= */
 function pickSecretWord(){
-  // avoid repeats within session until bank cycles
-  for(let tries=0; tries < state.wordBank.length; tries++){
-    const w = state.wordBank.shift();
-    state.wordBank.push(w); // rotate
+  const bank = state.wordBank;
+  for(let tries=0; tries < bank.length; tries++){
+    const w = bank.shift();
+    bank.push(w);
     const key = norm(w);
     if(!state.usedWords.has(key)){
       state.usedWords.add(key);
       return w;
     }
   }
-  // fallback: allow repeat
-  return state.wordBank[Math.floor(Math.random()*state.wordBank.length)];
+  return bank[Math.floor(Math.random()*bank.length)];
 }
 
 function assignRoles(){
-  // reset player states
   for(const p of state.players){
     p.role = "civil";
     p.alive = true;
   }
-  // choose impostors randomly
   const ids = state.players.map(p => p.id);
   shuffle(ids);
   const chosen = new Set(ids.slice(0, state.impostorCount));
@@ -1031,19 +808,17 @@ function startNewGame(){
   state.finished = false;
   state.winner = "";
 
-  state.round = 1;
+  state.round = Math.max(1, state.round + 1);
+  state.votesAllowed = state.impostorCount; // your rule
   state.votesUsed = 0;
-  state.votesLeftThisGame = state.impostorCount;
 
   state.revealIndex = 0;
 
   state.secretWord = pickSecretWord();
-
   assignRoles();
 
-  // prepare guess list each cycle
-  state.aliveImpostorIds = getAliveImpostors().map(p => p.id);
-  state.guessIndex = 0;
+  state.turnIndex = 0;
+  state.votes = new Map();
   state.impostorGuesses = new Map();
 
   updateHUD();
@@ -1051,51 +826,21 @@ function startNewGame(){
 }
 
 function awardRoundCoins(){
-  // each player +2 coins per round (as requested)
   for(const p of state.players){
     p.coins = (p.coins||0) + 2;
   }
   updateHUD();
 }
 
-function beginVotingCycle(){
-  state.votes = new Map();
-  state.votedBy = new Set();
-  state.voterIndex = 0;
-  state.voteRoundIndex = state.votesUsed + 1;
-  setStep("vote_turn");
+function computePot(){
+  if(!state.betEnabled) return 0;
+  const amt = Number(state.betAmount||0);
+  if(!Number.isFinite(amt) || amt <= 0) return 0;
+  return amt * state.playerCount;
 }
 
-function tallyVotes(){
-  // Determine top-voted among alive players (excluding self-votes allowed? allow, but usually not)
-  const alive = getAlivePlayers();
-  if(alive.length <= 1) return null;
-
-  let max = 0;
-  let top = [];
-  for(const p of alive){
-    const c = state.votes.get(p.id) || 0;
-    if(c > max){
-      max = c;
-      top = [p.id];
-    } else if(c === max && c > 0){
-      top.push(p.id);
-    }
-  }
-  // If nobody voted (shouldn't happen), pick random alive
-  if(max === 0){
-    return alive[Math.floor(Math.random()*alive.length)].id;
-  }
-  // Tie-break: random among top
-  return top[Math.floor(Math.random()*top.length)];
-}
-
-function eliminatePlayer(id){
-  const p = state.players.find(x => x.id === id);
-  if(p) p.alive = false;
-}
-
-function checkWinAfterVote(){
+/* winner checks */
+function checkWinnerByRoles(){
   const imps = getAliveImpostors().length;
   const civs = getAliveCivilians().length;
   if(imps === 0){
@@ -1108,28 +853,13 @@ function checkWinAfterVote(){
     state.winner = "impostores";
     return true;
   }
-  if(state.votesUsed >= state.votesLeftThisGame){
-    // no more votes; impostors survived without guessing => impostors win? or civs? depends.
-    // We'll decide: if impostors survive all allowed votes, they win.
-    state.finished = true;
-    state.winner = "impostores";
-    return true;
-  }
   return false;
 }
-
-function beginImpostorGuessing(){
-  state.aliveImpostorIds = getAliveImpostors().map(p => p.id);
-  state.guessIndex = 0;
-  state.impostorGuesses = new Map();
-  setStep("guess_turn");
-}
-
 function checkImpostorGuessWin(){
-  // If any alive impostor guessed correctly, impostors win.
   const secret = norm(state.secretWord);
-  for(const [impId, guess] of state.impostorGuesses.entries()){
-    if(norm(guess) === secret){
+  for(const imp of getAliveImpostors()){
+    const g = state.impostorGuesses.get(imp.id);
+    if(g && norm(g) === secret){
       state.finished = true;
       state.winner = "impostores";
       return true;
@@ -1138,12 +868,35 @@ function checkImpostorGuessWin(){
   return false;
 }
 
+/* vote tally and elimination */
+function tallyVotes(){
+  const alive = getAlivePlayers();
+  let max = 0;
+  let top = [];
+  for(const p of alive){
+    const c = state.votes.get(p.id) || 0;
+    if(c > max){
+      max = c;
+      top = [p.id];
+    } else if(c === max && c > 0){
+      top.push(p.id);
+    }
+  }
+  if(max === 0){
+    return alive[Math.floor(Math.random()*alive.length)].id;
+  }
+  return top[Math.floor(Math.random()*top.length)];
+}
+function eliminatePlayer(id){
+  const p = state.players.find(x => x.id === id);
+  if(p) p.alive = false;
+}
+
 /* =========================================================
- *  RENDERERS
+ *  Renderers
  * ========================================================= */
 function render(){
   updateHUD();
-
   switch(state.step){
     case "home": return renderHome();
     case "setup_count": return renderSetupCount();
@@ -1151,10 +904,8 @@ function render(){
     case "setup_impostors": return renderSetupImpostors();
     case "reveal": return renderReveal();
     case "briefing": return renderBriefing();
-    case "vote_turn": return renderVoteTurn();
+    case "turn": return renderTurn();            // combined: civilians vote, impostors guess
     case "vote_result": return renderVoteResult();
-    case "guess_turn": return renderGuessTurn();
-    case "guess_result": return renderGuessResult();
     case "end": return renderEnd();
     default: return renderHome();
   }
@@ -1165,34 +916,37 @@ function renderHome(){
 
   const panel = el("div",{class:"panel"},[
     el("h2",{},["Configurar partida"]),
-    el("p",{},["Juego local para pasar el teléfono. Cada jugador ve su tarjeta en privado y luego hay votaciones para descubrir al impostor."]),
+    el("p",{},["Juego local para pasar el teléfono. Tarjetas privadas, luego votación. El impostor no vota: solo intenta adivinar la palabra."]),
     iosHint,
-    el("div",{class:"row"},[
+    el("div",{class:"row-center"},[
       el("button",{class:"btn btn-primary",type:"button",onclick:() => setStep("setup_count")},["▶ Empezar"])
     ]),
-    el("div",{class:"help"},[
-      "Consejo rápido: en Android, toca una vez para intentar pantalla completa. En iPhone, usa “Añadir a pantalla de inicio”."
-    ])
+    el("div",{class:"help"},["Si no entra a pantalla completa al abrir, toca el botón de “Pantalla completa” que aparece encima."])
   ]);
 
   stage.appendChild(panel);
-
-  // arm fullscreen on first gesture (non-iOS)
-  stage.addEventListener("pointerdown", () => {
-    if(!isIOS() && !document.fullscreenElement){
-      requestFullscreenSafe();
-    }
-  }, { once:true });
 }
 
 function renderSetupCount(){
   clearStage();
 
   const panel = el("div",{class:"panel"},[
-    el("h2",{},["¿Cuántos jugadores?"]),
-    el("p",{},["Define el número de personas que van a jugar en esta ronda."]),
+    el("h2",{},["Jugadores y apuesta"]),
+    el("p",{},["Define cuántos jugadores van a jugar y si la ronda será con apuesta o sin apuesta."]),
     el("label",{for:"pc"},["Cantidad de jugadores (3–20)"]),
     el("input",{id:"pc",type:"number",min:"3",max:"20",inputmode:"numeric",value:String(state.playerCount)}),
+
+    el("label",{for:"betMode"},["Modo de juego"]),
+    el("select",{id:"betMode"},[
+      el("option",{value:"no"},["Sin apuesta"]),
+      el("option",{value:"yes"},["Con apuesta"])
+    ]),
+    el("div",{id:"betBox",style:"display:none"},[
+      el("label",{for:"betAmt"},["Valor de la apuesta (por persona)"]),
+      el("input",{id:"betAmt",type:"number",min:"1",step:"1",inputmode:"numeric",placeholder:"Ej: 5000"}),
+      el("div",{class:"help"},["Regla: todos deben poner en la mesa la cantidad seleccionada antes de empezar."])
+    ]),
+
     el("div",{class:"row"},[
       el("button",{class:"btn",type:"button",onclick:() => setStep("home")},["⬅ Volver"]),
       el("button",{class:"btn btn-primary",type:"button",onclick:() => {
@@ -1201,10 +955,25 @@ function renderSetupCount(){
           toast("Ingresa un número entre 3 y 20.", true);
           return;
         }
+
+        const mode = document.getElementById("betMode").value;
+        if(mode === "yes"){
+          const amt = Math.floor(Number(document.getElementById("betAmt").value||0));
+          if(!Number.isFinite(amt) || amt <= 0){
+            toast("Ingresa un valor válido para la apuesta.", true);
+            return;
+          }
+          state.betEnabled = true;
+          state.betAmount = amt;
+        } else {
+          state.betEnabled = false;
+          state.betAmount = 0;
+        }
+
         state.playerCount = v;
         state.players = Array.from({length:v}).map((_,i)=>({
           id: "p"+(i+1),
-          name: "Jugador "+(i+1),
+          name: "",
           role:"civil",
           alive:true,
           coins: state.players[i]?.coins || 0
@@ -1215,14 +984,25 @@ function renderSetupCount(){
   ]);
 
   stage.appendChild(panel);
+
+  // init select
+  const betMode = document.getElementById("betMode");
+  const betBox = document.getElementById("betBox");
+  betMode.value = state.betEnabled ? "yes" : "no";
+  betBox.style.display = (betMode.value === "yes") ? "block" : "none";
+  if(state.betEnabled) document.getElementById("betAmt").value = String(state.betAmount||"");
+
+  betMode.addEventListener("change", () => {
+    betBox.style.display = (betMode.value === "yes") ? "block" : "none";
+  });
 }
 
 function renderSetupNames(){
   clearStage();
 
-  const list = el("div",{class:"panel"},[
+  const panel = el("div",{class:"panel"},[
     el("h2",{},["Nombres de jugadores"]),
-    el("p",{},["Escribe el nombre de cada jugador. Esto se mostrará en la tarjeta privada y en la votación."])
+    el("p",{},["Escribe el nombre de cada jugador. No puedes continuar si falta alguno."])
   ]);
 
   const wrap = el("div",{class:"grid2"});
@@ -1234,8 +1014,8 @@ function renderSetupNames(){
     ]));
   }
 
-  list.appendChild(wrap);
-  list.appendChild(el("div",{class:"row"},[
+  panel.appendChild(wrap);
+  panel.appendChild(el("div",{class:"row"},[
     el("button",{class:"btn",type:"button",onclick:() => setStep("setup_count")},["⬅ Atrás"]),
     el("button",{class:"btn btn-primary",type:"button",onclick:() => {
       const names = [];
@@ -1244,7 +1024,6 @@ function renderSetupNames(){
         if(!v){ toast("Completa todos los nombres.", true); return; }
         names.push(v);
       }
-      // unique-ish check
       const normed = names.map(norm);
       const set = new Set(normed);
       if(set.size !== normed.length){
@@ -1259,43 +1038,42 @@ function renderSetupNames(){
     }},["Siguiente"])
   ]));
 
-  stage.appendChild(list);
+  stage.appendChild(panel);
 }
 
 function renderSetupImpostors(){
   clearStage();
 
   const maxImp = Math.max(1, Math.floor(state.playerCount/3));
-  const defaultImp = Math.min(state.impostorCount || 1, maxImp);
+  const current = Math.min(Math.max(1, state.impostorCount || 1), maxImp);
 
   const panel = el("div",{class:"panel"},[
-    el("h2",{},["Impostores y reglas"]),
-    el("p",{},["Selecciona cuántos impostores habrá. Todos los civiles verán la misma palabra. Los impostores verán “—” y deberán deducirla."]),
-    el("div",{class:"grid2"},[
-      el("div",{},[
-        el("label",{for:"imp"},["Cantidad de impostores"]),
-        el("input",{id:"imp",type:"number",min:"1",max:String(maxImp),inputmode:"numeric",value:String(defaultImp)}),
-        el("div",{class:"help"},[`Máximo sugerido para ${state.playerCount} jugadores: ${maxImp}.`])
-      ]),
-      el("div",{},[
-        el("label",{for:"bankInfo"},["Banco de palabras"]),
-        el("input",{id:"bankInfo",type:"text",readonly:"readonly",value:`${buildWordBank().length}+ palabras/phrases`} ),
-        el("div",{class:"help"},["Se evitan repeticiones hasta agotar el banco de la sesión."])
-      ])
-    ]),
+    el("h2",{},["Cantidad de impostores"]),
+    el("p",{},["Selecciona cuántos impostores habrá. (Mínimo 1)."]),
+    el("label",{for:"imp"},["Impostores (1 a máximo sugerido)"]),
+    el("input",{id:"imp",type:"number",min:"1",max:String(maxImp),inputmode:"numeric",value:String(current)}),
+    el("div",{class:"help"},[`Máximo sugerido para ${state.playerCount} jugadores: ${maxImp}.`]),
+
     el("div",{class:"row"},[
-      el("button",{class:"btn",type:"button",onclick:() => setStep("setup_names")},["⬅ Atrás"]),
+      el("button",{class:"btn",type:"button",onclick:() => setStep("setup_names")},["⬅ Atrás"])
+    ]),
+    el("div",{class:"row-center"},[
       el("button",{class:"btn btn-primary",type:"button",onclick:() => {
         const v = Math.floor(Number(document.getElementById("imp").value||0));
         if(!Number.isFinite(v) || v < 1 || v > maxImp){
-          toast(`El número de impostores debe estar entre 1 y ${maxImp}.`, true);
+          toast(`La cantidad de impostores debe estar entre 1 y ${maxImp}.`, true);
+          return;
+        }
+        // Also ensure names are present (safety)
+        if(state.players.some(p => !p.name || !p.name.trim())){
+          toast("Faltan nombres. Vuelve y completa los jugadores.", true);
+          setStep("setup_names");
           return;
         }
         state.impostorCount = v;
         startNewGame();
       }},["🎴 Repartir tarjetas"])
-    ]),
-    el("div",{class:"help"},["Seguridad: cada jugador debe mantener presionado para revelar, y soltar para ocultar antes de pasar el teléfono."]),
+    ])
   ]);
 
   stage.appendChild(panel);
@@ -1314,7 +1092,7 @@ function renderReveal(){
 
   const card = el("div",{class:"secretCard",id:"secretCard"},[
     el("div",{class:"secretHeader"},[
-      el("div",{class:"avatarIcon", "aria-hidden":"true"},["👤"]),
+      el("div",{class:"avatarIcon","aria-hidden":"true"},["👤"]),
       el("div",{class:"playerName"},[p.name])
     ]),
     el("div",{class:"role",style:`color:${roleColor}`},[roleTxt]),
@@ -1332,7 +1110,6 @@ function renderReveal(){
     class:"btn btn-primary bottomNext",
     type:"button",
     disabled:"disabled",
-    "data-next-primary":"1",
     onclick:() => {
       state.revealIndex++;
       if(state.revealIndex >= total){
@@ -1354,17 +1131,16 @@ function renderReveal(){
       card,
       nextBtn
     ]),
-    el("div",{class:"help"},["Para avanzar: suelta para ocultar la palabra y luego pulsa “Siguiente jugador”."])
+    el("div",{class:"help"},["Para avanzar: suelta para ocultar y luego pulsa “Siguiente jugador”."])
   ]);
 
   stage.appendChild(panel);
 
-  // Hold-to-reveal behavior (pointer-based)
   const secretCard = document.getElementById("secretCard");
   const holdBtn = document.getElementById("holdBtn");
   let holding = false;
   let holdTimer = null;
-  const HOLD_MS = 220;
+  const HOLD_MS = 200;
 
   function revealOn(){ secretCard.classList.add("revealed"); }
   function revealOff(){
@@ -1396,13 +1172,6 @@ function renderReveal(){
   holdBtn.addEventListener("keyup", (e) => {
     if(e.code === "Space" || e.code === "Enter"){ endHold(e); }
   });
-
-  // try fullscreen on first meaningful touch (Android)
-  stage.addEventListener("pointerdown", () => {
-    if(!isIOS() && !document.fullscreenElement){
-      requestFullscreenSafe();
-    }
-  }, { once:true });
 }
 
 function renderBriefing(){
@@ -1410,38 +1179,60 @@ function renderBriefing(){
 
   const imp = getAliveImpostors().length;
   const civ = getAliveCivilians().length;
+  const pot = computePot();
 
   const panel = el("div",{class:"panel"},[
     el("h2",{},["Listos para jugar"]),
     el("p",{},[
-      "Ahora conversen por turnos. Cada jugador dice una pista relacionada con la palabra, sin decirla literalmente. "
+      "Ahora conversen por turnos. Cada jugador dice una pista relacionada con la palabra, sin decirla literalmente."
     ]),
-    el("div",{class:"help"},[
-      "Sugerencia: hagan 2–3 vueltas de pistas antes de votar para que sea más divertido."
-    ]),
+    state.betEnabled
+      ? el("div",{class:"resultCard"},[
+          el("div",{class:"ttl"},["Apuesta activa"]),
+          el("div",{class:"mut"},[
+            `Cada jugador pone ${state.betAmount}. Total en la mesa: ${pot}.`
+          ])
+        ])
+      : el("div",{class:"resultCard"},[
+          el("div",{class:"ttl"},["Sin apuesta"]),
+          el("div",{class:"mut"},["Esta ronda se juega solo por diversión."])
+        ]),
     el("div",{class:"resultCard"},[
-      el("div",{class:"ttl"},["Resumen (solo para el anfitrión)"]),
+      el("div",{class:"ttl"},["Resumen (anfitrión)"]),
       el("div",{class:"mut"},[
-        `Civiles: ${civ}. Impostores: ${imp}. Votaciones disponibles: ${state.votesLeftThisGame}.`
+        `Civiles: ${civ}. Impostores: ${imp}. Votaciones disponibles: ${state.votesAllowed}.`
       ])
     ]),
     el("div",{class:"row"},[
       el("button",{class:"btn",type:"button",onclick:() => {
-        // restart same setup
-        state.revealIndex = 0;
+        // new word, new roles, keep coins and betting settings
         state.secretWord = pickSecretWord();
         assignRoles();
+        state.revealIndex = 0;
         setStep("reveal");
       }},["↻ Repartir otra palabra"]),
-      el("button",{class:"btn btn-primary",type:"button",onclick:() => beginVotingCycle()},["🗳 Empezar votación"])
-    ])
+      el("button",{class:"btn btn-primary",type:"button",onclick:() => {
+        state.turnIndex = 0;
+        state.votes = new Map();
+        state.impostorGuesses = new Map();
+        setStep("turn");
+      }},["🗳 Empezar votación"])
+    ]),
+    el("div",{class:"help"},["En votación: civiles votan. Impostores no votan: solo escriben la palabra que creen correcta."])
   ]);
 
   stage.appendChild(panel);
 }
 
-function renderVoteTurn(){
+function renderTurn(){
   clearStage();
+
+  // if no more votes, end by survival rule
+  if(state.votesUsed >= state.votesAllowed){
+    state.finished = true;
+    state.winner = "impostores";
+    return setStep("end");
+  }
 
   const alive = getAlivePlayers();
   if(alive.length < 2){
@@ -1450,93 +1241,151 @@ function renderVoteTurn(){
     return setStep("end");
   }
 
-  // Find next voter who is alive and hasn't voted
-  let voter = null;
-  for(let i=0; i<state.players.length; i++){
-    const p = state.players[(state.voterIndex + i) % state.players.length];
-    if(p.alive && !state.votedBy.has(p.id)){
-      voter = p;
-      state.voterIndex = (state.players.indexOf(p) + 1) % state.players.length;
+  // find next alive player turn in order
+  let next = null;
+  let startIdx = state.turnIndex;
+  for(let k=0;k<state.players.length;k++){
+    const i = (startIdx + k) % state.players.length;
+    const p = state.players[i];
+    if(p.alive){
+      next = p;
+      state.turnIndex = (i + 1) % state.players.length;
       break;
     }
   }
-  if(!voter){
-    // all votes collected
+  if(!next){
     return setStep("vote_result");
   }
 
-  const suspects = alive.filter(p => p.id !== voter.id);
+  // Determine if we are still collecting turns; we need one turn per alive player.
+  // We use a simple counter per vote: store in stage dataset.
+  const key = "turnsDone_"+state.votesUsed;
+  if(state[key] === undefined) state[key] = 0;
+
+  const remaining = getAlivePlayers().length - state[key];
+
+  if(remaining <= 0){
+    return setStep("vote_result");
+  }
+
+  const isImp = next.role === "impostor";
+
+  if(isImp){
+    const panel = el("div",{class:"panel"},[
+      el("h2",{},[`Votación ${state.votesUsed+1} de ${state.votesAllowed}`]),
+      el("p",{},[
+        "Pasa el teléfono a ",
+        el("b",{},[next.name]),
+        ". (Impostor) No votas: solo intenta adivinar la palabra."
+      ]),
+      el("label",{for:"guess"},["¿Cuál crees que es la palabra?"]),
+      el("input",{id:"guess",type:"text",autocomplete:"off",autocapitalize:"none",placeholder:"Escribe una sola palabra"}),
+      el("div",{class:"row"},[
+        el("button",{class:"btn btn-primary",type:"button",onclick:() => {
+          const g = (document.getElementById("guess").value||"").trim();
+          if(!g){
+            toast("Escribe una palabra.", true);
+            return;
+          }
+          // store guess
+          state.impostorGuesses.set(next.id, g);
+          state[key] += 1;
+          toast("Listo. Pasa el teléfono.", false);
+          setTimeout(() => setStep("turn"), 250);
+        }},["Confirmar"])
+      ]),
+      el("div",{class:"help"},["Nadie más debe ver lo que escribes."])
+    ]);
+    stage.appendChild(panel);
+    return;
+  }
+
+  // civilian vote
+  const suspects = getAlivePlayers().filter(p => p.id !== next.id);
 
   const panel = el("div",{class:"panel"},[
-    el("h2",{},[`Votación ${state.votesUsed+1} de ${state.votesLeftThisGame}`]),
+    el("h2",{},[`Votación ${state.votesUsed+1} de ${state.votesAllowed}`]),
     el("p",{},[
       "Pasa el teléfono a ",
-      el("b",{},[voter.name]),
-      ". Solo esa persona debe votar."
-    ]),
-    el("div",{class:"help"},["Selecciona a quién consideras impostor y confirma."])
+      el("b",{},[next.name]),
+      ". Vota por quien crees que es el impostor."
+    ])
   ]);
 
   const list = el("div",{class:"playersList"});
-  const group = "vote_"+voter.id;
+  const group = "vote_"+next.id+"_"+state.votesUsed;
 
   for(const s of suspects){
     const rid = `${group}_${s.id}`;
     list.appendChild(el("div",{class:"voteItem"},[
       el("div",{},[
         el("div",{class:"nm"},[s.name]),
-        el("small",{},["Toca para seleccionar"])
+        el("small",{},["Seleccionar"])
       ]),
       el("input",{class:"radio",type:"radio",name:group,id:rid,value:s.id})
     ]));
   }
 
-  const btn = el("button",{class:"btn btn-primary",type:"button","data-next-primary":"1"},["Confirmar voto"]);
-
+  const btn = el("button",{class:"btn btn-primary",type:"button"},["Confirmar voto"]);
   btn.addEventListener("click", () => {
     const selected = panel.querySelector(`input[name="${group}"]:checked`);
     if(!selected){
-      toast("Selecciona un jugador para votar.", true);
+      toast("Selecciona un jugador.", true);
       return;
     }
     const suspectId = selected.value;
-    state.votedBy.add(voter.id);
     state.votes.set(suspectId, (state.votes.get(suspectId)||0) + 1);
-    toast("Voto registrado.", false);
-
-    // move to next voter
-    setTimeout(() => setStep("vote_turn"), 250);
+    state[key] += 1;
+    toast("Voto registrado. Pasa el teléfono.", false);
+    setTimeout(() => setStep("turn"), 250);
   });
 
   panel.appendChild(list);
-  panel.appendChild(el("div",{class:"row"},[
-    el("button",{class:"btn",type:"button",onclick:() => { state.votesUsed = Math.max(0, state.votesUsed-1); setStep("briefing"); }},["⬅ Volver a pistas"]),
-    btn
-  ]));
+  panel.appendChild(el("div",{class:"row"},[btn]));
+  panel.appendChild(el("div",{class:"help"},["Recuerda: los impostores NO votan."]));
 
   stage.appendChild(panel);
-
-  stage.addEventListener("pointerdown", () => {
-    if(!isIOS() && !document.fullscreenElement){
-      requestFullscreenSafe();
-    }
-  }, { once:true });
 }
 
 function renderVoteResult(){
   clearStage();
 
-  const eliminatedId = tallyVotes();
-  if(!eliminatedId){
-    toast("No se pudo calcular la votación.", true);
-    return setStep("briefing");
-  }
-  eliminatePlayer(eliminatedId);
+  // clear turn counter for next vote
+  const key = "turnsDone_"+state.votesUsed;
 
-  state.votesUsed += 1;
+  // If any impostor guessed correctly, impostors win immediately
+  if(checkImpostorGuessWin()){
+    awardRoundCoins();
+    return setStep("end");
+  }
+
+  const eliminatedId = tallyVotes();
+  eliminatePlayer(eliminatedId);
 
   const eliminated = state.players.find(p => p.id === eliminatedId);
   const wasImp = eliminated?.role === "impostor";
+
+  state.votesUsed += 1;
+
+  // award coins each resolved vote-round
+  awardRoundCoins();
+
+  // reset maps for next cycle
+  state.votes = new Map();
+  state.impostorGuesses = new Map();
+  state[key] = 0;
+
+  // role-based win check
+  if(checkWinnerByRoles()){
+    return setStep("end");
+  }
+
+  // if votes exhausted after this elimination, impostors win by survival rule
+  if(state.votesUsed >= state.votesAllowed){
+    state.finished = true;
+    state.winner = "impostores";
+    return setStep("end");
+  }
 
   const panel = el("div",{class:"panel"},[
     el("h2",{},["Resultado de votación"]),
@@ -1548,137 +1397,14 @@ function renderVoteResult(){
     el("div",{class: wasImp ? "ok" : "warn"},[
       wasImp ? "Era IMPOSTOR." : "No era impostor."
     ]),
-    el("div",{class:"resultCard"},[
-      el("div",{class:"ttl"},["Conteo de votos (anfitrión)"]),
-      el("div",{class:"mut"},[
-        ...getAlivePlayers().map(p => `${p.name}: ${state.votes.get(p.id)||0}  `)
-      ])
+    el("div",{class:"row"},[
+      el("button",{class:"btn",type:"button",onclick:() => setStep("briefing")},["Volver a pistas"]),
+      el("button",{class:"btn btn-primary",type:"button",onclick:() => {
+        state.turnIndex = 0;
+        setStep("turn");
+      }},["Siguiente votación"])
     ])
   ]);
-
-  // reset voting maps for next vote or next round
-  state.votes = new Map();
-  state.votedBy = new Set();
-
-  // award coins at the end of each vote round (treat as completing a round)
-  awardRoundCoins();
-
-  // Check immediate win
-  if(checkWinAfterVote()){
-    panel.appendChild(el("div",{class:"row"},[
-      el("button",{class:"btn btn-primary",type:"button",onclick:() => setStep("end")},["Ver resultado final"])
-    ]));
-    stage.appendChild(panel);
-    return;
-  }
-
-  // If still ongoing: allow impostors to guess now (as requested)
-  panel.appendChild(el("div",{class:"row"},[
-    el("button",{class:"btn",type:"button",onclick:() => setStep("briefing")},["Volver a pistas"]),
-    el("button",{class:"btn btn-primary",type:"button",onclick:() => beginImpostorGuessing()},["🧠 Impostores: adivinar palabra"])
-  ]));
-
-  stage.appendChild(panel);
-}
-
-function renderGuessTurn(){
-  clearStage();
-
-  const aliveImps = getAliveImpostors();
-  if(aliveImps.length === 0){
-    state.finished = true;
-    state.winner = "civiles";
-    return setStep("end");
-  }
-
-  const idList = aliveImps.map(p => p.id);
-  state.aliveImpostorIds = idList;
-
-  const impId = state.aliveImpostorIds[state.guessIndex];
-  const imp = state.players.find(p => p.id === impId);
-
-  if(!imp){
-    // no more impostors to ask
-    return setStep("guess_result");
-  }
-
-  const panel = el("div",{class:"panel"},[
-    el("h2",{},["Adivinar palabra (solo impostor)"]),
-    el("p",{},[
-      "Pasa el teléfono a ",
-      el("b",{},[imp.name]),
-      ". Escribe tu intento de palabra. Si aciertas, ganas."
-    ]),
-    el("label",{for:"guess"},["Tu palabra (exacta)"]),
-    el("input",{id:"guess",type:"text",placeholder:"Escribe aquí",autocomplete:"off",autocapitalize:"none"}),
-    el("div",{class:"help"},["Consejo: escribe tal cual crees que es la palabra. Se ignoran tildes y mayúsculas."])
-  ]);
-
-  const btn = el("button",{class:"btn btn-primary",type:"button"},["Confirmar intento"]);
-  btn.addEventListener("click", () => {
-    const g = (document.getElementById("guess").value||"").trim();
-    if(!g){
-      toast("Escribe una palabra.", true);
-      return;
-    }
-    state.impostorGuesses.set(imp.id, g);
-    toast("Intento guardado.", false);
-
-    state.guessIndex += 1;
-    if(state.guessIndex >= state.aliveImpostorIds.length){
-      setStep("guess_result");
-    }else{
-      setStep("guess_turn");
-    }
-  });
-
-  panel.appendChild(el("div",{class:"row"},[
-    el("button",{class:"btn",type:"button",onclick:() => setStep("briefing")},["⬅ Cancelar"]),
-    btn
-  ]));
-
-  stage.appendChild(panel);
-}
-
-function renderGuessResult(){
-  clearStage();
-
-  const panel = el("div",{class:"panel"},[
-    el("h2",{},["Resultado de intento"]),
-  ]);
-
-  if(checkImpostorGuessWin()){
-    panel.appendChild(el("div",{class:"ok"},["Un impostor acertó la palabra."]));
-    panel.appendChild(el("div",{class:"resultCard"},[
-      el("div",{class:"ttl"},["Palabra real"]),
-      el("div",{class:"mut"},[state.secretWord])
-    ]));
-    panel.appendChild(el("div",{class:"row"},[
-      el("button",{class:"btn btn-primary",type:"button",onclick:() => setStep("end")},["Ver resultado final"])
-    ]));
-    stage.appendChild(panel);
-    return;
-  }
-
-  panel.appendChild(el("div",{class:"warn"},["Ningún impostor acertó."]));
-  panel.appendChild(el("div",{class:"help"},[
-    `Votos restantes: ${Math.max(0, state.votesLeftThisGame - state.votesUsed)}.`
-  ]));
-
-  // If no more votes, civilians win (impostors couldn't guess) OR impostors win (survived)
-  if(checkWinAfterVote()){
-    panel.appendChild(el("div",{class:"row"},[
-      el("button",{class:"btn btn-primary",type:"button",onclick:() => setStep("end")},["Ver resultado final"])
-    ]));
-    stage.appendChild(panel);
-    return;
-  }
-
-  // Otherwise continue discussion then next vote when ready
-  panel.appendChild(el("div",{class:"row"},[
-    el("button",{class:"btn",type:"button",onclick:() => setStep("briefing")},["Volver a pistas"]),
-    el("button",{class:"btn btn-primary",type:"button",onclick:() => beginVotingCycle()},["🗳 Siguiente votación"])
-  ]));
 
   stage.appendChild(panel);
 }
@@ -1690,8 +1416,38 @@ function renderEnd(){
   const icon  = state.winner === "impostores" ? "🕵️‍♂️" : "🛡️";
   const color = state.winner === "impostores" ? "var(--bad)" : "var(--good)";
 
-  const imps = state.players.filter(p => p.role === "impostor");
-  const civs = state.players.filter(p => p.role === "civil");
+  const impsAll = state.players.filter(p => p.role === "impostor");
+  const civsAll = state.players.filter(p => p.role === "civil");
+
+  const pot = computePot();
+
+  // payout logic (display-only)
+  let payoutText = "Sin apuesta.";
+  if(state.betEnabled){
+    if(state.winner === "impostores"){
+      const aliveImps = getAliveImpostors();
+      const secret = norm(state.secretWord);
+      const correct = aliveImps.filter(p => {
+        const g = state.impostorGuesses.get(p.id);
+        return g && norm(g) === secret;
+      });
+      if(state.impostorCount === 1){
+        payoutText = `${aliveImps[0]?.name || "Impostor"} se lleva el total: ${pot}.`;
+      }else{
+        if(correct.length >= 1){
+          const share = Math.floor(pot / correct.length);
+          payoutText = `Ganan los impostores. Premio para quienes acertaron la palabra (${correct.map(p=>p.name).join(", ")}): ${share} cada uno. Total: ${pot}.`;
+        }else{
+          const share = aliveImps.length ? Math.floor(pot / aliveImps.length) : 0;
+          payoutText = `Ganan los impostores. Se reparte entre los impostores vivos (${aliveImps.map(p=>p.name).join(", ")}): ${share} cada uno. Total: ${pot}.`;
+        }
+      }
+    }else{
+      const aliveCivs = getAliveCivilians();
+      const share = aliveCivs.length ? Math.floor(pot / aliveCivs.length) : 0;
+      payoutText = `Ganan los civiles. Se reparte entre civiles vivos (${aliveCivs.map(p=>p.name).join(", ")}): ${share} cada uno. Total: ${pot}.`;
+    }
+  }
 
   const panel = el("div",{class:"panel"},[
     el("h2",{},[`${icon} ${title}`]),
@@ -1701,11 +1457,15 @@ function renderEnd(){
       "."
     ]),
     el("div",{class:"resultCard"},[
-      el("div",{class:"ttl",style:`color:${color}`},["Roles"]),
+      el("div",{class:"ttl",style:`color:${color}`},["Roles (anfitrión)"]),
       el("div",{class:"mut"},[
-        "Impostores: " + (imps.map(p=>p.name).join(", ") || "—"),
-        " · Civiles: " + (civs.map(p=>p.name).join(", ") || "—")
+        "Impostores: " + (impsAll.map(p=>p.name).join(", ") || "—"),
+        " · Civiles: " + (civsAll.map(p=>p.name).join(", ") || "—")
       ])
+    ]),
+    el("div",{class:"resultCard"},[
+      el("div",{class:"ttl"},["Resultado de apuesta"]),
+      el("div",{class:"mut"},[payoutText])
     ]),
     el("div",{class:"resultCard"},[
       el("div",{class:"ttl"},["Monedas acumuladas"]),
@@ -1714,36 +1474,50 @@ function renderEnd(){
       ])
     ]),
     el("div",{class:"row"},[
-      el("button",{class:"btn",type:"button",onclick:() => {
-        // new round with same players & impostor count, keep coins
-        state.round += 1;
+      el("button",{class:"btn btn-primary",type:"button",onclick:() => {
+        // next round (same players, keep coins and bet mode)
         state.votesUsed = 0;
-        state.votesLeftThisGame = state.impostorCount;
-        state.revealIndex = 0;
+        // refresh word and roles
         state.secretWord = pickSecretWord();
         assignRoles();
-        state.finished = false;
-        state.winner = "";
+        state.revealIndex = 0;
+        state.turnIndex = 0;
+        state.votes = new Map();
+        state.impostorGuesses = new Map();
         setStep("reveal");
       }},["▶ Siguiente ronda"]),
       el("button",{class:"btn btn-danger",type:"button",onclick:() => {
         // reset everything
+        state.step = "home";
         state.playerCount = 4;
         state.players = [];
         state.impostorCount = 1;
+        state.betEnabled = false;
+        state.betAmount = 0;
+
         state.round = 0;
-        state.votesLeftThisGame = 0;
+        state.votesAllowed = 0;
         state.votesUsed = 0;
+
         state.revealIndex = 0;
-        state.secretWord = "";
+
         state.usedWords = new Set();
         state.wordBank = shuffle(buildWordBank());
+        state.secretWord = "";
+
+        state.turnIndex = 0;
+        state.votes = new Map();
+        state.impostorGuesses = new Map();
+
+        state.finished = false;
+        state.winner = "";
+
         updateHUD();
         setStep("home");
       }},["⟲ Reiniciar todo"])
     ]),
     el("div",{class:"help"},[
-      "Nota: si hay empate en la votación, el eliminado se decide aleatoriamente entre los empatados (para mantener la partida fluida)."
+      "Regla aplicada: civiles votan; impostores solo intentan adivinar la palabra. Si un impostor acierta, ganan de inmediato."
     ])
   ]);
 
@@ -1751,7 +1525,8 @@ function renderEnd(){
 }
 
 /* boot */
-setStep("home");
+updateHUD();
+document.addEventListener("DOMContentLoaded", () => { setStep("home"); });
 
 })();
 </script>
