@@ -392,7 +392,58 @@
     body.fs .topbar{ position:absolute; left:12px; right:12px; top:12px; z-index:30; pointer-events:none; }
     body.fs .topbar .actions, body.fs .topbar .btn{ pointer-events:auto; }
     body.fs .hud-overlay{ top:56px; }
-  </style>
+  
+    /* --- Layout: canvas + sidepanel (evita tapar el tablero) --- */
+    .game-container{
+      display:flex;
+      flex-direction:row;
+      align-items:stretch;
+      gap:12px;
+      padding:12px;
+    }
+    .play-area{
+      position:relative;
+      flex:1 1 auto;
+      min-width:0;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+    }
+    .sidepanel{
+      width: 240px;
+      flex: 0 0 auto;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding:10px;
+      border-radius:18px;
+      background: rgba(2,6,23,0.35);
+      border:1px solid rgba(148,163,184,0.16);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+      z-index:5;
+    }
+    .sidepanel .stack{ display:flex; flex-direction:column; gap:10px; }
+    .sidepanel .btn{ width:100%; justify-content:center; padding:10px 12px; font-size:12px; }
+    .sidepanel .chip{ width:100%; justify-content:space-between; }
+
+    .topbar .actions{ display:none !important; }
+    .hud-overlay{ display:none !important; }
+
+    /* joystick por encima del canvas, no del panel */
+    .joystick{ left: max(10px, env(safe-area-inset-left)); bottom: max(14px, env(safe-area-inset-bottom)); }
+
+    @media (max-width: 820px){
+      .sidepanel{ width: 170px; padding:8px; }
+      .sidepanel .btn{ padding:9px 10px; font-size:12px; }
+    }
+    @media (max-width: 520px){
+      .game-container{ flex-direction:column; }
+      .sidepanel{ width: 100%; flex-direction:row; flex-wrap:wrap; }
+      .sidepanel .stack{ flex:1 1 180px; }
+      .sidepanel .btn{ width:auto; flex:1 1 auto; }
+      .sidepanel .chip{ width:auto; flex:1 1 140px; }
+    }
+</style>
 </head>
 <body>
   <div id="app">
@@ -405,36 +456,17 @@
             <p id="hello">Jugador</p>
           </div>
         </div>
-        <div class="actions">
-          <button class="btn btn-volver" id="btnBack" type="button">⬅ Volver</button>
-          <button class="btn btn-primary" id="btnStartTop" type="button">▶ Jugar</button>
-          <button class="btn" id="btnPause" type="button" aria-pressed="false">⏸ Pausa</button>
-          <button class="btn" id="btnSound" type="button" aria-pressed="true" title="Activar o silenciar sonidos">🔊 Sonido</button>
-          <button class="btn btn-danger" id="btnRestartTop" type="button" style="display:none;">↻ Reintentar</button>
-        </div>
+        <div class="actions"></div>
       </div>
 
       <div class="game-container" id="gameContainer">
-        <div class="hud-overlay">
-          <div class="left">
-            <div class="chip">🪙 Monedas: <b id="hudCoins">0</b> <span class="sub">(+<b id="hudCoinsRun">0</b>)</span></div>
-            <div class="chip">🎯 Nivel: <b id="hudLevel">1</b></div>
-            <div class="chip">❤️ Vidas: <b id="hudLives">3</b></div>
-          </div>
-          <div class="right">
-            <div class="chip">⭐ Puntaje: <b id="hudScore">0</b></div>
-            <div class="chip">🏆 Récord: <b id="hudBest">0</b></div>
-          </div>
-        </div>
-
-        <canvas id="cv" width="900" height="540"></canvas>
-
-        <div class="joystick" id="joystick" aria-label="Joystick">
+        <div class="play-area" id="playArea">
+          <canvas id="cv" width="900" height="540"></canvas>
+          <div class="joystick" id="joystick" aria-label="Joystick">
           <div class="joy-base" id="joyBase" aria-hidden="true"></div>
           <div class="joy-knob" id="joyKnob" aria-hidden="true"></div>
         </div>
-
-        <div id="startOverlay" class="overlay show" role="dialog" aria-modal="true">
+          <div id="startOverlay" class="overlay show" role="dialog" aria-modal="true">
           <div class="card">
             <div class="icon" aria-hidden="true">🟡</div>
             <div>
@@ -494,9 +526,27 @@
         </div>
 
         <div id="iosHint" style="display:none"></div>
+        </div>
+
+        <div class="sidepanel" id="sidePanel">
+          <div class="stack">
+            <button class="btn btn-volver" id="btnBack" type="button">⬅ Volver</button>
+            <button class="btn btn-primary" id="btnStartTop" type="button">▶ Jugar</button>
+            <button class="btn" id="btnPause" type="button" aria-pressed="false">⏸ Pausa</button>
+            <button class="btn" id="btnSound" type="button" aria-pressed="true" title="Activar o silenciar sonidos">🔊 Sonido</button>
+            <button class="btn btn-danger" id="btnRestartTop" type="button" style="display:none;">↻ Reintentar</button>
+          </div>
+          <div class="stack">
+            <div class="chip">🪙 Monedas: <b id="hudCoins">0</b> <span class="sub">(+<b id="hudCoinsRun">0</b>)</span></div>
+            <div class="chip">🎯 Nivel: <b id="hudLevel">1</b> <span class="sub">(<b id="hudSpeed">1%</b>)</span></div>
+            <div class="chip">❤️ Vidas: <b id="hudLives">3</b></div>
+            <div class="chip">⭐ Puntaje: <b id="hudScore">0</b></div>
+            <div class="chip">🏆 Récord: <b id="hudBest">0</b></div>
+            <div class="chip">🧩 Restantes: <b id="hudLeft">0</b></div>
+          </div>
+        </div>
+
       </div>
-    </div>
-  </div>
 
 <script>
 (() => {
@@ -649,6 +699,8 @@ const hudCoinsRun = document.getElementById("hudCoinsRun");
 const hudLevel = document.getElementById("hudLevel");
 const hudLives = document.getElementById("hudLives");
 const hudBest = document.getElementById("hudBest");
+const hudSpeed = document.getElementById("hudSpeed");
+const hudLeft = document.getElementById("hudLeft");
 
 const btnBack = document.getElementById("btnBack");
 const btnStartTop = document.getElementById("btnStartTop");
@@ -845,7 +897,22 @@ let frightened = 0; // seconds
 let comboGhost = 0;
 let startGrace = 0; // segundos de “gracia” al iniciar/respawn (evita muerte instantánea)
 
-const SPEED_BASE = 160; // px/s (scaled with level)
+const MAX_LEVEL = 100;
+const SPEED_BASE = 160; // px/s base
+const isMobileDevice = () => (Math.min(window.innerWidth, window.innerHeight) <= 900);
+function levelPercent(lv){ return Math.max(1, Math.min(100, lv|0)); }
+function ghostMultiplierFromLevel(lv){
+  // 1%..100% como etiqueta; 1% = base, 100% = ~2.4x base
+  const p = (levelPercent(lv)-1)/99;
+  const maxMult = 2.4;
+  return 1 + p*(maxMult-1);
+}
+function pacBonusFromCoins(coins){
+  // Pac acelera levemente a medida que recoge monedas (hasta ~18%)
+  const b = Math.min(0.18, (coins|0) / 320);
+  return 1 + b;
+}
+
 const PAC = {
   x:0, y:0,
   dir:{x:1,y:0},
@@ -876,8 +943,8 @@ function placeEntities(){
   const pr = 9, pc = 10;
   PAC.x = ox + pc*tile + tile/2;
   PAC.y = oy + pr*tile + tile/2;
-  PAC.dir = {x:1,y:0};
-  PAC.next = {x:1,y:0};
+  PAC.dir = {x:0,y:0};
+  PAC.next = {x:0,y:0};
   PAC.inv = 0;
   PAC.mouth = 0;
 
@@ -892,11 +959,13 @@ function updateHUD(){
   hudScore.textContent = String(score|0);
   hudLives.textContent = String(lives|0);
   hudCoinsRun.textContent = String(runCoins|0);
+  hudLeft.textContent = String(pelletsLeft|0);
   // wallet coins + level
   const w = loadWallet();
   hudCoins.textContent = String(w.coins|0);
   hudLevel.textContent = String(w.level|0);
   hudBest.textContent = String(bestScore|0);
+  hudSpeed.textContent = levelPercent(levelLocal) + "%";
 }
 
 function resetGame(keepOverlays=false){
@@ -960,7 +1029,7 @@ function endRun(reason){
   vibrate("hit");
 
   goTitle.textContent = reason || "Fin de partida";
-  goStats.textContent = `Puntaje: ${score|0} · Monedas (partida): ${runCoins|0} · Nivel interno: ${levelLocal|0}`;
+  goStats.textContent = `Puntaje: ${score|0} · Monedas (partida): ${runCoins|0} · Nivel: ${levelLocal|0} · Velocidad fantasmas: ${levelPercent(levelLocal)}%`;
   gameOverOverlay.classList.add("show");
   gameOverOverlay.setAttribute("aria-hidden","false");
 }
@@ -996,22 +1065,50 @@ function tryTurn(e){
   }
 }
 
-function moveEntity(e, speed, dt){
-  // dt in seconds
-  // if at center, stop if wall ahead
-  if(atCenter(e) && !canMoveDir(e, e.dir)){
-    e.dir = {x:0,y:0};
-    return;
-  }
-  e.x += e.dir.x * speed * dt;
-  e.y += e.dir.y * speed * dt;
 
-  // keep inside bounds softly
+function moveEntity(e, speed, dt){
+  if(!e.dir || (e.dir.x===0 && e.dir.y===0)) return;
+
+  // Intento de giro solo en el centro (sin glitches visuales)
+  if(e === PAC) tryTurn(PAC);
+
+  // Movimiento por pasos pequeños (evita atravesar muros)
+  let remaining = Math.min(speed * dt, tile * 0.95);
+  const stepMax = tile * 0.18;
+
+  while(remaining > 0){
+    const step = Math.min(stepMax, remaining);
+    const nx = e.x + e.dir.x * step;
+    const ny = e.y + e.dir.y * step;
+
+    // Si caería en un muro, frena y alinea al centro de la celda actual
+    const cell = cellAt(nx, ny);
+    if(isWall(cell.r, cell.c)){
+      snapToGrid(e);
+      e.dir = {x:0,y:0};
+      break;
+    }
+
+    e.x = nx;
+    e.y = ny;
+
+    // Si estamos en el centro y al frente hay muro, frena (lógica clásica)
+    if(atCenter(e) && !canMoveDir(e, e.dir)){
+      snapToGrid(e);
+      e.dir = {x:0,y:0};
+      break;
+    }
+
+    remaining -= step;
+  }
+
+  // keep inside bounds
   const minX = ox + tile/2, maxX = ox + (cols-1)*tile + tile/2;
   const minY = oy + tile/2, maxY = oy + (rows-1)*tile + tile/2;
   e.x = Math.max(minX, Math.min(maxX, e.x));
   e.y = Math.max(minY, Math.min(maxY, e.y));
 }
+
 
 function eatIfAny(){
   const cell = cellAt(PAC.x, PAC.y);
@@ -1136,11 +1233,11 @@ function update(dt){
   if(startGrace > 0) startGrace -= dt;
 
   // smooth speed scaling with internal level
-  const k = 1 + (levelLocal-1)*0.08;
-  const pacSpeed = SPEED_BASE * k;
-  const ghostSpeed = (SPEED_BASE * 0.92) * k * (frightened>0 ? 0.82 : 1.0);
+  const gMult = ghostMultiplierFromLevel(levelLocal);
+  const mobileFactor = isMobileDevice() ? 0.85 : 1.0;
+  const pacSpeed = (SPEED_BASE * 0.95) * pacBonusFromCoins(runCoins) * (1 + (gMult-1)*0.25);
+  const ghostSpeed = (SPEED_BASE * 0.78) * gMult * mobileFactor * (frightened>0 ? 0.78 : 1.0);
 
-  tryTurn(PAC);
   moveEntity(PAC, pacSpeed, dt);
   eatIfAny();
 
@@ -1187,6 +1284,13 @@ function update(dt){
 
   // level clear
   if(pelletsLeft <= 0){
+    if(levelLocal >= MAX_LEVEL){
+      score += 500;
+      addXp(120);
+      updateHUD();
+      endRun("¡Completaste el nivel 100!");
+      return;
+    }
     levelLocal++;
     // new map
     MAP = buildMap();
@@ -1294,14 +1398,16 @@ function draw(){
   }
 }
 
+
 function drawPac(){
   const t = performance.now()/1000;
-  const mouth = running && !paused ? (0.25 + 0.25*Math.sin(t*10)) : 0.22;
-  const a0 = mouth;
-  const a1 = Math.PI*2 - mouth;
+  const mouth = running && !paused ? (0.22 + 0.22*Math.sin(t*10)) : 0.20;
 
   // inv blink
   const invBlink = (PAC.inv > 0) ? (Math.sin(t*18) > 0 ? 0.45 : 1.0) : 1.0;
+
+  // Ángulo dirección (si quieto: mira a la derecha)
+  const dirAngle = (PAC.dir.x===0 && PAC.dir.y===0) ? 0 : Math.atan2(PAC.dir.y, PAC.dir.x);
 
   ctx.save();
   ctx.globalAlpha = invBlink;
@@ -1315,17 +1421,19 @@ function drawPac(){
   ctx.beginPath(); ctx.arc(PAC.x,PAC.y,PAC.r*3.2,0,Math.PI*2); ctx.fill();
   ctx.globalCompositeOperation = "source-over";
 
-  // body
-  const g = ctx.createRadialGradient(PAC.x - PAC.r*0.35, PAC.y - PAC.r*0.35, 0, PAC.x, PAC.y, PAC.r*1.25);
+  // Dibujo en coords locales (evita “patas arriba”)
+  ctx.translate(PAC.x, PAC.y);
+  ctx.rotate(dirAngle);
+
+  const g = ctx.createRadialGradient(-PAC.r*0.35, -PAC.r*0.35, 0, 0, 0, PAC.r*1.25);
   g.addColorStop(0,"rgba(255,255,255,0.95)");
   g.addColorStop(0.20,"rgba(250,204,21,0.98)");
   g.addColorStop(1,"rgba(245,158,11,0.96)");
   ctx.fillStyle = g;
 
-  const dirAngle = Math.atan2(PAC.dir.y, PAC.dir.x) || 0;
   ctx.beginPath();
-  ctx.moveTo(PAC.x, PAC.y);
-  ctx.arc(PAC.x, PAC.y, PAC.r, dirAngle + a0, dirAngle + a1, false);
+  ctx.moveTo(0,0);
+  ctx.arc(0,0,PAC.r, mouth, Math.PI*2 - mouth, false);
   ctx.closePath();
   ctx.fill();
 
@@ -1333,14 +1441,15 @@ function drawPac(){
   ctx.lineWidth = Math.max(1, PAC.r*0.14);
   ctx.stroke();
 
-  // eye
+  // ojo (siempre arriba relativo al cuerpo)
   ctx.fillStyle = "rgba(2,6,23,0.85)";
   ctx.beginPath();
-  ctx.arc(PAC.x + Math.cos(dirAngle+0.9)*PAC.r*0.35, PAC.y + Math.sin(dirAngle+0.9)*PAC.r*0.35, Math.max(1.4, PAC.r*0.11), 0, Math.PI*2);
+  ctx.arc(PAC.r*0.10, -PAC.r*0.35, Math.max(1.4, PAC.r*0.11), 0, Math.PI*2);
   ctx.fill();
 
   ctx.restore();
 }
+
 
 function drawGhost(g){
   const t = performance.now()/1000;
@@ -1417,11 +1526,19 @@ function roundRect(ctx, x, y, w, h, r){
 /* ---------------------------------------------------------
  *  Input: teclado + joystick
  * --------------------------------------------------------- */
+
 function setNextDir(nx, ny){
-  // ignore if same
   if(nx === PAC.next.x && ny === PAC.next.y) return;
   PAC.next = {x:nx, y:ny};
+
+  // No moverse automáticamente: arranca con la primera acción
+  if(PAC.dir.x===0 && PAC.dir.y===0){
+    if(atCenter(PAC) && canMoveDir(PAC, PAC.next)){
+      PAC.dir = {x:PAC.next.x, y:PAC.next.y};
+    }
+  }
 }
+
 
 window.addEventListener("keydown", (e) => {
   const k = e.key.toLowerCase();
@@ -1480,6 +1597,10 @@ function joySetKnob(dx, dy){
 
 function joyReset(){
   joyKnob.style.transform = "translate(-50%, -50%)";
+  if(isMobileDevice()){
+    PAC.dir = {x:0,y:0};
+    PAC.next = {x:0,y:0};
+  }
 }
 
 joystick.addEventListener("pointerdown", (e) => {
